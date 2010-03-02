@@ -25,6 +25,7 @@
          !----------------------------------------------------------------------
          ! PPM numerics routines
          !----------------------------------------------------------------------
+         USE ppm_module_comp_part
          USE ppm_module_bem
          USE ppm_module_fieldsolver
          USE ppm_module_ode
