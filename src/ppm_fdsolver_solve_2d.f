@@ -183,7 +183,11 @@
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_mesh
-      USE ppm_module_typedef
+      USE ppm_module_substart
+      USE ppm_module_substop
+      USE ppm_module_write
+      USE ppm_module_error
+      USE ppm_module_alloc
       USE ppm_module_mktopo
       USE ppm_module_mesh_define
       USE ppm_module_fdsolver_map
@@ -274,8 +278,7 @@
       !  Initialise
       !-------------------------------------------------------------------------
       CALL substart('ppm_fdsolver_solve_2d',t0,info)
-      f_topo => ppm_topo(field_topoid)%t
-      f_mesh => f_topo%mesh(mesh_id_data)
+
       !-------------------------------------------------------------------------
       ! Check arguments
       !-------------------------------------------------------------------------
@@ -293,6 +296,9 @@
               GOTO 9999
           ENDIF
       ENDIF
+      
+      f_topo => ppm_topo(field_topoid)%t
+      f_mesh => f_topo%mesh(mesh_id_data)
       !-------------------------------------------------------------------------
       !  Check if FFTW-Library is available of if NEC Library
       !-------------------------------------------------------------------------

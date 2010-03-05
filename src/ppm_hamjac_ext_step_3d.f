@@ -147,6 +147,15 @@
            DO k=1,ndata(3,isubl)
               DO j=1,ndata(2,isubl)
                  DO i=1,ndata(1,isubl)
+                    IF(ABS(phi(i,j,k,isub)).GT.7.0_mk*dx(1)) CYCLE
+                    ! TODO replace the hardcoded 7 by an argument
+                    IF(ABS(phi(i,j,k,isub)).LT.dx(1)) THEN
+#if   __MODE == __SCA
+                       tpsi(i,j,k,isub) = psi(i,j,k,isub)
+#elif __MODE == __VEC
+                       tpsi(1:lda,i,j,k,isub) = psi(1:lda,i,j,k,isub)
+#endif
+                    ELSE
                     phimid(1) = phi(i+1,j,k,isub)-phi(i-1,j,k,isub)
                     phimid(2) = phi(i,j+1,k,isub)-phi(i,j-1,k,isub)
                     phimid(3) = phi(i,j,k+1,isub)-phi(i,j,k-1,isub)
@@ -186,7 +195,8 @@
                     tpsi(1:lda,i,j,k,isub) = psi(1:lda,i,j,k,isub) &
                          & - wenotau * dphi_dt(1:lda)
                     rms = MAX(rms,SUM(ABS(dphi_dt)))
-#endif                    
+#endif
+                 ENDIF
                  END DO
               END DO
            END DO

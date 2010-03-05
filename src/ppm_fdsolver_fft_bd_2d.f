@@ -58,7 +58,10 @@
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_fieldsolver
+      USE ppm_module_substart
+      USE ppm_module_substop
       USE ppm_module_error
+      USE ppm_module_alloc
       IMPLICIT NONE
 #if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -103,8 +106,9 @@
 #ifdef __MATHKEISAN
       ! MATHKEISAN variables for MathKeisan FFTs
       INTEGER                                 :: isign_fft,isys
-#if   __KIND == __SINGLE_PRECISION        | __KIND == __DOUBLE_PRECISION
-#elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
+#if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
+
+#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       ! parameters for cfft (default=1)
       INTEGER                                 :: incx, incy
 #endif
@@ -169,8 +173,8 @@
       !-------------------------------------------------------------------------
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       Nx_out = (Nx_in-1)*2
-#elif __KIND == __SINGLE_PRECISION_COMPLEX |__KIND == __DOUBLE_PRECISION_COMPLEX
-      Nx_out = Nx_in -1
+#el#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
+   Nx_out = Nx_in -1
 #endif
       Ny_out=Ny_in
       lda(1)=Nx_out+1

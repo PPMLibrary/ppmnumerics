@@ -73,7 +73,10 @@
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_fieldsolver
+      USE ppm_module_substart
+      USE ppm_module_substop
       USE ppm_module_error
+      USE ppm_module_alloc
       IMPLICIT NONE
 #if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -98,9 +101,9 @@
       ! size of data
       INTEGER, DIMENSION(:)         , INTENT(INOUT) :: lda
       ! output data, inverse fast fourier transformed
-#if   __KIND == __SINGLE_PRECISION        | __KIND == __DOUBLE_PRECISION 
+#if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION 
       REAL(MK), DIMENSION(:,:,:)    , POINTER       :: data_out
-#elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
+#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       COMPLEX(MK), DIMENSION(:,:,:) , POINTER       :: data_out 
 #elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND ==__DOUBLE_PRECISION_COMPLEX_Z
       COMPLEX(MK), DIMENSION(:,:,:) , POINTER       :: data_out 
@@ -128,7 +131,7 @@
       INTEGER                                 :: isign_fft,isys
 #if __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       INTEGER                                 :: incx, incy
-#elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND ==__DOUBLE_PRECISION_COMPLEX_Z
+#elif __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND == __DOUBLE_PRECISION_COMPLEX_Z
       INTEGER                                 :: incx, incy
 #endif
       ! scale of the transformation
@@ -200,9 +203,9 @@
       !-------------------------------------------------------------------------
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       Nx_out = (Nx_in-1)*2
-#elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
+#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       Nx_out = Nx_in-1       
-#elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND ==__DOUBLE_PRECISION_COMPLEX_Z
+#elif __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND == __DOUBLE_PRECISION_COMPLEX_Z
       Nx_out = Nx_in-1       
 #endif
       Ny_out=Ny_in
@@ -240,7 +243,7 @@
       lda_work    = 4*Nx_out
 #elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND== __DOUBLE_PRECISION_COMPLEX
       lda_work(1) = 6*Nx_out
-#elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND== __DOUBLE_PRECISION_COMPLEX_Z
+#elif __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND== __DOUBLE_PRECISION_COMPLEX_Z
       lda_work(1) = 6*Nx_out
 #endif
       CALL ppm_alloc(work,lda_work,ppm_param_alloc_fit,info)

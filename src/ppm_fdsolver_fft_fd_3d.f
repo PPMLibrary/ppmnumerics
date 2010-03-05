@@ -76,7 +76,10 @@
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_fieldsolver
+      USE ppm_module_substart
+      USE ppm_module_substop
       USE ppm_module_error
+      USE ppm_module_alloc
       IMPLICIT NONE
 #if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -99,9 +102,9 @@
       ! input data
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       REAL(MK), DIMENSION(:,:,:)    , INTENT(IN   ) :: data_in
-#elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
+#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       COMPLEX(MK), DIMENSION(:,:,:) , INTENT(IN   ) :: data_in
-#elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND ==__DOUBLE_PRECISION_COMPLEX_Z
+#elif __KIND == __SINGLE_PRECISION_COMPLEX_Z|__KIND == __DOUBLE_PRECISION_COMPLEX_Z
       COMPLEX(MK), DIMENSION(:,:,:) , INTENT(IN   ) :: data_in
 #endif
       ! size of array
@@ -131,7 +134,7 @@
       INTEGER                                 :: isign_fft,isys
 #if __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       INTEGER                                 :: incx, incy
-#elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND==__DOUBLE_PRECISION_COMPLEX_Z
+#elif __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND == __DOUBLE_PRECISION_COMPLEX_Z
       INTEGER                                 :: incx, incy
 #endif
       !scale of the transformation
@@ -202,20 +205,20 @@
       !-------------------------------------------------------------------------
       !  Allocate result array
       !-------------------------------------------------------------------------
-#if   __KIND == __SINGLE_PRECISION        | __KIND == __DOUBLE_PRECISION
+#if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       Nx_out = Nx_in/2 + 1
-#elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
+#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       Nx_out = Nx_in     
-#elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND ==__DOUBLE_PRECISION_COMPLEX_Z
+#elif __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND == __DOUBLE_PRECISION_COMPLEX_Z
       Nx_out = Nx_in     
 #endif
       Ny_out = Ny_in
       Nz_out = Nz_in
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       lda(1) = Nx_out
-#elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
+#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       lda(1) = Nx_out+1      ! to fit ppm-convention
-#elif __KIND==__SINGLE_PRECISION_COMPLEX_Z|__KIND ==__DOUBLE_PRECISION_COMPLEX_Z
+#elif __KIND == __SINGLE_PRECISION_COMPLEX_Z| __KIND == __DOUBLE_PRECISION_COMPLEX_Z
       lda(1) = Nx_out+1      ! to fit ppm-convention
 #endif
       lda(2) = Ny_out
@@ -338,7 +341,8 @@
          ENDDO
       ENDDO     
 #endif
-#if __KIND ==__SINGLE_PRECISION_COMPLEX_Z| __KIND ==__DOUBLE_PRECISION_COMPLEX_Z
+
+#if __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND == __DOUBLE_PRECISION_COMPLEX_Z
       !-------------------------------------------------------------------------
       !  Copy margin to conform with PPM convention
       !-------------------------------------------------------------------------

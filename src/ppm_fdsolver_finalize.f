@@ -54,8 +54,16 @@
       !-------------------------------------------------------------------------
       !  Modules
       !-------------------------------------------------------------------------
-	  USE ppm_module_data_fieldsolver
-      USE ppm_module_data
+
+       USE ppm_module_substart
+       USE ppm_module_substop
+       USE ppm_module_write
+       USE ppm_module_error
+       USE ppm_module_alloc
+       USE ppm_module_data_fieldsolver
+
+
+
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  FFTW include
@@ -70,7 +78,7 @@
       !-------------------------------------------------------------------------
       !  Local Variables
       !-------------------------------------------------------------------------
-      REAL(ppm_kind_double)                        :: t0
+      REAL(ppm_kind_double)                                      :: t0
       INTEGER, DIMENSION(3)                        :: lda
       !-------------------------------------------------------------------------
       !  Initialise
