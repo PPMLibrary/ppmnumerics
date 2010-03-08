@@ -84,7 +84,7 @@
 #endif
       !!! This routine extends a function defined on the interface to the whole
       !!! band on which the level function is defined. The extension is done
-      !!! such that the gradient of the function is perpendicular to the
+      !!! such that the graident of the function is perpendicular to the
       !!! gradient of the level function. ppm_gmm_init must be called BEFORE
       !!! this routine is invoked.
       !-------------------------------------------------------------------------
@@ -101,11 +101,6 @@
       USE ppm_module_gmm_cpt
       USE ppm_module_gmm_march
       USE ppm_module_gmm_finalize
-      USE ppm_module_substart
-      USE ppm_module_substop
-      USE ppm_module_error
-      USE ppm_module_alloc
-      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -134,33 +129,16 @@
           END FUNCTION ivalue
       END INTERFACE
 #endif
-      !!! Function pointer to the function computing the value of the function
-      !!! on the interface: (F) ivalue(x,y[,z])
-      !!! The function may assume that the point (x,y[,z]) is on the interface.
 #else
       REAL(MK)                       , INTENT(IN   )   :: ivalue
       !!! A (F) scalar value defining a cutoff. Points closer to the interface
-      !!! than this cutoff will be kept to initialize the marching. The cpt
-      !!! is skipped in this case.
+      !!! than this cutoff will be kept to initialize the marching. The cpt is
+      !!! skipped in this case.
 #endif
 #if   __TYPE == __SFIELD
       REAL(MK), DIMENSION(:,:,:)     , POINTER         :: udata
-      !!! Field of the function to be extended, defined in the same narrow
-      !!! band as the level function. Values outside this band are set to
-      !!! HUGE. This has to be allocated to proper size incl. ghost layers of
-      !!! size order!  If ivalue is a function pointer, udata will be
-      !!! completely replaced. If ivalue is a scalar, the points closer to
-      !!! the interface than this scalar are kept unchanged. Can be a vector
-      !!! or a scalar field. If vector, lda must be given.
 #elif __TYPE == __VFIELD
       REAL(MK), DIMENSION(:,:,:,:)   , POINTER         :: udata
-      !!! Field of the function to be extended, defined in the same narrow
-      !!! band as the level function. Values outside this band are set to
-      !!! HUGE. This has to be allocated to proper size incl. ghost layers of
-      !!! size order!  If ivalue is a function pointer, udata will be
-      !!! completely replaced. If ivalue is a scalar, the points closer to
-      !!! the interface than this scalar are kept unchanged. Can be a vector
-      !!! or a scalar field. If vector, lda must be given.
       INTEGER                        , INTENT(IN   )   :: lda
       !!! Only present for vector udata. Gives the length of the leading
       !!! dimension of udata. All elements will be equally extended.
@@ -171,10 +149,10 @@
       !!! to be the interface. Always a scalar field. THIS NEEDS TO BE
       !!! PROPERLY ALLOCATED ON INPUT, INCLUDING GHOST LAYERS OF SIZE order.
       REAL(MK), DIMENSION(:,:,:,:)   , INTENT(IN),OPTIONAL:: chi
-      !!! rank 5 (3d) or rank 4 (2d) field specifying the positions
-      !!! of the grid nodes. 1st index: 1..ppm_dim, then i,j,[k],isub.
-      !!! OPTIONAL. Uniform grid is assumed if absent. Ghostlayers  of size
-      !!! >=1 must be pre-filled.
+      !!! rank 4 (2d) field specifying the positions of the
+      !!! grid nodes. 1st index: 1..ppm_dim, then i,j,[k],isub. OPTIONAL.
+      !!! Uniform grid is assumed if absent. Ghostlayers of size >=1 must
+      !!! be pre-filled.
 #elif __DIM == __3D
 #if   __KICKOFF == __YES
 #if   __KIND == __SINGLE_PRECISION
@@ -195,20 +173,20 @@
       END INTERFACE
 #endif
       !!! Function pointer to the function computing the value of the function
-      !!! on the interface: (F) ivalue(x,y[,z])
-      !!! The function may assume that the point (x,y[,z]) is on the interface.
+      !!! on the interface: (F) ivalue(x,y[,z]) The function may assume that
+      !!! the point (x,y[,z]) is on the interface.
 #else
       REAL(MK)                       , INTENT(IN   )   :: ivalue
       !!! A (F) scalar value defining a cutoff. Points closer to the interface
-      !!! than this cutoff will be kept to initialize the marching. The cpt
-      !!! is skipped in this case.
+      !!! than this cutoff will be kept to initialize the marching. The cpt is
+      !!! skipped in this case.
 #endif
 #if   __TYPE == __SFIELD
       REAL(MK), DIMENSION(:,:,:,:)   , POINTER         :: udata
       !!! Field of the function to be extended, defined in the same narrow
       !!! band as the level function. Values outside this band are set to
-      !!! HUGE. This has to be allocated to proper size incl. ghost layers of
-      !!! size order!  If ivalue is a function pointer, udata will be
+      !!! HUGE. This has to be allocated to proper size incl. ghost layers
+      !!! of size order! If ivalue is a function pointer, udata will be
       !!! completely replaced. If ivalue is a scalar, the points closer to
       !!! the interface than this scalar are kept unchanged. Can be a vector
       !!! or a scalar field. If vector, lda must be given.
@@ -216,8 +194,8 @@
       REAL(MK), DIMENSION(:,:,:,:,:) , POINTER         :: udata
       !!! Field of the function to be extended, defined in the same narrow
       !!! band as the level function. Values outside this band are set to
-      !!! HUGE. This has to be allocated to proper size incl. ghost layers of
-      !!! size order!  If ivalue is a function pointer, udata will be
+      !!! HUGE. This has to be allocated to proper size incl. ghost layers
+      !!! of size order! If ivalue is a function pointer, udata will be
       !!! completely replaced. If ivalue is a scalar, the points closer to
       !!! the interface than this scalar are kept unchanged. Can be a vector
       !!! or a scalar field. If vector, lda must be given.
@@ -231,30 +209,29 @@
       !!! to be the interface. Always a scalar field. THIS NEEDS TO BE
       !!! PROPERLY ALLOCATED ON INPUT, INCLUDING GHOST LAYERS OF SIZE order.
       REAL(MK), DIMENSION(:,:,:,:,:) , INTENT(IN),OPTIONAL:: chi
-      !!! rank 5 (3d) or rank 4 (2d) field specifying the positions
-      !!! of the grid nodes. 1st index: 1..ppm_dim, then i,j,[k],isub.
-      !!! OPTIONAL. Uniform grid is assumed if absent. Ghostlayers  of size
-      !!! >=1 must be pre-filled.
+      !!! rank 5 (3d) field specifying the positions of the
+      !!! grid nodes. 1st index: 1..ppm_dim, then i,j,[k],isub. OPTIONAL.
+      !!! Uniform grid is assumed if absent. Ghostlayers of size >=1 must
+      !!! be pre-filled.
 #endif
       INTEGER                        , INTENT(IN   )   :: order
-      !!! Order of the method to be used. One of
+      !!! Desired order of the method. One of:
       !!!
       !!! *ppm_param_order_1
       !!! *ppm_param_order_2
       !!! *ppm_param_order_3
       REAL(MK)                       , INTENT(IN   )   :: tol
-      !!! Relative tolerance for the determined distance to the interface. 1E-3
-      !!! is a good choice. The tolerance is in multiples of grid spacings.
+      !!! Relative tolerance for the determined distance to the interface.
+      !!! 1E-3 is a good choice. The tolerance is in multiples of grid spacings
       REAL(MK)                       , INTENT(IN   )   :: width
-      !!! Width of the narrow band to be produced on each side of
-      !!! the interface.
+      !!! Width of the narrow band to be produced on each side of the interface.
       INTEGER                        , INTENT(  OUT)   :: info
-      !!! Return status, 0 upon success
+      !!! Return status. 0 upon success
       INTEGER , OPTIONAL             , INTENT(IN   )   :: MaxIter
       !!! OPTIONAL argument specifying the maximum number of allowed
-      !!! iterations. This can be useful since a cyclic dependency in the GMM
-      !!! algorithms could cause infinite loops. In each iteration at least one
-      !!! point is computed.
+      !!! iterations. This can be useful since a cyclic dependency in the
+      !!! GMM algorithms could cause infinite loops. In each iteration at least
+      !!! one point is computed.
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
@@ -265,8 +242,6 @@
       REAL(MK)                              :: t0,x,y,z,big
       LOGICAL                               :: lok
       REAL(MK), DIMENSION(:,:), POINTER     :: closest
-      TYPE(ppm_t_topo),         POINTER     :: topo
-      TYPE(ppm_t_equi_mesh),    POINTER     :: mesh
 #if   __TYPE == __VFIELD
 #if   __DIM == __2D
       REAL(MK), DIMENSION(:,:,:  ), POINTER :: ext_wrk
@@ -279,8 +254,6 @@
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_extend',t0,info)
       big = HUGE(big)
-      topo => ppm_topo(gmm_topoid)%t
-      mesh => topo%mesh(gmm_meshid)
       !-------------------------------------------------------------------------
       !  Set pointers
       !-------------------------------------------------------------------------
@@ -362,7 +335,7 @@
 !     ldu(1) = maxxhi + ghostsize(1)
 !     ldu(2) = maxyhi + ghostsize(2)
 !     ldu(3) = maxzhi + ghostsize(3)
-!     ldu(4) = topo%nsublist
+!     ldu(4) = ppm_nsublist(gmm_topoid)
 !     CALL ppm_alloc(udata,ldl,ldu,iopt,info)
 !     IF (info .NE. ppm_param_success) THEN
 !         info = ppm_error_fatal
@@ -443,7 +416,7 @@
 !     ldu(1) = maxxhi + ghostsize(1)
 !     ldu(2) = maxyhi + ghostsize(2)
 !     ldu(3) = maxzhi + ghostsize(3)
-!     ldu(4) = topo%nsublist
+!     ldu(4) = ppm_nsublist(gmm_topoid)
 !     CALL ppm_alloc(udata,ldu,iopt,info)
 !     IF (info .NE. ppm_param_success) THEN
 !         info = ppm_error_fatal
@@ -455,11 +428,11 @@
       !  Nuke points farther from the interface than ivalue
       !-------------------------------------------------------------------------
 #if   __DIM == __3D
-      DO isub=1,topo%nsublist
-          jsub = topo%isublist(isub)
-          DO k=1,mesh%nnodes(3,jsub)
-              DO j=1,mesh%nnodes(2,jsub)
-                  DO i=1,mesh%nnodes(1,jsub)
+      DO isub=1,ppm_nsublist(gmm_topoid)
+          jsub = ppm_isublist(isub,gmm_topoid)
+          DO k=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(3,jsub)
+              DO j=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,jsub)
+                  DO i=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,jsub)
                       IF (ABS(fdata(i,j,k,isub)) .GT. ivalue) THEN
 #if   __TYPE == __VFIELD
                           DO ida=1,lda
@@ -474,10 +447,10 @@
           ENDDO
       ENDDO
 #elif __DIM == __2D
-      DO isub=1,topo%nsublist
-          jsub = topo%isublist(isub)
-          DO j=1,mesh%nnodes(2,jsub)
-              DO i=1,mesh%nnodes(1,jsub)
+      DO isub=1,ppm_nsublist(gmm_topoid)
+          jsub = ppm_isublist(isub,gmm_topoid)
+          DO j=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,jsub)
+              DO i=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,jsub)
                   IF (ABS(fdata(i,j,isub)) .GT. ivalue) THEN
 #if   __TYPE == __VFIELD
                       DO ida=1,lda
@@ -519,7 +492,7 @@
 #if   __DIM == __3D
       ldu(3) = UBOUND(udata,4)
 #endif
-      ldu(4) = topo%nsublist
+      ldu(4) = ppm_nsublist(gmm_topoid)
       CALL ppm_alloc(ext_wrk,ldl,ldu,iopt,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_fatal

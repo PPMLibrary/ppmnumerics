@@ -22,7 +22,7 @@
      &    rhscst,dxinv,dyinv,dzinv,ghostsize,info,speed,chi)
 #endif 
 #endif
-      !!! This routine performs the forward marching step of the GMM. See
+      !!! This routine performs the forward extension step of the GMM. See
       !!! ppm_gmm_march for details.
       !!!
       !!! === References ===
@@ -34,11 +34,6 @@
       USE ppm_module_data
       USE ppm_module_data_mesh
       USE ppm_module_data_gmm
-      USE ppm_module_substart
-      USE ppm_module_substop
-      USE ppm_module_error
-      USE ppm_module_alloc
-      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -57,37 +52,33 @@
       !-------------------------------------------------------------------------
 #if   __DIM == __2D
       REAL(MK), DIMENSION(:,:,:)     , POINTER          :: fdta
+      !!! pointer to level function. Needs to be defined in a band
+      !!! (width+order*dx)
+      REAL(MK), DIMENSION(:,:,:)     , POINTER          :: dta
+      !!! pointer to value function.
+      REAL(MK), DIMENSION(:,:,:)     , INTENT(IN), OPTIONAL :: speed
+      !!! rank 3 (2d) field of front speeds. OPTIONAL to override rhscst.
+      REAL(MK), DIMENSION(:,:,:,:)   , INTENT(IN), OPTIONAL :: chi
+      !!! rank 4 (2d) field specifying the positions of the grid nodes.
+      !!! 1st index: 1..ppm_dim, then i,j,[k],isub. OPTIONAL. Uniform grid is
+      !!! assumed if absent.
 #elif __DIM == __3D
       REAL(MK), DIMENSION(:,:,:,:)   , POINTER          :: fdta
-#endif
       !!! pointer to level function. Needs to be defined in a band
-      !!! (width+order*dx).
-#if   __DIM == __2D
-      REAL(MK), DIMENSION(:,:,:)     , POINTER          :: dta
-#elif __DIM == __3D
+      !!! (width+order*dx)
       REAL(MK), DIMENSION(:,:,:,:)   , POINTER          :: dta
-#endif
       !!! pointer to value function.
-#if   __DIM == __2D
-      REAL(MK), DIMENSION(:,:,:)     , INTENT(IN), OPTIONAL :: speed
-#elif __DIM == __3D
       REAL(MK), DIMENSION(:,:,:,:)   , INTENT(IN), OPTIONAL :: speed
-#endif
-      !!! rank 4 (3d) or rank 3 (2d) field of front speeds.
-      !!! OPTIONAL to override rhscst.
-#if   __DIM == __2D
-      REAL(MK), DIMENSION(:,:,:,:)   , INTENT(IN), OPTIONAL :: chi
-#elif __DIM == __3D
+      !!! rank 4 (3d) field of front speeds. OPTIONAL to override rhscst.
       REAL(MK), DIMENSION(:,:,:,:,:) , INTENT(IN), OPTIONAL :: chi
+      !!! rank 5 (3d) field specifying the positions of the grid nodes.
+      !!! 1st index: 1..ppm_dim, then i,j,[k],isub. OPTIONAL. Uniform grid is
+      !!! assumed if absent.
 #endif
-      !!! rank 5 (3d) or rank 4 (2d) field specifying the positions
-      !!! of the grid nodes. 1st index: 1..ppm_dim, then i,j,[k],isub.
-      !!! OPTIONAL. Uniform grid is assumed if absent.
       REAL(MK)                       , INTENT(IN   )    :: width
-      !!! Width of the narrow band to be produced on each side of
-      !!! the interface.
+      !!! Width of the narrow band to be produced on each side of the interface
       REAL(MK)                       , INTENT(IN   )    :: rhscst
-      !!! constant value for the right hand side of grad u * grad f = c.
+      !!! constant value for the right hand side of grad u * grad f  = c.
       !!! If speed is present, this argument will be ignored.
       REAL(MK)                       , INTENT(IN   )    :: TM
       !!! Current threshold for wave front location.
@@ -97,18 +88,18 @@
       !!! inverse of the y grid spacing.
       REAL(MK)                       , INTENT(IN   )    :: dzinv
       !!! inverse of the z grid spacing. (Not used in 2D version).
+      INTEGER, DIMENSION(3)          , INTENT(IN   )    :: ghostsize
+      !!! Size of the ghostlayer on all sides.
       INTEGER                        , INTENT(IN   )    :: order
       !!! Order of the method to be used. One of
       !!!
       !!! *ppm_param_order_1
       !!! *ppm_param_order_2
       !!! *ppm_param_order_3
-      INTEGER, DIMENSION(3)          , INTENT(IN   )    :: ghostsize
-      !!! Size of the ghostlayer on all sides.
       INTEGER                        , INTENT(INOUT)    :: npos
       !!! Current number of points in the close set.
       INTEGER                        , INTENT(  OUT)    :: info
-      !!! Return status, 0 upon success
+      !!! Return status. 0 upon success
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
@@ -128,8 +119,6 @@
       REAL(MK), DIMENSION(-3:3,ppm_dim):: phi,psi
       REAL(MK), DIMENSION(ppm_dim)     :: alpha,beta
       REAL(MK), DIMENSION(2)           :: roots
-      TYPE(ppm_t_topo),      POINTER   :: topo
-      TYPE(ppm_t_equi_mesh), POINTER   :: mesh
       !-------------------------------------------------------------------------
       !  Externals 
       !-------------------------------------------------------------------------
@@ -138,8 +127,6 @@
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_extend_fwd',t0,info)
-      topo => ppm_topo(gmm_topoid)%t
-      mesh => topo%mesh(gmm_meshid)
       phi      = 0.0_MK
       psi      = 0.0_MK
       big      = HUGE(big)
@@ -189,10 +176,10 @@
           jj   = gmm_ipos(2,p)
           kk   = gmm_ipos(3,p)
           jsub = gmm_ipos(4,p)
-          isub = topo%isublist(jsub)
-          xhi  = mesh%nnodes(1,isub)
-          yhi  = mesh%nnodes(2,isub)
-          zhi  = mesh%nnodes(3,isub)
+          isub = ppm_isublist(jsub,gmm_topoid)
+          xhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,isub)
+          yhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,isub)
+          zhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(3,isub)
           fdta0= fdta(ii,jj,kk,jsub)
           absfdta0 = fdta0
           IF (absfdta0 .LT. 0.0_MK) absfdta0 = -absfdta0
@@ -442,9 +429,9 @@
           ii   = gmm_ipos(1,p)
           jj   = gmm_ipos(2,p)
           jsub = gmm_ipos(3,p)
-          isub = topo%isublist(jsub)
-          xhi  = mesh%nnodes(1,isub)
-          yhi  = mesh%nnodes(2,isub)
+          isub = ppm_isublist(jsub,gmm_topoid)
+          xhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,isub)
+          yhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,isub)
           fdta0= fdta(ii,jj,jsub)
           !---------------------------------------------------------------------
           !  GMM update condition (see Kim:2001a)

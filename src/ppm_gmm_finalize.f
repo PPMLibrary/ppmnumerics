@@ -7,8 +7,8 @@
       !-------------------------------------------------------------------------
 
       SUBROUTINE ppm_gmm_finalize(info)
-      !!! This routine finalizes the ppm_gmm module and deallocates all data
-      !!! structures.
+      !!! This routine finalizes the ppm_gmm module and deallocates all
+      !!! data structures.
       !-------------------------------------------------------------------------
       !  Includes
       !-------------------------------------------------------------------------
@@ -18,16 +18,12 @@
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_gmm
-      USE ppm_module_substart
-      USE ppm_module_substop
-      USE ppm_module_error
-      USE ppm_module_alloc
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Arguments     
       !-------------------------------------------------------------------------
       INTEGER, INTENT(  OUT) :: info
-      !!! Return status, 0 upon success
+      !!! Return status. 0 upon success
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------

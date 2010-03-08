@@ -1,94 +1,8 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                  ppm_gmm_cpt
       !-------------------------------------------------------------------------
-      !
-      !  Purpose      : This routine performs a closest point transform.
-      !                 For each grid point adjacent to the interface,
-      !                 the closest point ON the interface is returned.
-      !                 ppm_gmm_init must be called BEFORE this routine is
-      !                 invoked.
-      !
-      !  Input        : fdata(...)      (F) Level data. Either rank 3
-      !                                     (for 2D scalar fields), or rank
-      !                                     4 (for 3D scalar fields).
-      !                                     Indices: (i,j,[k],isub).
-      !                                     Every zero-crossing is
-      !                                     interpreted as an interface.
-      !                                     A ghostsize of 1 is needed
-      !                                     on all sides which must be
-      !                                     filled with the old level
-      !                                     function value on input!! Only
-      !                                     scalar fdata supported.
-      !                 tol             (F) Relative tolerance for the
-      !                                     determined distance to the
-      !                                     interface. 1E-3 is a good
-      !                                     choice. The tolerance is in
-      !                                     multiples of grid spacings.
-      !                 chi([:],:,:,:,:)(F) rank 5 (3d) or rank 4 (2d)
-      !                                     field specifying the positions
-      !                                     of the grid nodes. 1st index:
-      !                                     1..ppm_dim, then i,j,[k],isub.
-      !                                     OPTIONAL. Uniform grid is
-      !                                     assumed if absent. Ghostlayers
-      !                                     of size >=1 must be pre-filled.
-      !
-      !  Input/output : 
-      !
-      !  Output       : npts            (I) Number of unique grid points
-      !                                     adjacent to the interface.
-      !                 ipts(:,:)       (I) Mesh indices of these
-      !                                     points. 1st index:
-      !                                     i,j,(k),isub (local sub ID);
-      !                                     2nd: 1...npts. Will be
-      !                                     allocated by this routine.
-      !                 closest(:,:)    (F) Locations of the closest
-      !                                     points ON the interface. 1st
-      !                                     index: x,y,(z), 2nd:
-      !                                     1...npts. Will be allocated
-      !                                     by this routine.
-      !                 info            (I) return status. 0 on success.
-      !
-      !  Remarks      : 
-      !
-      !  References   : 
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_gmm_cpt.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:18:55  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.8  2005/07/14 19:58:11  ivos
-      !  Added OPTIONAL argument chi for mesh node positions in distorted
-      !  (mapped) meshes. For use with AGM for example.
-      !
-      !  Revision 1.7  2005/06/06 20:33:29  ivos
-      !  Added pointer NULLIFication at the end to restore alloccation status.
-      !
-      !  Revision 1.6  2005/06/01 05:19:05  ivos
-      !  Updated to new interface of gmm_kickoff.
-      !
-      !  Revision 1.5  2005/04/27 01:06:10  ivos
-      !  Convergence tests completed, cleaned up code, optmized code (Shark),
-      !  and changed structure to allow faster compilation.
-      !
-      !  Revision 1.4  2005/04/21 04:49:56  ivos
-      !  bugfix: pointers to array slabs were incorrectly used.
-      !
-      !  Revision 1.3  2005/03/16 06:20:07  ivos
-      !  Several bugfixes. 1st order version is now tested. Moved all large
-      !  data to the module.
-      !
-      !  Revision 1.2  2005/03/12 04:08:34  ivos
-      !  Misc bug fixes.
-      !
-      !  Revision 1.1  2005/03/11 21:09:10  ivos
-      !  Initial implementation.
-      !
-      !-------------------------------------------------------------------------
       !  Parallel Particle Mesh Library (PPM)
-      !  Institute of Computational Science
-      !  ETH Zentrum, Hirschengraben 84
+      !  ETH Zurich
       !  CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
 #if    __DIM == __2D
@@ -109,6 +23,9 @@
      &    info,chi)
 #endif 
 #endif
+      !!! This routine performs a closest point transform. For each grid point
+      !!! adjacent to the interface, the closest point ON the interface is
+      !!! returned. ppm_gmm_init must be called BEFORE this routine is invoked.
       !-------------------------------------------------------------------------
       !  Includes
       !-------------------------------------------------------------------------
@@ -120,11 +37,6 @@
       USE ppm_module_data_mesh
       USE ppm_module_data_gmm
       USE ppm_module_gmm_kickoff
-      USE ppm_module_substart
-      USE ppm_module_substop
-      USE ppm_module_error
-      USE ppm_module_alloc
-      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -136,15 +48,40 @@
       !-------------------------------------------------------------------------
 #if   __DIM == __2D
       REAL(MK), DIMENSION(:,:,:)     , POINTER             :: fdata
+      !!! Level data. Rank 3 (for 2D scalar fields),
+      !!! Indices: (i,j,[k],isub). Every zero-crossing is interpreted as an
+      !!! interface. A ghostsize of 1 is needed on all sides which must be
+      !!! filled with the old level function value on input!! Only scalar fdata
+      !!! supported.
       REAL(MK), DIMENSION(:,:,:,:)   , INTENT(IN), OPTIONAL:: chi
+      !!! Rank 4 (2d) field specifying the positions of the grid nodes.
+      !!! 1st index: 1..ppm_dim, then i,j,[k],isub. OPTIONAL. Uniform grid is
+      !!! assumed if absent. Ghostlayers of size >=1 must be pre-filled.
 #elif __DIM == __3D
       REAL(MK), DIMENSION(:,:,:,:)   , POINTER             :: fdata
+      !!! Level data. Rank 4 (for 3D scalar fields).
+      !!! Indices: (i,j,[k],isub). Every zero-crossing is interpreted as an
+      !!! interface. A ghostsize of 1 is needed on all sides which must be
+      !!! filled with the old level function value on input!! Only scalar fdata
+      !!! supported.
       REAL(MK), DIMENSION(:,:,:,:,:) , INTENT(IN), OPTIONAL:: chi
+      !!! Rank 5 (3d) field specifying the positions of the grid nodes.
+      !!! 1st index: 1..ppm_dim, then i,j,[k],isub. OPTIONAL. Uniform grid is
+      !!! assumed if absent. Ghostlayers of size >=1 must be pre-filled.
 #endif
       INTEGER , DIMENSION(:,:)       , POINTER             :: ipts
+      !!! Mesh indices of these points. 1st index: i,j,(k),isub (local sub ID);
+      !!! 2nd: 1...npts. Will be allocated by this routine.
       REAL(MK), DIMENSION(:,:)       , POINTER             :: closest
+      !!! Locations of the closest points ON the interface. 1st index: x,y,(z),
+      !!! 2nd: 1...npts. Will be allocated by this routine.
       REAL(MK)                       , INTENT(IN   )       :: tol
-      INTEGER                        , INTENT(  OUT)       :: info,npts
+      !!! Relative tolerance for the determined distance to the interface.
+      !!! 1E-3 is a good choice. The tolerance is in multiples of grid spacings.
+      INTEGER                        , INTENT(  OUT)       :: info
+      !!! Return status. 0 upon success
+      INTEGER                        , INTENT(  OUT)       :: npts
+      !!! Number of unique grid points adjacent to the interface.
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
@@ -155,14 +92,10 @@
       REAL(MK)                         :: t0,x,y,z,xx,yy,zz,dx,dy,dz
       REAL(MK)                         :: s,sprev,thresh
       LOGICAL                          :: lok
-      TYPE(ppm_t_topo),      POINTER   :: topo
-      TYPE(ppm_t_equi_mesh), POINTER   :: mesh
       !-------------------------------------------------------------------------
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_cpt',t0,info)
-      topo => ppm_topo(gmm_topoid)%t
-      mesh => topo%mesh(gmm_meshid)
 #if   __KIND == __SINGLE_PRECISION
       clotmp => gmm_clos
 #elif __KIND == __DOUBLE_PRECISION
@@ -185,7 +118,7 @@
               GOTO 9999
           ENDIF
 #if   __DIM == __3D
-          IF (SIZE(fdata,4) .LT. topo%nsublist) THEN
+          IF (SIZE(fdata,4) .LT. ppm_nsublist(gmm_topoid)) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_cpt',  &
      &            'field data for some subs is missing',__LINE__,info)
@@ -210,7 +143,7 @@
               GOTO 9999
           ENDIF
 #elif __DIM == __2D
-          IF (SIZE(fdata,3) .LT. topo%nsublist) THEN
+          IF (SIZE(fdata,3) .LT. ppm_nsublist(gmm_topoid)) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_cpt',  &
      &            'field data for some subs is missing',__LINE__,info)
@@ -234,23 +167,23 @@
       !  Find mesh spacing
       !-------------------------------------------------------------------------
       IF (ppm_kind .EQ. ppm_kind_single) THEN
-          dx = (topo%max_physs(1)-topo%min_physs(1))/   &
-     &        REAL(mesh%Nm(1)-1,ppm_kind_single)
-          dy = (topo%max_physs(2)-topo%min_physs(2))/  &
-     &        REAL(mesh%Nm(2)-1,ppm_kind_single)
+          dx = (ppm_max_physs(1,gmm_topoid)-ppm_min_physs(1,gmm_topoid))/   &
+     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(1)-1,ppm_kind_single)
+          dy = (ppm_max_physs(2,gmm_topoid)-ppm_min_physs(2,gmm_topoid))/   &
+     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(2)-1,ppm_kind_single)
           IF (ppm_dim .GT. 2) THEN
-              dz = (topo%max_physs(3)-topo%min_physs(3))/ &
-     &            REAL(mesh%Nm(3)-1,     &
+              dz = (ppm_max_physs(3,gmm_topoid)-ppm_min_physs(3,gmm_topoid))/ &
+     &            REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(3)-1,     &
      &            ppm_kind_single)
           ENDIF
       ELSE
-          dx = (topo%max_physs(1)-topo%min_physs(1))/   &
-     &        REAL(mesh%Nm(1)-1,ppm_kind_double)
-          dy = (topo%max_physs(2)-topo%min_physs(2))/  &
-     &        REAL(mesh%Nm(2)-1,ppm_kind_double)
+          dx = (ppm_max_physd(1,gmm_topoid)-ppm_min_physd(1,gmm_topoid))/   &
+     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(1)-1,ppm_kind_double)
+          dy = (ppm_max_physd(2,gmm_topoid)-ppm_min_physd(2,gmm_topoid))/   &
+     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(2)-1,ppm_kind_double)
           IF (ppm_dim .GT. 2) THEN
-              dz = (topo%max_physs(3)-topo%min_physs(3))/ &
-     &            REAL(mesh%Nm(3)-1,     &
+              dz = (ppm_max_physd(3,gmm_topoid)-ppm_min_physd(3,gmm_topoid))/ &
+     &            REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(3)-1,     &
      &            ppm_kind_double)
           ENDIF
       ENDIF
@@ -352,20 +285,20 @@
               sprev = HUGE(sprev)
           ENDIF
           isub = ipts(4,npts)
-          jsub = topo%isublist(isub)
+          jsub = ppm_isublist(isub,gmm_topoid)
           IF (PRESENT(chi)) THEN
               x = chi(1,ipts(1,npts),ipts(2,npts),ipts(3,npts),isub)
               y = chi(2,ipts(1,npts),ipts(2,npts),ipts(3,npts),isub)
               z = chi(3,ipts(1,npts),ipts(2,npts),ipts(3,npts),isub)
           ELSE
               IF (ppm_kind .EQ. ppm_kind_single) THEN
-                  x = topo%min_subs(1,jsub) + (ipts(1,npts)-1)*dx
-                  y = topo%min_subs(2,jsub)+ (ipts(2,npts)-1)*dy
-                  z = topo%min_subs(3,jsub)+ (ipts(3,npts)-1)*dz
+                  x = ppm_min_subs(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
+                  y = ppm_min_subs(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
+                  z = ppm_min_subs(3,jsub,gmm_topoid) + (ipts(3,npts)-1)*dz
               ELSE
-                  x = topo%min_subd(1,jsub) + (ipts(1,npts)-1)*dx
-                  y = topo%min_subd(2,jsub) + (ipts(2,npts)-1)*dy
-                  z = topo%min_subd(3,jsub) + (ipts(3,npts)-1)*dz
+                  x = ppm_min_subd(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
+                  y = ppm_min_subd(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
+                  z = ppm_min_subd(3,jsub,gmm_topoid) + (ipts(3,npts)-1)*dz
               ENDIF
           ENDIF
           xx = clotmp(1,idx(i))
@@ -390,17 +323,17 @@
               sprev = HUGE(sprev)
           ENDIF
           isub = ipts(3,npts)
-          jsub = topo%isublist(isub)
+          jsub = ppm_isublist(isub,gmm_topoid)
           IF (PRESENT(chi)) THEN
               x = chi(1,ipts(1,npts),ipts(2,npts),isub)
               y = chi(2,ipts(1,npts),ipts(2,npts),isub)
           ELSE
               IF (ppm_kind .EQ. ppm_kind_single) THEN
-                  x = topo%min_subs(1,jsub) + (ipts(1,npts)-1)*dx
-                  y = topo%min_subs(2,jsub)+ (ipts(2,npts)-1)*dy
+                  x = ppm_min_subs(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
+                  y = ppm_min_subs(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
               ELSE
-                  x = topo%min_subd(1,jsub) + (ipts(1,npts)-1)*dx
-                  y = topo%min_subd(2,jsub) + (ipts(2,npts)-1)*dy
+                  x = ppm_min_subd(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
+                  y = ppm_min_subd(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
               ENDIF
           ENDIF
           xx = clotmp(1,idx(i))

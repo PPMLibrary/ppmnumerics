@@ -1,111 +1,8 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                ppm_gmm_reinitialize
       !-------------------------------------------------------------------------
-      !
-      !  Purpose      : This routine re-initializes a signed distance
-      !                 level function with the zero level representing
-      !                 the interface. Shift accordingly if other level
-      !                 is to be used. The group marching method is
-      !                 used.
-      !
-      !  Input        : tol             (F) Relative tolerance for the
-      !                                     determined distance to the
-      !                                     interface. 1E-3 is a good
-      !                                     choice. The tolerance is in
-      !                                     multiples of grid spacings.
-      !                 width           (F) Width of the narrow band to
-      !                                     be produced on each side of
-      !                                     the interface.
-      !                 order           (I) Desired order of the method.
-      !                                     One of:
-      !                                           ppm_param_order_1 
-      !                                           ppm_param_order_2
-      !                                           ppm_param_order_3 
-      !                 thresh          (F) OPTIONAL. Threshold for
-      !                                     interface detection. If this is
-      !                                     not specified, it is set to
-      !                                     MAXVAL(ABS(fdata)).
-      !                 chi([:],:,:,:,:)(F) rank 5 (3d) or rank 4 (2d)
-      !                                     field specifying the positions
-      !                                     of the grid nodes. 1st index:
-      !                                     1..ppm_dim, then i,j,[k],isub.
-      !                                     OPTIONAL. Uniform grid is
-      !                                     assumed if absent. Ghostlayers
-      !                                     of size >=1 must be pre-filled.
-      !                 MaxIter         (I) OPTIONAL argument specifying the
-      !                                     maximum number of allowed
-      !                                     iterations. This can be useful
-      !                                     since a cyclic dependency in the
-      !                                     GMM algorithms could cause 
-      !                                     infinite loops. In each iteration
-      !                                     at least one point is computed.
-      !
-      !  Input/output : fdata(...)      (F) Field data. Either rank 3
-      !                                     (for 2D scalar fields), or rank
-      !                                     4 (for 3D scalar fields).
-      !                                     Indices: (i,j,[k],isub).
-      !                                     On input: old level function
-      !                                     values. The interface is at
-      !                                     level zero.
-      !                                     A ghostsize of 1 is needed
-      !                                     on all sides which must be
-      !                                     filled with the old level
-      !                                     function value on input!!
-      !                                     On output: reinitialized
-      !                                     signed distance function
-      !                                     using the interpolation
-      !                                     method of Chopp. Points far
-      !                                     from the interface will have
-      !                                     the value HUGE.
-      !
-      !  Output       : info            (I) return status. 0 on success.
-      !
-      !  Remarks      : 
-      !
-      !  References   : S. Kim. An O(N) level set method for Eikonal equations.
-      !                 SIAM J. Sci. Comput. 22(6):2178-2193, 2001.
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_gmm_reinitialize.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:18:55  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.9  2006/07/03 12:57:36  ivos
-      !  Added literature references to header comments.
-      !
-      !  Revision 1.8  2006/04/06 14:40:29  ivos
-      !  Added the MaxIter argument to specify the maximum number of allowed
-      !  iterations for the GMM marching.
-      !
-      !  Revision 1.7  2005/07/14 19:58:15  ivos
-      !  Added OPTIONAL argument chi for mesh node positions in distorted
-      !  (mapped) meshes. For use with AGM for example.
-      !
-      !  Revision 1.6  2005/06/01 05:17:48  ivos
-      !  Added optional argument thresh for kickoff threshold.
-      !
-      !  Revision 1.5  2005/04/27 01:06:13  ivos
-      !  Convergence tests completed, cleaned up code, optmized code (Shark),
-      !  and changed structure to allow faster compilation.
-      !
-      !  Revision 1.4  2005/04/21 04:49:57  ivos
-      !  bugfix: pointers to array slabs were incorrectly used.
-      !
-      !  Revision 1.3  2005/03/16 06:20:09  ivos
-      !  Several bugfixes. 1st order version is now tested. Moved all large
-      !  data to the module.
-      !
-      !  Revision 1.2  2005/03/12 04:08:35  ivos
-      !  Misc bug fixes.
-      !
-      !  Revision 1.1  2005/03/11 04:15:58  ivos
-      !  Initial implementation.
-      !
-      !-------------------------------------------------------------------------
       !  Parallel Particle Mesh Library (PPM)
-      !  Institute of Computational Science
-      !  ETH Zentrum, Hirschengraben 84
+      !  ETH Zurich
       !  CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
 #if    __DIM == __2D
@@ -125,6 +22,14 @@
      &    order,info,thresh,chi,MaxIter)
 #endif 
 #endif
+      !!! This routine re-initializes a signed distance level function with the
+      !!! zero level representing the interface. Shift accordingly if other
+      !!! level is to be used. The group marching method is used.
+      !!!
+      !!! === References ===
+      !!!
+      !!! S. Kim. An O(N) level set method for Eikonal equations. SIAM J. Sci.
+      !!! Comput. 22(6):2178-2193, 2001.
       !-------------------------------------------------------------------------
       !  Includes
       !-------------------------------------------------------------------------
@@ -139,10 +44,6 @@
       USE ppm_module_gmm_kickoff
       USE ppm_module_gmm_march
       USE ppm_module_gmm_finalize
-      USE ppm_module_substart
-      USE ppm_module_substop
-      USE ppm_module_error
-      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -154,28 +55,62 @@
       !-------------------------------------------------------------------------
 #if   __DIM == __2D
       REAL(MK), DIMENSION(:,:,:  )   , POINTER             :: fdata
+      !!! Field data. Rank 3 (for 2D scalar fields).
+      !!! Indices: (i,j,[k],isub). On input: old level function values. The
+      !!! interface is at level zero. A ghostsize of 1 is needed on all sides
+      !!! which must be filled with the old level function value on input!!
+      !!! On output: reinitialized signed distance function using the
+      !!! interpolation method of Chopp. Points far from the interface will have
+      !!! the value HUGE.
       REAL(MK), DIMENSION(:,:,:,:)   , INTENT(IN), OPTIONAL:: chi
+      !!! Rank 4 (2d) field specifying the positions of the grid nodes.
+      !!! 1st index: 1..ppm_dim, then i,j,[k],isub.  OPTIONAL. Uniform grid is
+      !!! assumed if absent. Ghostlayers of size >=1 must be pre-filled.
 #elif __DIM == __3D
       REAL(MK), DIMENSION(:,:,:,:)   , POINTER             :: fdata
+      !!! Field data. Rank 4 (for 3D scalar fields).
+      !!! Indices: (i,j,[k],isub). On input: old level function values. The
+      !!! interface is at level zero. A ghostsize of 1 is needed on all sides
+      !!! which must be filled with the old level function value on input!!
+      !!! On output: reinitialized signed distance function using the
+      !!! interpolation method of Chopp. Points far from the interface will have
+      !!! the value HUGE.
       REAL(MK), DIMENSION(:,:,:,:,:) , INTENT(IN), OPTIONAL:: chi
+      !!! Rank 5 (3d) field specifying the positions
+      !!! of the grid nodes. 1st index: 1..ppm_dim, then i,j,[k],isub.
+      !!! OPTIONAL. Uniform grid is assumed if absent. Ghostlayers of size >=1
+      !!! must be pre-filled.
 #endif
       INTEGER                        , INTENT(IN   )       :: order
-      REAL(MK)                       , INTENT(IN   )       :: tol,width
+      !!! Order of the method to be used. One of
+      !!!
+      !!! *ppm_param_order_1
+      !!! *ppm_param_order_2
+      !!! *ppm_param_order_3
+      REAL(MK)                       , INTENT(IN   )       :: tol
+      !!! Relative tolerance for the determined distance to the interface.
+      !!! 1E-3 is a good choice. The tolerance is in multiples of grid spacings.
+      REAL(MK)                       , INTENT(IN   )       :: width
+      !!! Width of the narrow band to be produced on each side of the interface.
       INTEGER                        , INTENT(  OUT)       :: info
       REAL(MK) , OPTIONAL            , INTENT(IN   )       :: thresh
+      !!! OPTIONAL. Threshold for interface detection. If this is not specified,
+      !!! it is set to MAXVAL(ABS(fdata)).
       INTEGER  , OPTIONAL            , INTENT(IN   )       :: MaxIter
+      !!! OPTIONAL argument specifying the maximum number of allowed iterations.
+      !!! This can be useful since a cyclic dependency in the GMM algorithms
+      !!! could cause infinite loops. In each iteration at least one point is
+      !!! computed.
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
       INTEGER                     :: xhi,i,isub,Nminit,MaxIt
       REAL(MK)                    :: t0,th
       LOGICAL                     :: lok  
-      TYPE(ppm_t_topo), POINTER   :: topo
       !-------------------------------------------------------------------------
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_reinitialize',t0,info)
-      topo => ppm_topo(gmm_topoid)%t
       !-------------------------------------------------------------------------
       !  Check arguments
       !-------------------------------------------------------------------------
@@ -199,7 +134,7 @@
               GOTO 9999
           ENDIF
 #if   __DIM == __3D
-          IF (SIZE(fdata,4) .LT. topo%nsublist) THEN
+          IF (SIZE(fdata,4) .LT. ppm_nsublist(gmm_topoid)) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_reinitialize',  &
      &            'field data for some subs is missing',__LINE__,info)
@@ -224,7 +159,7 @@
               GOTO 9999
           ENDIF
 #elif __DIM == __2D
-          IF (SIZE(fdata,3) .LT. topo%nsublist) THEN
+          IF (SIZE(fdata,3) .LT. ppm_nsublist(gmm_topoid)) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_reinitialize',  &
      &            'field data for some subs is missing',__LINE__,info)

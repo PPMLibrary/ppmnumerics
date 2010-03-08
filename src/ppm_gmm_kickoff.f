@@ -29,18 +29,23 @@
       !!! level set, apply shifting as pre-processing.
       !!!
       !!! [NOTE]
+      !!! ======================================================================
       !!! This routine creates second-order accurate data near the interface
       !!! and is needed to kick off a reinitialize a level set or extend a
       !!! function to a narrow band.
+      !!!
       !!! The order of the method is limited by the order of the finite
       !!! differences used in computing the rhs of the interpolation system.
       !!! Use higher order FD to get higher order initialization.
+      !!!
       !!! Tests have shown that storing shifted indices (i.e. ip1 = i+1) is
       !!! faster than using i+1 in the array index directly. We thus use
       !!! this technique here.
+      !!!
       !!! Maybe we shoud actually allocate ipos and copy the stuff so it will
       !!! survive ppm_gmm_finalize?? This will be easy: just change the pointer
       !!! assignment at the end of the routine to a physical copy operation.
+      !!! ======================================================================
       !!!
       !!! === References ====
       !!!
