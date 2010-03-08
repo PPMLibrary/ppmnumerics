@@ -22,7 +22,7 @@
      &    rhscst,dxinv,dyinv,dzinv,ghostsize,info,speed,chi)
 #endif 
 #endif
-      !!! This routine performs the forward extension step of the GMM. See
+      !!! This routine performs the forward marching step of the GMM. See
       !!! ppm_gmm_march for details.
       !!!
       !!! === References ===
@@ -34,6 +34,11 @@
       USE ppm_module_data
       USE ppm_module_data_mesh
       USE ppm_module_data_gmm
+      USE ppm_module_substart
+      USE ppm_module_substop
+      USE ppm_module_error
+      USE ppm_module_alloc
+      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -119,6 +124,8 @@
       REAL(MK), DIMENSION(-3:3,ppm_dim):: phi,psi
       REAL(MK), DIMENSION(ppm_dim)     :: alpha,beta
       REAL(MK), DIMENSION(2)           :: roots
+      TYPE(ppm_t_topo),      POINTER   :: topo
+      TYPE(ppm_t_equi_mesh), POINTER   :: mesh
       !-------------------------------------------------------------------------
       !  Externals 
       !-------------------------------------------------------------------------
@@ -127,6 +134,8 @@
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_extend_fwd',t0,info)
+      topo => ppm_topo(gmm_topoid)%t
+      mesh => topo%mesh(gmm_meshid)
       phi      = 0.0_MK
       psi      = 0.0_MK
       big      = HUGE(big)
@@ -176,10 +185,10 @@
           jj   = gmm_ipos(2,p)
           kk   = gmm_ipos(3,p)
           jsub = gmm_ipos(4,p)
-          isub = ppm_isublist(jsub,gmm_topoid)
-          xhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,isub)
-          yhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,isub)
-          zhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(3,isub)
+          isub = topo%isublist(jsub)
+          xhi  = mesh%nnodes(1,isub)
+          yhi  = mesh%nnodes(2,isub)
+          zhi  = mesh%nnodes(3,isub)
           fdta0= fdta(ii,jj,kk,jsub)
           absfdta0 = fdta0
           IF (absfdta0 .LT. 0.0_MK) absfdta0 = -absfdta0
@@ -429,9 +438,9 @@
           ii   = gmm_ipos(1,p)
           jj   = gmm_ipos(2,p)
           jsub = gmm_ipos(3,p)
-          isub = ppm_isublist(jsub,gmm_topoid)
-          xhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,isub)
-          yhi  = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,isub)
+          isub = topo%isublist(jsub)
+          xhi  = mesh%nnodes(1,isub)
+          yhi  = mesh%nnodes(2,isub)
           fdta0= fdta(ii,jj,jsub)
           !---------------------------------------------------------------------
           !  GMM update condition (see Kim:2001a)

@@ -84,7 +84,7 @@
 #endif
       !!! This routine extends a function defined on the interface to the whole
       !!! band on which the level function is defined. The extension is done
-      !!! such that the graident of the function is perpendicular to the
+      !!! such that the gradient of the function is perpendicular to the
       !!! gradient of the level function. ppm_gmm_init must be called BEFORE
       !!! this routine is invoked.
       !-------------------------------------------------------------------------
@@ -101,6 +101,11 @@
       USE ppm_module_gmm_cpt
       USE ppm_module_gmm_march
       USE ppm_module_gmm_finalize
+      USE ppm_module_substart
+      USE ppm_module_substop
+      USE ppm_module_error
+      USE ppm_module_alloc
+      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -242,6 +247,8 @@
       REAL(MK)                              :: t0,x,y,z,big
       LOGICAL                               :: lok
       REAL(MK), DIMENSION(:,:), POINTER     :: closest
+      TYPE(ppm_t_topo),         POINTER     :: topo
+      TYPE(ppm_t_equi_mesh),    POINTER     :: mesh
 #if   __TYPE == __VFIELD
 #if   __DIM == __2D
       REAL(MK), DIMENSION(:,:,:  ), POINTER :: ext_wrk
@@ -254,6 +261,8 @@
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_extend',t0,info)
       big = HUGE(big)
+      topo => ppm_topo(gmm_topoid)%t
+      mesh => topo%mesh(gmm_meshid)
       !-------------------------------------------------------------------------
       !  Set pointers
       !-------------------------------------------------------------------------
@@ -335,7 +344,7 @@
 !     ldu(1) = maxxhi + ghostsize(1)
 !     ldu(2) = maxyhi + ghostsize(2)
 !     ldu(3) = maxzhi + ghostsize(3)
-!     ldu(4) = ppm_nsublist(gmm_topoid)
+!     ldu(4) = topo%nsublist
 !     CALL ppm_alloc(udata,ldl,ldu,iopt,info)
 !     IF (info .NE. ppm_param_success) THEN
 !         info = ppm_error_fatal
@@ -416,7 +425,7 @@
 !     ldu(1) = maxxhi + ghostsize(1)
 !     ldu(2) = maxyhi + ghostsize(2)
 !     ldu(3) = maxzhi + ghostsize(3)
-!     ldu(4) = ppm_nsublist(gmm_topoid)
+!     ldu(4) = topo%nsublist
 !     CALL ppm_alloc(udata,ldu,iopt,info)
 !     IF (info .NE. ppm_param_success) THEN
 !         info = ppm_error_fatal
@@ -428,11 +437,11 @@
       !  Nuke points farther from the interface than ivalue
       !-------------------------------------------------------------------------
 #if   __DIM == __3D
-      DO isub=1,ppm_nsublist(gmm_topoid)
-          jsub = ppm_isublist(isub,gmm_topoid)
-          DO k=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(3,jsub)
-              DO j=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,jsub)
-                  DO i=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,jsub)
+      DO isub=1,topo%nsublist
+          jsub = topo%isublist(isub)
+          DO k=1,mesh%nnodes(3,jsub)
+              DO j=1,mesh%nnodes(2,jsub)
+                  DO i=1,mesh%nnodes(1,jsub)
                       IF (ABS(fdata(i,j,k,isub)) .GT. ivalue) THEN
 #if   __TYPE == __VFIELD
                           DO ida=1,lda
@@ -447,10 +456,10 @@
           ENDDO
       ENDDO
 #elif __DIM == __2D
-      DO isub=1,ppm_nsublist(gmm_topoid)
-          jsub = ppm_isublist(isub,gmm_topoid)
-          DO j=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,jsub)
-              DO i=1,ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,jsub)
+      DO isub=1,topo%nsublist
+          jsub = topo%isublist(isub)
+          DO j=1,mesh%nnodes(2,jsub)
+              DO i=1,mesh%nnodes(1,jsub)
                   IF (ABS(fdata(i,j,isub)) .GT. ivalue) THEN
 #if   __TYPE == __VFIELD
                       DO ida=1,lda
@@ -492,7 +501,7 @@
 #if   __DIM == __3D
       ldu(3) = UBOUND(udata,4)
 #endif
-      ldu(4) = ppm_nsublist(gmm_topoid)
+      ldu(4) = topo%nsublist
       CALL ppm_alloc(ext_wrk,ldl,ldu,iopt,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_fatal

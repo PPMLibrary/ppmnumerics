@@ -68,8 +68,7 @@
       USE ppm_module_substop
       USE ppm_module_error
       USE ppm_module_alloc
-      USE ppm_module_map
-      USE ppm_module_map_part_ring_shift
+      USE ppm_module_map, ONLY : ppm_module_map_part_ring_shift
       USE ppm_module_comp_pp_doring
       IMPLICIT NONE
 #if   __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX

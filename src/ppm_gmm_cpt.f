@@ -37,6 +37,11 @@
       USE ppm_module_data_mesh
       USE ppm_module_data_gmm
       USE ppm_module_gmm_kickoff
+      USE ppm_module_substart
+      USE ppm_module_substop
+      USE ppm_module_error
+      USE ppm_module_alloc
+      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -92,10 +97,14 @@
       REAL(MK)                         :: t0,x,y,z,xx,yy,zz,dx,dy,dz
       REAL(MK)                         :: s,sprev,thresh
       LOGICAL                          :: lok
+      TYPE(ppm_t_topo),      POINTER   :: topo
+      TYPE(ppm_t_equi_mesh), POINTER   :: mesh
       !-------------------------------------------------------------------------
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_cpt',t0,info)
+      topo => ppm_topo(gmm_topoid)%t
+      mesh => topo%mesh(gmm_meshid)
 #if   __KIND == __SINGLE_PRECISION
       clotmp => gmm_clos
 #elif __KIND == __DOUBLE_PRECISION
@@ -118,7 +127,7 @@
               GOTO 9999
           ENDIF
 #if   __DIM == __3D
-          IF (SIZE(fdata,4) .LT. ppm_nsublist(gmm_topoid)) THEN
+          IF (SIZE(fdata,4) .LT. topo%nsublist) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_cpt',  &
      &            'field data for some subs is missing',__LINE__,info)
@@ -143,7 +152,7 @@
               GOTO 9999
           ENDIF
 #elif __DIM == __2D
-          IF (SIZE(fdata,3) .LT. ppm_nsublist(gmm_topoid)) THEN
+          IF (SIZE(fdata,3) .LT. topo%nsublist) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_cpt',  &
      &            'field data for some subs is missing',__LINE__,info)
@@ -167,23 +176,23 @@
       !  Find mesh spacing
       !-------------------------------------------------------------------------
       IF (ppm_kind .EQ. ppm_kind_single) THEN
-          dx = (ppm_max_physs(1,gmm_topoid)-ppm_min_physs(1,gmm_topoid))/   &
-     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(1)-1,ppm_kind_single)
-          dy = (ppm_max_physs(2,gmm_topoid)-ppm_min_physs(2,gmm_topoid))/   &
-     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(2)-1,ppm_kind_single)
+          dx = (topo%max_physs(1)-topo%min_physs(1))/   &
+     &        REAL(mesh%Nm(1)-1,ppm_kind_single)
+          dy = (topo%max_physs(2)-topo%min_physs(2))/  &
+     &        REAL(mesh%Nm(2)-1,ppm_kind_single)
           IF (ppm_dim .GT. 2) THEN
-              dz = (ppm_max_physs(3,gmm_topoid)-ppm_min_physs(3,gmm_topoid))/ &
-     &            REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(3)-1,     &
+              dz = (topo%max_physs(3)-topo%min_physs(3))/ &
+     &            REAL(mesh%Nm(3)-1,     &
      &            ppm_kind_single)
           ENDIF
       ELSE
-          dx = (ppm_max_physd(1,gmm_topoid)-ppm_min_physd(1,gmm_topoid))/   &
-     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(1)-1,ppm_kind_double)
-          dy = (ppm_max_physd(2,gmm_topoid)-ppm_min_physd(2,gmm_topoid))/   &
-     &        REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(2)-1,ppm_kind_double)
+          dx = (topo%max_physs(1)-topo%min_physs(1))/   &
+     &        REAL(mesh%Nm(1)-1,ppm_kind_double)
+          dy = (topo%max_physs(2)-topo%min_physs(2))/  &
+     &        REAL(mesh%Nm(2)-1,ppm_kind_double)
           IF (ppm_dim .GT. 2) THEN
-              dz = (ppm_max_physd(3,gmm_topoid)-ppm_min_physd(3,gmm_topoid))/ &
-     &            REAL(ppm_cart_mesh(gmm_meshid,gmm_topoid)%Nm(3)-1,     &
+              dz = (topo%max_physs(3)-topo%min_physs(3))/ &
+     &            REAL(mesh%Nm(3)-1,     &
      &            ppm_kind_double)
           ENDIF
       ENDIF
@@ -285,20 +294,20 @@
               sprev = HUGE(sprev)
           ENDIF
           isub = ipts(4,npts)
-          jsub = ppm_isublist(isub,gmm_topoid)
+          jsub = topo%isublist(isub)
           IF (PRESENT(chi)) THEN
               x = chi(1,ipts(1,npts),ipts(2,npts),ipts(3,npts),isub)
               y = chi(2,ipts(1,npts),ipts(2,npts),ipts(3,npts),isub)
               z = chi(3,ipts(1,npts),ipts(2,npts),ipts(3,npts),isub)
           ELSE
               IF (ppm_kind .EQ. ppm_kind_single) THEN
-                  x = ppm_min_subs(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
-                  y = ppm_min_subs(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
-                  z = ppm_min_subs(3,jsub,gmm_topoid) + (ipts(3,npts)-1)*dz
+                  x = topo%min_subs(1,jsub) + (ipts(1,npts)-1)*dx
+                  y = topo%min_subs(2,jsub)+ (ipts(2,npts)-1)*dy
+                  z = topo%min_subs(3,jsub)+ (ipts(3,npts)-1)*dz
               ELSE
-                  x = ppm_min_subd(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
-                  y = ppm_min_subd(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
-                  z = ppm_min_subd(3,jsub,gmm_topoid) + (ipts(3,npts)-1)*dz
+                  x = topo%min_subd(1,jsub) + (ipts(1,npts)-1)*dx
+                  y = topo%min_subd(2,jsub) + (ipts(2,npts)-1)*dy
+                  z = topo%min_subd(3,jsub) + (ipts(3,npts)-1)*dz
               ENDIF
           ENDIF
           xx = clotmp(1,idx(i))
@@ -323,17 +332,17 @@
               sprev = HUGE(sprev)
           ENDIF
           isub = ipts(3,npts)
-          jsub = ppm_isublist(isub,gmm_topoid)
+          jsub = topo%isublist(isub)
           IF (PRESENT(chi)) THEN
               x = chi(1,ipts(1,npts),ipts(2,npts),isub)
               y = chi(2,ipts(1,npts),ipts(2,npts),isub)
           ELSE
               IF (ppm_kind .EQ. ppm_kind_single) THEN
-                  x = ppm_min_subs(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
-                  y = ppm_min_subs(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
+                  x = topo%min_subs(1,jsub) + (ipts(1,npts)-1)*dx
+                  y = topo%min_subs(2,jsub)+ (ipts(2,npts)-1)*dy
               ELSE
-                  x = ppm_min_subd(1,jsub,gmm_topoid) + (ipts(1,npts)-1)*dx
-                  y = ppm_min_subd(2,jsub,gmm_topoid) + (ipts(2,npts)-1)*dy
+                  x = topo%min_subd(1,jsub) + (ipts(1,npts)-1)*dx
+                  y = topo%min_subd(2,jsub) + (ipts(2,npts)-1)*dy
               ENDIF
           ENDIF
           xx = clotmp(1,idx(i))

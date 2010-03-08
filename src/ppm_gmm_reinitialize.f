@@ -44,6 +44,10 @@
       USE ppm_module_gmm_kickoff
       USE ppm_module_gmm_march
       USE ppm_module_gmm_finalize
+      USE ppm_module_substart
+      USE ppm_module_substop
+      USE ppm_module_error
+      USE ppm_module_typedef
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -107,10 +111,12 @@
       INTEGER                     :: xhi,i,isub,Nminit,MaxIt
       REAL(MK)                    :: t0,th
       LOGICAL                     :: lok  
+      TYPE(ppm_t_topo), POINTER   :: topo
       !-------------------------------------------------------------------------
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_reinitialize',t0,info)
+      topo => ppm_topo(gmm_topoid)%t
       !-------------------------------------------------------------------------
       !  Check arguments
       !-------------------------------------------------------------------------
@@ -134,7 +140,7 @@
               GOTO 9999
           ENDIF
 #if   __DIM == __3D
-          IF (SIZE(fdata,4) .LT. ppm_nsublist(gmm_topoid)) THEN
+          IF (SIZE(fdata,4) .LT. topo%nsublist) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_reinitialize',  &
      &            'field data for some subs is missing',__LINE__,info)
@@ -159,7 +165,7 @@
               GOTO 9999
           ENDIF
 #elif __DIM == __2D
-          IF (SIZE(fdata,3) .LT. ppm_nsublist(gmm_topoid)) THEN
+          IF (SIZE(fdata,3) .LT. topo%nsublist) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_reinitialize',  &
      &            'field data for some subs is missing',__LINE__,info)

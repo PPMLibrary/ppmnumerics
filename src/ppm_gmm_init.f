@@ -5,7 +5,7 @@
       !  ETH Zurich
       !  CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
-      SUBROUTINE ppm_gmm_init(meshid,Nest,prec,info)
+      SUBROUTINE ppm_gmm_init(field_topoid,meshid,Nest,prec,info)
       !!! This routine initializes the ppm_gmm module and allocates all data
       !!! structures.
       !-------------------------------------------------------------------------
@@ -18,6 +18,8 @@
       USE ppm_module_data
       USE ppm_module_data_gmm
       USE ppm_module_data_mesh
+      USE ppm_module_error
+      USE ppm_module_typedef
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Arguments     
@@ -33,15 +35,19 @@
       !!! *ppm_kind_double
       INTEGER, INTENT(IN   ) :: meshid
       !!! Mesh ID (user numbering) for which a GMM should be initialized.
+      INTEGER, INTENT(IN   ) :: field_topoid
+      !!! Topo ID of the field
       INTEGER, INTENT(  OUT) :: info
       !!! Return status. 0 upon success
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
-      INTEGER, DIMENSION(3)  :: ldu
-      INTEGER                :: iopt,i,isub
-      LOGICAL                :: lok
-      REAL(ppm_kind_double)  :: t0
+      INTEGER, DIMENSION(3)            :: ldu
+      INTEGER                          :: iopt,i,isub
+      LOGICAL                          :: lok
+      REAL(ppm_kind_double)            :: t0
+      TYPE(ppm_t_topo),      POINTER   :: topo
+      TYPE(ppm_t_equi_mesh), POINTER   :: mesh
       !-------------------------------------------------------------------------
       !  Externals 
       !-------------------------------------------------------------------------
@@ -50,6 +56,8 @@
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_init',t0,info)
+      topo => ppm_topo(field_topoid)%t
+      mesh => topo%mesh(gmm_meshid)
       !-------------------------------------------------------------------------
       !  Check arguments
       !-------------------------------------------------------------------------
@@ -60,8 +68,7 @@
      &            'Please call ppm_init first!',__LINE__,info)
               GOTO 9999
           ENDIF
-          CALL ppm_check_meshid(ppm_param_id_user,meshid,ppm_field_topoid, &
-     &        lok,info)
+          CALL ppm_check_meshid(field_topoid,meshid,lok,info)
           IF (.NOT. lok) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_gmm_init',  &
@@ -116,28 +123,25 @@
           GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
-      !  Set topoid for all GMM operations
-      !-------------------------------------------------------------------------
-      gmm_topoid = ppm_field_topoid
-      !-------------------------------------------------------------------------
       !  Translate meshid to internal numbering and store it
       !-------------------------------------------------------------------------
-      gmm_meshid = ppm_meshid(gmm_topoid)%internal(meshid)
+
+      gmm_meshid = mesh%ID
       !-------------------------------------------------------------------------
       !  Determine max extent of mesh in any sub
       !-------------------------------------------------------------------------
       maxxhi = 0
       maxyhi = 0
       maxzhi = 0
-      DO i=1,ppm_nsublist(gmm_topoid)
-          isub = ppm_isublist(i,gmm_topoid)
-          IF (ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,isub).GT.maxxhi) &
-     &        maxxhi = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(1,isub)
-          IF (ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,isub).GT.maxyhi) &
-     &        maxyhi = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(2,isub)
+      DO i=1,topo%nsublist
+          isub = topo%isublist(i)
+          IF (mesh%nnodes(1,isub).GT.maxxhi) &
+     &        maxxhi = mesh%nnodes(1,isub)
+          IF (mesh%nnodes(2,isub).GT.maxyhi) &
+     &        maxyhi = mesh%nnodes(2,isub)
           IF (ppm_dim .GT. 2) THEN 
-             IF (ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(3,isub).GT.maxzhi)&
-     &           maxzhi = ppm_cart_mesh(gmm_meshid,gmm_topoid)%nnodes(3,isub)
+             IF (mesh%nnodes(3,isub).GT.maxzhi)&
+     &           maxzhi = mesh%nnodes(3,isub)
           ENDIF
       ENDDO
       !-------------------------------------------------------------------------
