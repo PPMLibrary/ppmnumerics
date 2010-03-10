@@ -120,7 +120,6 @@
         meshid = mesh%ID
         nsublist = topo%nsublist
         ndata    => mesh%nnodes
-        !  COMMENT Thu May 26 19:39:51 PDT 2005:  experimental
         isublist => topo%isublist
 #if    __KIND == __SINGLE_PRECISION
         min_phys => topo%min_physs
@@ -161,7 +160,7 @@
                     phimid(3) = phi(i,j,k+1,isub)-phi(i,j,k-1,isub)
                     sij       = phi(i,j,k,isub) &
                          &       /SQRT(phi(i,j,k,isub)**2+dxavg**2)
-                    n         = phimid / SQRT(SUM(phimid**2)+1.0e-6_MK)
+                    n         = phimid / SQRT(SUM(phimid**2))
 #if   __MODE == __SCA
                     dphi_dt    = &
                          & MAX(n(1)*sij,0.0_mk)*dxi(1)*          &

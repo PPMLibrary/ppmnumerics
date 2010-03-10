@@ -17,7 +17,7 @@
       !     
       !     Revisions    :
       !-------------------------------------------------------------------------
-      !     $Log: ppm_hamjac_reinit_step_3d.f,v $
+      !     $Log: ppm_hamjac_reinit_loc_step_3d.f,v $
       !     Revision 1.1.1.1  2006/07/25 15:18:19  menahel
       !     initial import
       !
@@ -36,19 +36,19 @@
 
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_hamjac_reinit_step_3ds (phi, tphi, trgt, res, &
-           &                          topo_id, mesh_id, ghostsize, info)
+      SUBROUTINE ppm_hamjac_reinit_loc_step_3ds(phi,tphi,iloc,np,trgt,res, &
+     &                                     topo_id,mesh_id,ghostsize,info)
 #elif __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_hamjac_reinit_step_3dd (phi, tphi, trgt, res, topo_id, &
-           &                          mesh_id, ghostsize, info)
+      SUBROUTINE ppm_hamjac_reinit_loc_step_3dd(phi,tphi,iloc,np,trgt,res, &
+     &                                     topo_id,mesh_id,ghostsize,info)
 #endif
 #elif __MODE == __VEC
 #if   __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_hamjac_reinit_step_3dsV (phi, idx, tphi, trgt, res, &
-           &                          topo_id, mesh_id, ghostsize, info)
+      SUBROUTINE ppm_hamjac_reinit_loc_step_3dsV(phi,idx,tphi,iloc,np,trgt,&
+     &                                     res,topo_id,mesh_id,ghostsize,info)
 #elif __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_hamjac_reinit_step_3ddV (phi, idx, tphi, trgt, res, &
-           &                          topo_id, mesh_id, ghostsize, info)
+      SUBROUTINE ppm_hamjac_reinit_loc_step_3ddV(phi,idx,tphi,iloc,np,trgt,&
+     &                                     res,topo_id,mesh_id,ghostsize,info)
 #endif
 #endif
 
@@ -58,7 +58,6 @@
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_typedef
-        
         IMPLICIT NONE
         
 #if    __KIND == __SINGLE_PRECISION
@@ -84,7 +83,8 @@
         INTEGER, INTENT(in)                   :: idx
 #endif        
         REAL(mk), INTENT(in)                  :: trgt
-
+        INTEGER, DIMENSION(:,:), INTENT(in)   :: iloc
+        INTEGER                               :: np, p
         !-----------------------------------------------------
         !  Aliases
         !-----------------------------------------------------
@@ -113,7 +113,7 @@
         REAL(mk) :: t0
 
         
-        CALL substart('ppm_hamjac_reinit_step_3d',t0,info)
+        CALL substart('ppm_hamjac_reinit_loc_step_3d',t0,info)
         
         !-----------------------------------------------------
         !  Get the mesh data
@@ -146,11 +146,11 @@
 
         rms = -HUGE(rms)
 
-        DO isub=1,nsublist
-           isubl = isublist(isub)
-           DO k=1,ndata(3,isubl)
-              DO j=1,ndata(2,isubl)
-                 DO i=1,ndata(1,isubl)
+           DO p=1,np
+              isub = iloc(4,p)
+              i = iloc(1,p)
+              j = iloc(2,p)
+              k = iloc(3,p)
                     ! hack
 #if __MODE == __SCA                    
 !                    IF(phi(i+1,j,k,isub).EQ.phi(i-1,j,k,isub).AND. &
@@ -168,7 +168,6 @@
                     phimid(3) = phi(idx,i,j,k+1,isub)-phi(idx,i,j,k-1,isub)
 #endif
                     
-                    DO ilap=1,3
 #if __MODE == __SCA
                        laps(2-3,1) = phi(i+offs(1,3),j,k,isub)   &
                             & -2.0_mk * phi(i+offs(2,3),j,k,isub) &
@@ -198,6 +197,7 @@
                             & -2.0_mk * phi(i,j,k+offs(2,1),isub) &
                             &       + phi(i,j,k+offs(3,1),isub)
 #elif __MODE == __VEC
+                    DO ilap=1,3
                        laps(2-ilap,1) = phi(idx,i+offs(1,ilap),j,k,isub)   &
                             & -2.0_mk * phi(idx,i+offs(2,ilap),j,k,isub) &
                             &       + phi(idx,i+offs(3,ilap),j,k,isub)
@@ -207,8 +207,8 @@
                        laps(2-ilap,3) = phi(idx,i,j,k+offs(1,ilap),isub)   &
                             & -2.0_mk * phi(idx,i,j,k+offs(2,ilap),isub) &
                             &       + phi(idx,i,j,k+offs(3,ilap),isub)
-#endif                       
                     END DO
+#endif                       
 
                     rpos(1) = (wenoeps + laps( 1,1)**2)/(wenoeps + laps(0,1)**2)
                     rneg(1) = (wenoeps + laps(-1,1)**2)/(wenoeps + laps(0,1)**2)
@@ -259,32 +259,32 @@
                     phip(1) = 0.5_mk*(phimid(1) - &
                          & opos(1)*( &
                          &         phi(idx,i+2,j,k,isub) - &
-                         & 3.0_mk*(phi(idx,i+1,j,k,isub) - phi(idx,i  ,j,k,isub)) - &
+                         & 3.0_mk*(phi(idx,i+1,j,k,isub)-phi(idx,i,j,k,isub))-&
                          &         phi(idx,i-1,j,k,isub)))*dxi(1)
                     phip(2) = 0.5_mk*(phimid(2) - &
                          & opos(2)*( &
                          &         phi(idx,i,j+2,k,isub) - &
-                         & 3.0_mk*(phi(idx,i,j+1,k,isub) - phi(idx,i  ,j,k,isub)) - &
+                         & 3.0_mk*(phi(idx,i,j+1,k,isub)-phi(idx,i,j,k,isub))-&
                          &         phi(idx,i,j-1,k,isub)))*dxi(2)
                     phip(3) = 0.5_mk*(phimid(3) - &
                          & opos(3)*( &
                          &         phi(idx,i,j,k+2,isub) - &
-                         & 3.0_mk*(phi(idx,i,j,k+1,isub) - phi(idx,i  ,j,k,isub)) - &
+                         & 3.0_mk*(phi(idx,i,j,k+1,isub)-phi(idx,i,j,k,isub))-&
                          &         phi(idx,i,j,k-1,isub)))*dxi(3)
                     phin(1) = 0.5_mk*(phimid(1) - &
                          & oneg(1)*( &
                          &         phi(idx,i+1,j,k,isub) - &
-                         & 3.0_mk*(phi(idx,i  ,j,k,isub) - phi(idx,i-1,j,k,isub)) - &
+                         & 3.0_mk*(phi(idx,i  ,j,k,isub)-phi(idx,i-1,j,k,isub))-&
                          &         phi(idx,i-2,j,k,isub)))*dxi(1)
                     phin(2) = 0.5_mk*(phimid(2) - &
                          & oneg(2)*( &
                          &         phi(idx,i,j+1,k,isub) - &
-                         & 3.0_mk*(phi(idx,i,j  ,k,isub) - phi(idx,i,j-1,k,isub)) - &
+                         & 3.0_mk*(phi(idx,i,j  ,k,isub)-phi(idx,i,j-1,k,isub))-&
                          &         phi(idx,i,j-2,k,isub)))*dxi(2)
                     phin(3) = 0.5_mk*(phimid(3) - &
                          & oneg(3)*( &
                          &         phi(idx,i,j,k+1,isub) - &
-                         & 3.0_mk*(phi(idx,i,j,k  ,isub) - phi(idx,i,j,k-1,isub)) - &
+                         & 3.0_mk*(phi(idx,i,j,k  ,isub)-phi(idx,i,j,k-1,isub))-&
                          &         phi(idx,i,j,k-2,isub)))*dxi(3)
 #endif
 
@@ -334,28 +334,24 @@
 
                     rms = MAX(rms,ABS(dphi_dt))
 
-                 END DO
 
-              END DO
-
-           END DO
 
         END DO
 
         res = rms
 
-        CALL substop('ppm_hamjac_reinit_step_3d',t0,info)
+        CALL substop('ppm_hamjac_reinit_loc_step_3d',t0,info)
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_step_3ds 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3ds 
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_step_3dd 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3dd 
 #endif
 #elif __MODE == __VEC
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_step_3dsV 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3dsV 
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_step_3ddV 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3ddV 
 #endif
 #endif      
 

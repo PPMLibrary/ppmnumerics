@@ -82,9 +82,11 @@
         INTEGER                               :: nsublist
         INTEGER, DIMENSION(:,:), POINTER      :: ndata
         INTEGER                               :: topoid,meshid
-        REAL(mk), DIMENSION(:,:), POINTER     :: min_phys, max_phys
-		INTEGER, DIMENSION(6)                  :: orgbcdef
+        REAL(mk), DIMENSION(:), POINTER       :: min_phys, max_phys
+		INTEGER, DIMENSION(6)                 :: orgbcdef
         INTEGER								  :: s2didx, mpi_prec
+        TYPE(ppm_t_topo),      POINTER        :: topo
+        TYPE(ppm_t_equi_mesh), POINTER        :: mesh
         !-----------------------------------------------------
         !  standard stuff
         !-----------------------------------------------------
@@ -112,27 +114,27 @@
         !-----------------------------------------------------
         !  Get the mesh data
         !-----------------------------------------------------
-        topoid = ppm_internal_topoid(topo_id)
-        meshid = ppm_meshid(topoid)%internal(mesh_id)
-        nsublist = ppm_nsublist(topoid)
-        ndata    => ppm_cart_mesh(meshid,topoid)%nnodes
-		
-        isublist => ppm_isublist(:,topoid)
+        topo => ppm_topo(topo_id)%t
+        mesh => topo%mesh(mesh_id)
+        meshid = mesh%ID
+        nsublist = topo%nsublist
+        ndata    => mesh%nnodes
+        isublist => topo%isublist
 #if    __KIND == __SINGLE_PRECISION
-        min_phys => ppm_min_physs
-        max_phys => ppm_max_physs
+        min_phys => topo%min_physs
+        max_phys => topo%max_physs
 #elif  __KIND == __DOUBLE_PRECISION       
-        min_phys => ppm_min_physd
-        max_phys => ppm_max_physd
+        min_phys => topo%min_physd
+        max_phys => topo%max_physd
 #endif
 
-        len_phys(1) = max_phys(1,topoid) - min_phys(1,topoid)
-        len_phys(2) = max_phys(2,topoid) - min_phys(2,topoid)
-		len_phys(3) = max_phys(3,topoid) - min_phys(3,topoid)
+        len_phys(1) = max_phys(1) - min_phys(1)
+        len_phys(2) = max_phys(2) - min_phys(2)
+		len_phys(3) = max_phys(3) - min_phys(3)
 		
-        dx(1)       = len_phys(1)/REAL(ppm_cart_mesh(meshid,topoid)%nm(1)-1,mk)
-        dx(2)       = len_phys(2)/REAL(ppm_cart_mesh(meshid,topoid)%nm(2)-1,mk)
-		dx(3)       = len_phys(3)/REAL(ppm_cart_mesh(meshid,topoid)%nm(3)-1,mk)	
+        dx(1)       = len_phys(1)/REAL(mesh%Nm(1)-1,mk)
+        dx(2)       = len_phys(2)/REAL(mesh%Nm(2)-1,mk)
+		dx(3)       = len_phys(3)/REAL(mesh%Nm(3)-1,mk)
 		
 		! timestep
 		tau = 0.25_mk*MINVAL(dx)

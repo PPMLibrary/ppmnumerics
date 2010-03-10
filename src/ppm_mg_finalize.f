@@ -197,8 +197,6 @@
       iopt = ppm_param_dealloc
       CALL ppm_alloc(start,lda3,iopt,info)
       istat=istat+info  
-      CALL ppm_alloc(istop,lda3,iopt,info)
-      istat=istat+info  
       CALL ppm_alloc(lboundary,lda2,iopt,info)
       istat=istat+info  
       CALL ppm_alloc(max_node,lda2,iopt,info)
@@ -220,6 +218,15 @@
       istat=istat+info  
       CALL ppm_mg_alloc(mgfield,lda2,iopt,info)
       istat = istat +info
+#if __DIM == __SFIELD
+#if __MESH_DIM == __2D
+       CALL ppm_alloc(mask_dummy_2d,lda3,iopt,info)
+       istat=istat+info  
+#elif __MESH_DIM == __3D
+       CALL ppm_alloc(mask_dummy_3d,lda4,iopt,info)
+       istat=istat+info  
+#endif
+#endif
       IF (istat .NE. 0) THEN
           WRITE(mesg,'(A,I3,A)') 'for ',istat,' mgr arrays.Pble memory leak.'
           info = ppm_error_error

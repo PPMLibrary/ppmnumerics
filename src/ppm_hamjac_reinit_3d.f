@@ -18,11 +18,8 @@
       !     Revisions    :
       !-------------------------------------------------------------------------
       !     $Log: ppm_hamjac_reinit_3d.f,v $
-      !     Revision 1.1.1.1  2007/07/13 10:18:55  ivos
-      !     CBL version of the PPM library
-      !
-      !     Revision 1.3  2006/06/29 11:56:00  pchatela
-      !     Added a MPI_Allreduce for the loop exit
+      !     Revision 1.1.1.1  2006/07/25 15:18:19  menahel
+      !     initial import
       !
       !     Revision 1.2  2005/08/25 16:48:50  ivos
       !     Fixed format string. pgf90 barked.
@@ -36,6 +33,8 @@
       !     ETH Zentrum, Hirschengraben 84
       !     CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
+
+
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_hamjac_reinit_3ds (phi, trgt, tol, maxstep, &
@@ -53,25 +52,24 @@
            &                     topo_id, mesh_id, ghostsize, info)
 #endif
 #endif
-      !-------------------------------------------------------------------------
-      !  Modules 
-      !-------------------------------------------------------------------------
+
         USE ppm_module_data
         USE ppm_module_data_mesh
-        USE ppm_module_substart
-        USE ppm_module_substop
         USE ppm_module_error
+        USE ppm_module_write
+        USE ppm_module_substart
         USE ppm_module_alloc
+        USE ppm_module_substop
+        USE ppm_module_map
         USE ppm_module_typedef
         IMPLICIT NONE
-        INCLUDE 'mpif.h'        
+
 #if    __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_single
-        INTEGER, PARAMETER :: MPTYPE = MPI_REAL
-#elif  __KIND == __DOUBLE_PRECISION
+#elif  __KIND == __DOUBLE_PRECISION       
         INTEGER, PARAMETER :: MK = ppm_kind_double
-        INTEGER, PARAMETER :: MPTYPE = MPI_DOUBLE_PRECISION
 #endif
+
         !-----------------------------------------------------
         !  Arguments
         !-----------------------------------------------------
@@ -86,6 +84,7 @@
         INTEGER, INTENT(inout)                :: info
         INTEGER, INTENT(in)                   :: maxstep
         REAL(mk), INTENT(in)                  :: tol, trgt
+
         !-----------------------------------------------------
         !  Aliases
         !-----------------------------------------------------
@@ -93,10 +92,11 @@
         REAL(mk), DIMENSION(:,:,:,:), POINTER :: tphi
         INTEGER                               :: nsublist
         INTEGER, DIMENSION(:,:), POINTER      :: ndata
-        INTEGER                               :: meshid
-        REAL(mk), DIMENSION(:), POINTER       :: min_phys, max_phys
+        INTEGER                               :: topoid,meshid
+        REAL(MK), DIMENSION(:), POINTER       :: min_phys, max_phys
         TYPE(ppm_t_topo),      POINTER        :: topo
         TYPE(ppm_t_equi_mesh), POINTER        :: mesh
+        
         !-----------------------------------------------------
         !  standard stuff
         !-----------------------------------------------------
@@ -104,9 +104,11 @@
         INTEGER                               :: maptype,istep,iopt
         INTEGER                               :: ldl(4), ldu(4), ndata_max(3)
         REAL(mk)                              :: len_phys(3)
-        REAL(mk)                              :: t0, lres, gres
+        REAL(mk) :: t0, res
         CHARACTER(LEN=ppm_char)               :: cbuf
+
         CALL substart('ppm_hamjac_reinit_3d',t0,info)
+        
         !-----------------------------------------------------
         !  Get the mesh data
         !-----------------------------------------------------
@@ -115,7 +117,6 @@
         meshid = mesh%ID
         nsublist = topo%nsublist
         ndata    => mesh%nnodes
-        !  COMMENT Thu May 26 19:39:51 PDT 2005:  experimental
         isublist => topo%isublist
 #if    __KIND == __SINGLE_PRECISION
         min_phys => topo%min_physs
@@ -124,6 +125,12 @@
         min_phys => topo%min_physd
         max_phys => topo%max_physd
 #endif
+
+        !-----------------------------------------------------
+        !  RATIONALE Thu May 26 20:51:19 PDT 2005:
+        !  loop ghostmap doit. easy.
+        !-----------------------------------------------------
+
         !-----------------------------------------------------
         !  allocate temporary storage
         !-----------------------------------------------------
@@ -143,6 +150,7 @@
                 &        'temp storage for hamjac',__LINE__,info)
            GOTO 9999
         END IF
+
         !--- ready to blast
         maptype = ppm_param_map_init
 #if   __MODE == __SCA
@@ -150,6 +158,10 @@
 #elif __MODE == __VEC
         CALL ppm_map_field_ghost(phi,lda,topo_id,mesh_id,ghostsize,maptype,info)
 #endif        
+
+        !-----------------------------------------------------
+        !  COMMENT Thu May 26 21:05:23 PDT 2005:  simple euler here, DO TVD
+        !-----------------------------------------------------
         DO istep=1,maxstep
            !--- map the gowas
 #if   __MODE == __SCA
@@ -161,7 +173,7 @@
            CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
            maptype = ppm_param_map_pop
            CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
-           CALL ppm_hamjac_reinit_step(phi,tphi,trgt,lres,topo_id,mesh_id&
+           CALL ppm_hamjac_reinit_step(phi,tphi,trgt,res,topo_id,mesh_id&
                 &,                  ghostsize,info)
 #elif __MODE == __VEC
            maptype = ppm_param_map_ghost_get
@@ -176,9 +188,16 @@
            maptype = ppm_param_map_pop
            CALL ppm_map_field_ghost(phi,lda,topo_id,mesh_id,ghostsize, &
                 & maptype,info)
-           CALL ppm_hamjac_reinit_step(phi,idx,tphi,trgt,lres,topo_id,mesh_id,&
+           CALL ppm_hamjac_reinit_step(phi,idx,tphi,trgt,res,topo_id,mesh_id,&
                 & ghostsize,info)
 #endif
+           !-----------------------------------------------------
+           !  maybe put a if(debug)then
+           !-----------------------------------------------------
+           IF(ppm_debug.GT.0) THEN
+              WRITE(cbuf,'(A,I4,A,E12.5)') 'Iteration ',istep,' Residual: ',res
+              CALL ppm_write(ppm_rank,'ppm_hamjac_reinit_3d',cbuf,info)
+           END IF
            !-----------------------------------------------------
            !  copy the data back
            !-----------------------------------------------------
@@ -192,19 +211,16 @@
 #endif                 
               END DO; END DO; END DO
            END DO
-           CALL MPI_Allreduce(lres,gres,1,MPTYPE,MPI_MAX,ppm_comm,info)
-           !-----------------------------------------------------
-           !  maybe put a if(debug)then
-           !-----------------------------------------------------
-           WRITE(cbuf,'(A,I4,A,E12.5)') 'Iteration ',istep,' Residual: ',gres
-           IF (ppm_rank.EQ.0) CALL ppm_write(ppm_rank,'ppm_hamjac_reinit_3d',cbuf,info)
-           IF(gres.LT.tol) GOTO 666
+           IF(res.LT.tol) GOTO 666
         END DO
+
         info = ppm_error_warning
         CALL ppm_error(ppm_err_converge,'ppm_hamjac_reinit_3d', &
              &         'failed to reach target residual',__LINE__,info)
         info = ppm_param_success
+
 666     CONTINUE
+
         iopt = ppm_param_dealloc
         CALL ppm_alloc(tphi,ldl,ldu,iopt,info)
         IF(info.NE.0) THEN
@@ -213,7 +229,10 @@
                 &        'temp storage for hamjac not freed',__LINE__,info)
            GOTO 9999
         END IF
+
+
 9999    CONTINUE
+
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
       END SUBROUTINE ppm_hamjac_reinit_3ds 
@@ -227,3 +246,10 @@
       END SUBROUTINE ppm_hamjac_reinit_3ddV 
 #endif
 #endif      
+
+        
+           
+
+        
+        
+

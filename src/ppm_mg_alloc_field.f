@@ -27,11 +27,8 @@
       !  Revisions    :
       !-------------------------------------------------------------------------
       !  $Log: ppm_mg_alloc_field.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.8  2006/07/21 11:30:57  kotsalie
-      !  FRIDAY
+      !  Revision 1.1.1.1  2006/07/25 15:18:20  menahel
+      !  initial import
       !
       !  Revision 1.7  2004/10/01 16:33:39  ivos
       !  cosmetics.
@@ -89,6 +86,7 @@
 #endif
 #endif
 #endif
+
       !-------------------------------------------------------------------------
       !  Includes
       !-------------------------------------------------------------------------
@@ -101,7 +99,6 @@
       USE ppm_module_substart
       USE ppm_module_substop
       USE ppm_module_error
-      USE ppm_module_alloc
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -113,7 +110,6 @@
       !-------------------------------------------------------------------------
       INTEGER                 , DIMENSION(:  ), INTENT(IN   ) :: lda
       INTEGER                                 , INTENT(IN   ) :: iopt
-      INTEGER                                 , INTENT(  OUT) :: info
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND ==__SINGLE_PRECISION 
@@ -143,13 +139,16 @@
 #endif
 #endif
 #endif
+
+
+      INTEGER                           , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
-      INTEGER               :: i,j
+      INTEGER            :: i,j
       INTEGER, DIMENSION(2) :: ldc
       REAL(MK)              :: t0
-      LOGICAL               :: lcopy,lalloc,lrealloc,ldealloc
+
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND ==__SINGLE_PRECISION
@@ -179,6 +178,8 @@
 #endif
 #endif
 #endif
+
+      LOGICAL            :: lcopy,lalloc,lrealloc,ldealloc
       !-------------------------------------------------------------------------
       !  Externals 
       !-------------------------------------------------------------------------
@@ -187,6 +188,7 @@
       !  Initialise 
       !-------------------------------------------------------------------------
       CALL substart('ppm_mg_alloc_field',t0,info)
+
       !-------------------------------------------------------------------------
       !  Check arguments
       !-------------------------------------------------------------------------
@@ -210,6 +212,7 @@
               GOTO 9999
           ENDIF
       ENDIF
+
       !-------------------------------------------------------------------------
       !  Check allocation type
       !-------------------------------------------------------------------------
@@ -288,6 +291,7 @@
               ldealloc = .TRUE.
           ENDIF
       ENDIF
+              
       !-------------------------------------------------------------------------
       !  Perform the actual alloc action
       !-------------------------------------------------------------------------
@@ -307,10 +311,13 @@
                   NULLIFY(work_field(i,j)%uc)
                   NULLIFY(work_field(i,j)%fc)
                   NULLIFY(work_field(i,j)%err)
+                  NULLIFY(work_field(i,j)%mask_red)
+                  NULLIFY(work_field(i,j)%mask_black)
                   NULLIFY(work_field(i,j)%bcvalue)
               ENDDO
           ENDDO
       ENDIF
+
       IF (lcopy) THEN
           !---------------------------------------------------------------------
           !  Save the old contents
@@ -320,10 +327,13 @@
                   work_field(i,j)%uc => field(i,j)%uc
                   work_field(i,j)%fc => field(i,j)%fc
                   work_field(i,j)%err => field(i,j)%err
+                  work_field(i,j)%mask_red => field(i,j)%mask_red
+                  work_field(i,j)%mask_black => field(i,j)%mask_black
                   work_field(i,j)%bcvalue => field(i,j)%bcvalue
               ENDDO
           ENDDO
       ENDIF
+
       IF (ldealloc) THEN
           !---------------------------------------------------------------------
           !  Deallocate the old contents
@@ -357,6 +367,24 @@
                       ENDIF
                       NULLIFY(field(i,j)%err)
                   ENDIF
+                  IF (ASSOCIATED(field(i,j)%mask_red)) THEN
+                      DEALLOCATE(field(i,j)%mask_red,STAT=info)
+                      IF (info .NE. 0) THEN
+                          info = ppm_error_error
+                          CALL ppm_error(ppm_err_dealloc,'ppm_mg_alloc_field',&
+     &                       'MASK FIELD%MASK_RED',__LINE__,info)
+                      ENDIF
+                      NULLIFY(field(i,j)%mask_red)
+                  ENDIF
+                  IF (ASSOCIATED(field(i,j)%mask_black)) THEN
+                      DEALLOCATE(field(i,j)%mask_black,STAT=info)
+                      IF (info .NE. 0) THEN
+                          info = ppm_error_error
+                          CALL ppm_error(ppm_err_dealloc,'ppm_mg_alloc_field',&
+     &                       'MASK FIELD%MASK_BLACK',__LINE__,info)
+                      ENDIF
+                      NULLIFY(field(i,j)%mask_black)
+                  ENDIF
                   IF (ASSOCIATED(field(i,j)%bcvalue)) THEN
                       DEALLOCATE(field(i,j)%bcvalue,STAT=info)
                       IF (info .NE. 0) THEN
@@ -369,6 +397,7 @@
               ENDDO
           ENDDO
       ENDIF
+
       IF (lrealloc) THEN
           !---------------------------------------------------------------------
           !  Deallocate old pointer array
@@ -381,19 +410,20 @@
           ENDIF
           NULLIFY(field)
       ENDIF
+
       IF (lalloc) THEN
           !---------------------------------------------------------------------
           !  Point result to new array
           !---------------------------------------------------------------------
           field => work_field
       ENDIF
+
       !-------------------------------------------------------------------------
       !  Return 
       !-------------------------------------------------------------------------
  9999 CONTINUE
       CALL substop('ppm_mg_alloc_field',t0,info)
       RETURN
-
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
@@ -423,3 +453,5 @@
 #endif
 #endif
 #endif
+
+
