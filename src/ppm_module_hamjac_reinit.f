@@ -12,8 +12,8 @@
       !  Revisions    :
       !-------------------------------------------------------------------------
       !  $Log: ppm_module_hamjac_reinit.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:18:58  ivos
-      !  CBL version of the PPM library
+      !  Revision 1.1.1.1  2006/07/25 15:18:20  menahel
+      !  initial import
       !
       !  Revision 1.1  2005/07/25 00:34:08  ivos
       !  Initial check-in.
@@ -46,6 +46,13 @@
            MODULE PROCEDURE ppm_hamjac_reinit_step_2dd
         END INTERFACE
 
+        INTERFACE ppm_hamjac_reinit_loc_step
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_step_3ds
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_step_3dd
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_step_3dsV
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_step_3ddV
+        END INTERFACE
+
         INTERFACE ppm_hamjac_reinit
            MODULE PROCEDURE ppm_hamjac_reinit_3ds
            MODULE PROCEDURE ppm_hamjac_reinit_3dd
@@ -53,6 +60,13 @@
            MODULE PROCEDURE ppm_hamjac_reinit_3ddV
            MODULE PROCEDURE ppm_hamjac_reinit_2ds
            MODULE PROCEDURE ppm_hamjac_reinit_2dd
+        END INTERFACE
+
+        INTERFACE ppm_hamjac_reinit_loc
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_3ds
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_3dd
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_3dsV
+           MODULE PROCEDURE ppm_hamjac_reinit_loc_3ddV
         END INTERFACE
 
         INTERFACE ppm_hamjac_reinit_step_ref
@@ -81,12 +95,14 @@
 #define __KIND  __SINGLE_PRECISION
         ! 3D SCA SINGLE
 #include "ppm_hamjac_reinit_step_3d.f"
+#include "ppm_hamjac_reinit_loc_step_3d.f"
 #include "ppm_hamjac_reinit_step_ref_3d.f"
 #include "ppm_hamjac_reinit_russo_step_3d.f"
 #undef __KIND
 #define __KIND  __DOUBLE_PRECISION
         ! 3D SCA SINGLE
 #include "ppm_hamjac_reinit_step_3d.f"
+#include "ppm_hamjac_reinit_loc_step_3d.f"
 #include "ppm_hamjac_reinit_step_ref_3d.f"
 #include "ppm_hamjac_reinit_russo_step_3d.f"
 #undef __KIND
@@ -97,10 +113,12 @@
 #define __KIND  __SINGLE_PRECISION
         ! 3D VEC SINGLE
 #include "ppm_hamjac_reinit_step_3d.f"
+#include "ppm_hamjac_reinit_loc_step_3d.f"
 #undef __KIND
 #define __KIND  __DOUBLE_PRECISION
         ! 3D VEC SINGLE
 #include "ppm_hamjac_reinit_step_3d.f"
+#include "ppm_hamjac_reinit_loc_step_3d.f"
 #undef __KIND
 #undef __MODE
 #undef __DIME
@@ -125,12 +143,14 @@
 #define __KIND  __SINGLE_PRECISION
         ! 3D SCA SINGLE
 #include "ppm_hamjac_reinit_3d.f"
+#include "ppm_hamjac_reinit_loc_3d.f"
 #include "ppm_hamjac_reinit_ref_3d.f"
 #include "ppm_hamjac_reinit_russo_3d.f"
 #undef __KIND
 #define __KIND  __DOUBLE_PRECISION
         ! 3D SCA DOUBLE
 #include "ppm_hamjac_reinit_3d.f"
+#include "ppm_hamjac_reinit_loc_3d.f"
 #include "ppm_hamjac_reinit_ref_3d.f"
 #include "ppm_hamjac_reinit_russo_3d.f"
 #undef __KIND
@@ -142,10 +162,12 @@
 #define __KIND  __SINGLE_PRECISION
         ! 3D VEC SINGLE
 #include "ppm_hamjac_reinit_3d.f"
+#include "ppm_hamjac_reinit_loc_3d.f"
 #undef __KIND
 #define __KIND  __DOUBLE_PRECISION
         ! 3D VEC DOUBLE
 #include "ppm_hamjac_reinit_3d.f"
+#include "ppm_hamjac_reinit_loc_3d.f"
 #undef __KIND
 #undef __MODE
 #undef __DIME
