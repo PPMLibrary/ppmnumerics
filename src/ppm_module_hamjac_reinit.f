@@ -65,6 +65,16 @@
            MODULE PROCEDURE ppm_hamjac_reinit_ref_3dd
         END INTERFACE
 
+        INTERFACE ppm_hamjac_reinit_russo
+            MODULE PROCEDURE ppm_hamjac_reinit_russo_3ds
+            MODULE PROCEDURE ppm_hamjac_reinit_russo_3dd
+        END INTERFACE
+
+        INTERFACE ppm_hamjac_reinit_russo_step
+            MODULE PROCEDURE ppm_hamjac_reinit_russo_step_3ds
+            MODULE PROCEDURE ppm_hamjac_reinit_russo_step_3dd
+        END INTERFACE
+
       CONTAINS
 #define __DIME  __3D
 #define __MODE  __SCA
@@ -72,11 +82,13 @@
         ! 3D SCA SINGLE
 #include "ppm_hamjac_reinit_step_3d.f"
 #include "ppm_hamjac_reinit_step_ref_3d.f"
+#include "ppm_hamjac_reinit_russo_step_3d.f"
 #undef __KIND
 #define __KIND  __DOUBLE_PRECISION
         ! 3D SCA SINGLE
 #include "ppm_hamjac_reinit_step_3d.f"
 #include "ppm_hamjac_reinit_step_ref_3d.f"
+#include "ppm_hamjac_reinit_russo_step_3d.f"
 #undef __KIND
 #undef __MODE
 #undef __DIME
@@ -114,11 +126,13 @@
         ! 3D SCA SINGLE
 #include "ppm_hamjac_reinit_3d.f"
 #include "ppm_hamjac_reinit_ref_3d.f"
+#include "ppm_hamjac_reinit_russo_3d.f"
 #undef __KIND
 #define __KIND  __DOUBLE_PRECISION
         ! 3D SCA DOUBLE
 #include "ppm_hamjac_reinit_3d.f"
 #include "ppm_hamjac_reinit_ref_3d.f"
+#include "ppm_hamjac_reinit_russo_3d.f"
 #undef __KIND
 #undef __MODE
 #undef __DIME
