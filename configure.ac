@@ -53,11 +53,23 @@ AC_FC_LIBRARY_LDFLAGS
 # Check architecture
 AC_CHECK_SIZEOF([long double])
 
+AX_F90_MODULE_FLAG
+AC_SUBST([ax_cv_f90_modflag])
+
 if test "x${use_mpi}" == xyes; then
+    AC_MSG_CHECKING([if your MPI is usable])
     AC_LANG([Fortran])
-    AC_CHECK_LIB([mpi],[MPI_Init],[
-                  echo "#define __MPI" >> ./src/ppm_define.h],
-                  [AC_MSG_ERROR([Cannot build PPM with MPI support like this])])
+    AC_LINK_IFELSE([
+                     program conftest_prog
+                     include 'mpif.h'
+                     call MPI_Init(ierr)
+                     end program conftest_prog],
+                     [echo "#define __MPI" >> ./src/ppm_define.h],
+                     [AC_MSG_ERROR([Cannot build PPM with MPI support like this])])
+    AC_MSG_RESULT([yes])
+#    AC_CHECK_LIB([],[MPI_Init],[
+#                  echo "#define __MPI" >> ./src/ppm_define.h],
+#                  [AC_MSG_ERROR([Cannot build PPM with MPI support like this])])
     AC_LANG([C])
 fi
 
@@ -88,8 +100,6 @@ AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
     integer :: info
     call ppm_finalize(info)
    ])
-
-
 
 # Check to see if fftw3 was enabled with -enable-fftw3
 #use_fftw3=no
