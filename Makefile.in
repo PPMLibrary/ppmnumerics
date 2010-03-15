@@ -62,10 +62,10 @@ DEPENDENCIES := $(SOURCES:%.f=$(OBJ_DIR)/%.d)
 
 # This creates the install directories if they don't exist
 $(warning Checking for directories...)
-$(shell mkdir $(OBJ_DIR))
-$(shell mkdir $(MODULES_DIR))
-$(shell mkdir $(builddir)/lib)
-$(shell mkdir $(libdir))
+$(shell test -d $(OBJ_DIR) || mkdir $(OBJ_DIR))
+$(shell test -d $(MODULES_DIR) || mkdir $(MODULES_DIR))
+$(shell test -d $(builddir)/lib || mkdir $(builddir)/lib)
+$(shell test -d $(libdir) || mkdir $(libdir))
 
 .DEFAULT: ;
 
