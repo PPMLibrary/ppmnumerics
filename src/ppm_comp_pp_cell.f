@@ -8,45 +8,45 @@
 
 #if   __KERNEL == __INTERNAL
 #if   __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_comp_pp_cell_si(xp,Np,pdata,lda,lsymm,kernel,kpar,   &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_si(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_comp_pp_cell_di(xp,Np,pdata,lda,lsymm,kernel,kpar,   &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_di(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
-      SUBROUTINE ppm_comp_pp_cell_sci(xp,Np,pdata,lda,lsymm,kernel,kpar,  &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_sci(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
-      SUBROUTINE ppm_comp_pp_cell_dci(xp,Np,pdata,lda,lsymm,kernel,kpar,  &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_dci(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
+     &    Nm,clist,cutoff2,dpd,info)
 #endif
 #elif __KERNEL == __USER_FUNCTION
 #if   __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_comp_pp_cell_su(xp,Np,pdata,lda,lsymm,kernel,kpar,   &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_su(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_comp_pp_cell_du(xp,Np,pdata,lda,lsymm,kernel,kpar,   &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_du(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
-      SUBROUTINE ppm_comp_pp_cell_scu(xp,Np,pdata,lda,lsymm,kernel,kpar,  &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_scu(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
-      SUBROUTINE ppm_comp_pp_cell_dcu(xp,Np,pdata,lda,lsymm,kernel,kpar,  &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_dcu(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
+     &    Nm,clist,cutoff2,dpd,info)
 #endif
 #elif __KERNEL == __LOOKUP_TABLE
 #if   __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_comp_pp_cell_st(xp,Np,pdata,lda,lsymm,kernel,kpar,  &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_st(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_comp_pp_cell_dt(xp,Np,pdata,lda,lsymm,kernel,kpar,  &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_dt(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
-      SUBROUTINE ppm_comp_pp_cell_sct(xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_sct(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
+     &    Nm,clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
-      SUBROUTINE ppm_comp_pp_cell_dct(xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    nsublist,Nm,clist,cutoff2,dpd,info)
+      SUBROUTINE ppm_comp_pp_cell_dct(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
+     &    Nm,clist,cutoff2,dpd,info)
 #endif
 #endif
       !!! This routine computes kernel interactions by direct
@@ -77,6 +77,7 @@
       !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
+      USE ppm_module_check_topoid
       USE ppm_module_data_neighlist
       USE ppm_module_substart
       USE ppm_module_substop
@@ -95,6 +96,9 @@
       !-------------------------------------------------------------------------
       !  Arguments
       !-------------------------------------------------------------------------
+      INTEGER                                    :: topoid
+      !!! The ID of the topology currently mapped to (needed to get number
+      !!! of subdomains on local processor)
       REAL(MK)   , DIMENSION(:,:), INTENT(IN   ) :: xp
       !!! particle co-ordinates
 #if   __KIND == __SINGLE_PRECISION | __KIND == __DOUBLE_PRECISION
@@ -118,8 +122,6 @@
       !!! number of particles on this proc.
       INTEGER                    , INTENT(IN   ) :: lda
       !!! lading dimension of pdata.
-      INTEGER                    , INTENT(IN   ) :: nsublist
-      !!! number of subdomains on the local processor
 #if   __KERNEL == __INTERNAL
       INTEGER                    , INTENT(IN   ) :: kernel
       !!! kernel to be used for PP interactions. To use ppm-internal
@@ -177,6 +179,9 @@
       !-------------------------------------------------------------------------
       !  Local variables
       !-------------------------------------------------------------------------
+      INTEGER                                    :: nsublist
+      ! number of subdomains on the local processor
+
       ! counters
       INTEGER                                    :: i,idom,ibox,jbox,idx
       INTEGER                                    :: ipart,jpart,ip,jp
@@ -201,6 +206,7 @@
       INTEGER, SAVE                              :: nnp
       ! cell offsets for box index
       INTEGER                                    :: n1,n2,nz
+      LOGICAL                                    :: valid
       REAL(MK)                                   :: t0
       !-------------------------------------------------------------------------
       !  Externals
@@ -266,10 +272,11 @@
      &            'lda must be >0',__LINE__,info)
               GOTO 9999
           ENDIF
-          IF (nsublist .LT. 0) THEN
+          CALL ppm_check_topoid(topoid,valid,info)
+          IF (.NOT. valid) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_comp_pp_cell',  &
-     &            'nsublist must be >=0',__LINE__,info)
+     &            'Topology ID not valid',__LINE__,info)
               GOTO 9999
           ENDIF
           IF (cutoff2 .LT. 0.0_MK) THEN
@@ -287,6 +294,8 @@
           ENDIF
 #endif
       ENDIF
+
+      nsublist = ppm_topo(topoid)%t%nsublist
 
       !-------------------------------------------------------------------------
       !  Build interaction index lists
