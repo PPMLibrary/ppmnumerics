@@ -313,18 +313,14 @@
       DO i = 1,hops
          !TODO: check the argument quantity accuracy
          CALL ppm_map_part_ring_shift(xp2,ppm_dim,Lpart,itarget,isource,info)
-         CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     pdata2,lda,Lpart,Lpart,ppm_param_map_push,info)
-         CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     dpd2,lda,Lpart,Lpart,ppm_param_map_push,info)
-         CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     xp2,ppm_dim,Lpart,Lpart,ppm_param_map_send,info)
-         CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     dpd2,lda,Lpart,Lpart,ppm_param_map_pop,info)
-         CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     pdata2,lda,Lpart,Lpart,ppm_param_map_pop,info)
-         CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     xp2,ppm_dim,Lpart,Lpart,ppm_param_map_pop,info)
+         CALL ppm_map_part_push(pdata2,lda,Lpart,info)
+         CALL ppm_map_part_push(dpd2,lda,Lpart,info)
+
+         CALL ppm_map_part_send(Lpart,Lpart,info)
+
+         CALL ppm_map_part_pop(dpd2,lda,Lpart,Lpart,info)
+         CALL ppm_map_part_pop(pdata2,lda,Lpart,Lpart,info)
+         CALL ppm_map_part_pop(xp2,ppm_dim,Lpart,Lpart,info)
 
          CALL ppm_comp_pp_doring(xp,pdata,dpd,Np,xp2,pdata2,dpd2,Lpart,  &
      &       lda,lsymm,kernel,kpar,0,info)
@@ -343,18 +339,14 @@
       IF (lsymm .AND. (MOD(ppm_nproc,2) .EQ. 0)) THEN
           !TODO: check the argument quantity accuracy
           CALL ppm_map_part_ring_shift(xp2,ppm_dim,Lpart,itarget,isource,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     pdata2,lda,Lpart,Lpart,ppm_param_map_push,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     dpd2,lda,Lpart,Lpart,ppm_param_map_push,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     xp2,ppm_dim,Lpart,Lpart,ppm_param_map_send,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     dpd2,lda,Lpart,Lpart,ppm_param_map_pop,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     pdata2,lda,Lpart,Lpart,ppm_param_map_pop,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     xp2,ppm_dim,Lpart,Lpart,ppm_param_map_pop,info)
+          CALL ppm_map_part_push(pdata2,lda,Lpart,info)
+          CALL ppm_map_part_push(dpd2,lda,Lpart,info)
+
+          CALL ppm_map_part_send(Lpart,Lpart,info)
+
+          CALL ppm_map_part_pop(dpd2,lda,Lpart,Lpart,info)
+          CALL ppm_map_part_pop(pdata2,lda,Lpart,Lpart,info)
+          CALL ppm_map_part_pop(xp2,ppm_dim,Lpart,Lpart,info)
 
           !---------------------------------------------------------------------
           !  The processor with the higher ppm_rank computes the upper half of
@@ -395,18 +387,14 @@
       IF (itarget .NE. ppm_rank) THEN
           !TODO: check the argument quantity accuracy
           CALL ppm_map_part_ring_shift(xp2,ppm_dim,Lpart,itarget,isource,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     pdata2,lda,Lpart,Lpart,ppm_param_map_push,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     dpd2,lda,Lpart,Lpart,ppm_param_map_push,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     xp2,ppm_dim,Lpart,Lpart,ppm_param_map_send,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     dpd2,lda,Lpart,Lpart,ppm_param_map_pop,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     pdata2,lda,Lpart,Lpart,ppm_param_map_pop,info)
-          CALL ppm_map_part(ppm_param_topo_undefined,ppm_param_topo_undefined, &
-     &                     xp2,ppm_dim,Lpart,Lpart,ppm_param_map_pop,info)
+          CALL ppm_map_part_push(pdata2,lda,Lpart,info)
+          CALL ppm_map_part_push(dpd2,lda,Lpart,info)
+
+          CALL ppm_map_part_send(Lpart,Lpart,info)
+
+          CALL ppm_map_part_pop(dpd2,lda,Lpart,Lpart,info)
+          CALL ppm_map_part_pop(pdata2,lda,Lpart,Lpart,info)
+          CALL ppm_map_part_pop(xp2,ppm_dim,Lpart,Lpart,info)
 
           IF (Lpart .NE. Np) THEN
              info = ppm_error_error
