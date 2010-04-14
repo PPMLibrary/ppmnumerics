@@ -1,115 +1,8 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                    ppm_fmm_init
       !-------------------------------------------------------------------------
-      !
-      !  Purpose      : Initialisation of FMM. This routine calls the 
-      !                 ppm_tree-routine to get the tree 
-      !                 information and stores it. 
-      !                 Maps the particles to the leafs of the tree.
-      !                 It computes the center of the boxes and the radius
-      !                 of the leaf boxes and stores it.
-      !
-      !  Input        : xp(:,:)      (F) the field points
-      !                 wp(:,:)      (F) field particle strenghts
-      !                 lda          (I) number of source dimensions
-      !                 Nm(:)        (I) number of grid points in the
-      !                                  global mesh. (0,0,0) if there is
-      !                                  no mesh. If a mesh is present, the
-      !                                  box boundaries will be aligned
-      !                                  with mesh planes.
-      !                 ord          (I) expansion order
-      !                 min_dom(:)   (F) the minimum coordinate of the
-      !                                  domain
-      !                 max_dom(:)   (F) the maximum coordinate of the
-      !                                  domain
-      !                 maxboxcost   (F) the maximum number of particles
-      !                                  allowed in a box
-      !  Input/output :     
-      !                 Np           (I) the number of field points.
-      !
-      !  Output       : nrofbox     (I) the total number of all boxes
-      !                 info        (I) return status. 0 upon success.
-      !
-      !  Remarks      :  only useful for freespace boundary conditions
-      !
-      !  References   :
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_fmm_init.f,v $
-      !  Revision 1.21  2006/09/04 18:34:46  pchatela
-      !  Fixes and cleanups to make it compile for
-      !  release-1-0
-      !
-      !  Revision 1.20  2006/06/29 10:28:35  pchatela
-      !  Added vector strengths support
-      !
-      !  Revision 1.19  2006/06/20 15:13:35  hiebers
-      !  BUGFIX: adjusted indices for ppm_boxid, ppm_subid
-      !
-      !  Revision 1.18  2006/06/16 07:52:21  hiebers
-      !  Added a new list of topo IDs (topoidlist) to prevent overwriting 
-      !  user defined topologies
-      !
-      !  Revision 1.17  2005/09/19 13:03:28  polasekb
-      !  code cosmetics
-      !
-      !  Revision 1.16  2005/09/12 13:30:33  polasekb
-      !  added ppm_subid
-      !
-      !  Revision 1.15  2005/09/11 18:05:30  polasekb
-      !  (final?) corrected version
-      !  (also works parallel :-)
-      !
-      !  Revision 1.14  2005/09/11 11:43:39  polasekb
-      !  moved mapping and second tree call to init
-      !
-      !  Revision 1.13  2005/08/30 08:48:30  polasekb
-      !  added timing for tree
-      !
-      !  Revision 1.12  2005/08/25 13:51:49  polasekb
-      !  corrected data allocation of theta,phi,rho
-      !
-      !  Revision 1.11  2005/08/11 15:12:53  polasekb
-      !  added argument maxboxcost
-      !
-      !  Revision 1.10  2005/08/08 13:34:25  polasekb
-      !  removec fmm_prec
-      !
-      !  Revision 1.9  2005/08/04 16:00:41  polasekb
-      !  moved some allocation to init
-      !
-      !  Revision 1.8  2005/07/29 12:35:05  polasekb
-      !  changed diagonal to radius
-      !
-      !  Revision 1.7  2005/07/27 14:58:26  polasekb
-      !  added new argument wp to subroutine call
-      !
-      !  Revision 1.6  2005/07/25 15:01:57  polasekb
-      !  adapted some tree coefficients
-      !
-      !  Revision 1.5  2005/07/25 13:39:20  polasekb
-      !  bugfix in array indices
-      !
-      !  Revision 1.4  2005/07/21 13:21:32  polasekb
-      !  removed nullify
-      !
-      !  Revision 1.3  2005/06/02 13:54:55  polasekb
-      !  removed totalmass
-      !
-      !  Revision 1.2  2005/05/30 09:37:24  polasekb
-      !  correctet computing of centerofbox
-      !
-      !  Revision 1.1  2005/05/27 07:53:40  polasekb
-      !  Initial Implementation
-      !
-      !  Revision 0  2004/11/16 15:59:14 polasekb
-      !  start
-      !
-      !-------------------------------------------------------------------------
       !  Parallel Particle Mesh Library (PPM)
-      !  Institute of Computational Science
-      !  ETH Zentrum, Hirschengraben 84
+      !  ETH Zurich
       !  CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
 #if   (__KIND == __SINGLE_PRECISION && __DIM == __SFIELD)
@@ -119,12 +12,19 @@
       SUBROUTINE ppm_fmm_init_d_sf(xp,wp,Np,Nm,ord,min_dom,max_dom,maxboxcost, &
       &          nrofbox,info)
 #elif (__KIND == __SINGLE_PRECISION && __DIM == __VFIELD)
-      SUBROUTINE ppm_fmm_init_s_vf(xp,wp,lda,Np,Nm,ord,min_dom,max_dom,maxboxcost, &
-      &          nrofbox,info)
+      SUBROUTINE ppm_fmm_init_s_vf(xp,wp,lda,Np,Nm,ord,min_dom,max_dom,  &
+      &          maxboxcost,nrofbox,info)
 #elif ( __KIND == __DOUBLE_PRECISION && __DIM == __VFIELD)
-      SUBROUTINE ppm_fmm_init_d_vf(xp,wp,lda,Np,Nm,ord,min_dom,max_dom,maxboxcost, &
-      &          nrofbox,info)
+      SUBROUTINE ppm_fmm_init_d_vf(xp,wp,lda,Np,Nm,ord,min_dom,max_dom,  &
+      &          maxboxcost,nrofbox,info)
 #endif
+      !!! Initialisation of FMM. This routine calls the ppm_tree-routine to
+      !!! get the tree information and stores it. Maps the particles to
+      !!! the leafs of the tree. It computes the center of the boxes and
+      !!! the radius of the leaf boxes and stores it.
+      !!!
+      !!! [TIP]
+      !!! only useful for freespace boundary conditions
       !-------------------------------------------------------------------------
       !  Modules 
       !-------------------------------------------------------------------------
@@ -161,18 +61,34 @@
       !  Arguments     
       !-------------------------------------------------------------------------
 #if   __DIM == __SFIELD      
-      REAL(MK), DIMENSION(:  ), POINTER       :: wp 
+      REAL(MK), DIMENSION(:  ), POINTER       :: wp
+      !!! field particle strenghts
 #elif __DIM == __VFIELD
-      REAL(MK), DIMENSION(:,:), POINTER       :: wp 
+      REAL(MK), DIMENSION(:,:), POINTER       :: wp
+      !!! field particle strenghts
       INTEGER                 , INTENT(IN   ) :: lda
+      !!! number of source dimensions
 #endif
       REAL(MK), DIMENSION(:,:), POINTER       :: xp
+      !!! the field points
       INTEGER                 , INTENT(INOUT) :: Np
+      !!! the number of field points
       INTEGER , DIMENSION(:  ), INTENT(IN   ) :: Nm
+      !!! number of grid points in the global mesh. (0,0,0) if there is
+      !!! no mesh. If a mesh is present, the box boundaries will be aligned
+      !!! with mesh planes.
       INTEGER                 , INTENT(IN   ) :: ord
+      !!! expansion order
       REAL(MK)                , INTENT(IN   ) :: maxboxcost
-      REAL(MK), DIMENSION(:  ), INTENT(IN   ) :: min_dom,max_dom
-      INTEGER                 , INTENT(  OUT) :: nrofbox,info
+      !!! the maximum number of particles allowed in a box
+      REAL(MK), DIMENSION(:  ), INTENT(IN   ) :: min_dom
+      !!! the minimum coordinate of the domain
+      REAL(MK), DIMENSION(:  ), INTENT(IN   ) :: max_dom
+      !!! the maximum coordinate of the domain
+      INTEGER                 , INTENT(  OUT) :: nrofbox
+      !!! the total number of all boxes
+      INTEGER                 , INTENT(  OUT) :: info
+      !!! return status, 0 upon success
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
@@ -211,12 +127,11 @@
       REAL(MK),DIMENSION(:,:), POINTER    :: min_sub,max_sub 
       INTEGER                             :: nsubs,topoid
       INTEGER,DIMENSION(:),    POINTER    :: new_subs2proc,subs2proc
-      INTEGER                             :: mapt,Mpart
+      INTEGER                             :: Mpart
       INTEGER                             :: istat         
       REAL(MK),DIMENSION(:  ), POINTER    :: radius,totalmass
       REAL(MK),DIMENSION(:,:), POINTER    :: centerofbox      
       REAL(MK),DIMENSION(:,:), POINTER    :: treepart
-      TYPE(ppm_t_topo),        POINTER    :: topo
 #if   __DIM == __SFIELD              
       REAL(MK),DIMENSION(:  ), POINTER    :: treewp
 #elif __DIM == __VFIELD
@@ -412,35 +327,28 @@
          CALL ppm_write(ppm_rank,'ppm_fmm_init', &
          &    'topo_box2subs failed',info)
       ENDIF
-      !-------------------------------------------------------------------------
-      ! Find first topo id that is available 
-      !-------------------------------------------------------------------------
-      k = 1
-      CALL ppm_check_topoid(k,TopoExists,info)
-      DO WHILE(TopoExists)
-         k = k+1
-         CALL ppm_check_topoid(k,TopoExists,info)
-      ENDDO
-      topoid = k
-      topoidlist(level) = k
-      topo => ppm_topo(topoid)%t
+
+
       !-------------------------------------------------------------------------
       ! Create first topology based on leaf boxes
+      ! (this uses the topo_mkgeom implementation of ppm_mktopo
       !-------------------------------------------------------------------------
       CALL ppm_mktopo(topoid,decomp,assig,min_dom,max_dom,bcdef,ghostsize, &
-     &                cost,min_sub,max_sub,nsubs,subs2proc,info)
+     &                cost,info,min_sub,max_sub,nsubs,subs2proc)
       IF (info.NE.0) THEN
          CALL ppm_error(ppm_err_sub_failed,'ppm_fmm_init', &
               &         'mktopo failed',__LINE__,info)
       ENDIF
-      DO i = 1,topo%nsubs
+      topoidlist(level) = topoid
+
+      DO i = 1,nsubs
          ppm_boxid(i,level) = boxid(i)
       ENDDO
       DO j=1,SIZE(boxid)
          ppm_subid(boxid(j),level) = j
       ENDDO
-      DO i=1,topo%nsubs
-         box2proc(boxid(i)) = topo%sub2proc(i)
+      DO i=1,nsubs
+         box2proc(boxid(i)) = subs2proc(i)
       ENDDO
       !-------------------------------------------------------------------------
       ! Loop over the levels of the tree and register each level as topology
@@ -448,31 +356,23 @@
       assig      = ppm_param_assign_user_defined
       
       DO i=level+1,nlevel
-        !-----------------------------------------------------------------------
-        ! Assigning topoids  that are not used before
-        !-----------------------------------------------------------------------
-         CALL ppm_check_topoid(k,TopoExists,info)
-         DO WHILE(TopoExists)
-            k = k+1
-            CALL ppm_check_topoid(k,TopoExists,info)
-         ENDDO
-         topoid = k
-         topoidlist(i) = k
-         k = k+1
+
         !-----------------------------------------------------------------------
         ! Call subroutine to get subs
+        ! changed the level argument from -topoid to -i
         !-----------------------------------------------------------------------
         CALL ppm_topo_box2subs(min_box,max_box,nchld,nbox,min_sub,max_sub, &
-          &                    nsubs,info,boxid,-topoid,blevel,child)
+          &                    nsubs,info,boxid,-i,blevel,child)
         IF (info.NE.0) THEN
            CALL ppm_write(ppm_rank,'ppm_fmm_init', &
            &    'topo_box2subs failed',info)
         ENDIF
+
         !-----------------------------------------------------------------------
         ! Allocate new subs2proc
         !-----------------------------------------------------------------------
         iopt = ppm_param_alloc_grow
-        ldu1(1) = topo%nsubs
+        ldu1(1) = nsubs
         CALL ppm_alloc(new_subs2proc,ldu1,iopt,info)
         IF (info .NE. 0) THEN
            info = ppm_error_fatal
@@ -480,7 +380,7 @@
         &       'error allocating new_subs2proc',__LINE__,info)
         GOTO 9999
         ENDIF
-        DO j=1,topo%nsubs
+        DO j=1,nsubs
            new_subs2proc(j) = box2proc(parent(boxid(j)))
            box2proc(boxid(j)) = new_subs2proc(j)
         ENDDO
@@ -488,12 +388,12 @@
         ! Call ppm_mktopo to get topology
         !-----------------------------------------------------------------------
 	  CALL ppm_mktopo(topoid,decomp,assig,min_dom,max_dom,bcdef,ghostsize,&
-     &                cost,min_sub,max_sub,nsubs,new_subs2proc,info)
+     &                cost,info,min_sub,max_sub,nsubs,new_subs2proc)
         IF (info.NE.0) THEN
            CALL ppm_error(ppm_err_sub_failed,'ppm_fmm_init', &
            &         'mktopo failed',__LINE__,info)
         ENDIF
-        ppm_boxid(1:topo%nsubs,i) = boxid(1:topo%nsubs)
+        ppm_boxid(1:nsubs,i) = boxid(1:nsubs)
         DO j=1,SIZE(boxid)
            ppm_subid(boxid(j),i)   = j
         ENDDO
@@ -506,9 +406,8 @@
       !-------------------------------------------------------------------------
       !  Map the particles onto the finest tree topology = topoid=nlevel
       !-------------------------------------------------------------------------
-      mapt = ppm_param_map_global
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,xp,ppm_dim,Np,Mpart,&
-      &                 mapt,info)   ! positions
+
+      CALL ppm_map_part_global(topoid,xp,Np,info)   ! positions
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
           &    'Failed to start global mapping.',info)
@@ -517,61 +416,48 @@
       !-------------------------------------------------------------------------
       !  Push along the strength of the particles and the boxpart
       !-------------------------------------------------------------------------      
-      mapt = ppm_param_map_push
 #if   __DIM == __SFIELD      
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,wp,Np,Mpart,&
-     &                  mapt,info)   ! strengths
+      CALL ppm_map_part_push(wp,Np,info)   ! strengths
 #else
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,wp,lda,Np,Mpart,&
-     &                  mapt,info)   ! strengths
+      CALL ppm_map_part_push(wp,lda,Np,info)   ! strengths
 #endif
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
           &    'Failed to push strengths.',info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,boxpart,Np,Mpart,&
-     &                  mapt,info)   ! boxpart
+      CALL ppm_map_part_push(boxpart,Np,info)   ! boxpart
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
           &    'Failed to push strengths.',info)
           GOTO 9999
       ENDIF
-      mapt = ppm_param_map_send
-#if   __DIM == __SFIELD      
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,wp,Np,Mpart,&
-     &                  mapt,info)   ! strengths
-#else
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,wp,lda,Np,Mpart,&
-     &                  mapt,info)   ! strengths
-#endif
+
+      CALL ppm_map_part_send(Np,Mpart,info)
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
           &    'Failed to send particles.',info)
           GOTO 9999
       ENDIF
-      mapt = ppm_param_map_pop
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,boxpart,Np,Mpart,&
-     &                  mapt,info)   ! boxpart
+
+      CALL ppm_map_part_pop(boxpart,Np,Mpart,info)   ! boxpart
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
           &    'Failed to push strengths.',info)
           GOTO 9999
       ENDIF
 #if   __DIM == __SFIELD      
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,wp,Np,Mpart,&
-     &                  mapt,info)   ! strengths
+      CALL ppm_map_part_pop(wp,Np,Mpart,info)   ! strengths
 #else
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,wp,lda,Np,Mpart,&
-     &                  mapt,info)   ! strengths
+      CALL ppm_map_part_pop(wp,lda,Np,Mpart,info)   ! strengths
 #endif
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
           &    'Failed to pop strengths.',info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_part(ppm_param_topo_undefined,topoid,xp,ppm_dim,Np,Mpart,&
-     &                  mapt,info)   ! positions
+
+      CALL ppm_map_part_pop(xp,ppm_dim,Np,Mpart,info)   ! positions
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
           &    'Failed to pop positions.',info)
