@@ -124,8 +124,8 @@
         USE ppm_module_map
         USE ppm_module_mg_core
         USE ppm_module_mg_res
-        USE ppm_module_mg_prolong         
-        USE ppm_module_mg_smooth         
+        USE ppm_module_mg_prolong
+        USE ppm_module_mg_smooth
         USE ppm_module_write
 
         IMPLICIT NONE

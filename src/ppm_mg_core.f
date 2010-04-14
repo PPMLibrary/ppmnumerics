@@ -67,8 +67,8 @@
         !-----------------------------------------------------------------------
         USE ppm_module_data
         USE ppm_module_data_mg
-        USE ppm_module_mg_prolong 
-        USE ppm_module_mg_restrict 
+        USE ppm_module_mg_prolong
+        USE ppm_module_mg_restrict
         USE ppm_module_mg_smooth
         USE ppm_module_mg_res
         USE ppm_module_substart
