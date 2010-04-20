@@ -33,7 +33,7 @@ DEBUG = @DEBUG@
 MODFLAG = @ax_cv_f90_modflag@
 
 # These variables are standard
-LIB_PPM := libppmnumberics.a
+LIB_PPM := libppmnumerics.a
 TARGET  := $(builddir)/lib/$(LIB_PPM)
 SHELL := /bin/sh
 CPP := cpp
