@@ -12,8 +12,8 @@
       ! Revisions     :
       !-------------------------------------------------------------------------
       !  $Log: ppm_module_mg_core.f,v $
-      !  Revision 1.1.1.1  2006/07/25 15:18:20  menahel
-      !  initial import
+      !  Revision 1.1.1.1  2007/07/13 10:19:00  ivos
+      !  CBL version of the PPM library
       !
       !  Revision 1.1  2004/09/22 18:31:04  kotsalie
       !  MG new version

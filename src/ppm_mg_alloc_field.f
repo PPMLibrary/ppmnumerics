@@ -27,8 +27,11 @@
       !  Revisions    :
       !-------------------------------------------------------------------------
       !  $Log: ppm_mg_alloc_field.f,v $
-      !  Revision 1.1.1.1  2006/07/25 15:18:20  menahel
-      !  initial import
+      !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
+      !  CBL version of the PPM library
+      !
+      !  Revision 1.8  2006/07/21 11:30:57  kotsalie
+      !  FRIDAY
       !
       !  Revision 1.7  2004/10/01 16:33:39  ivos
       !  cosmetics.
@@ -145,7 +148,7 @@
       !-------------------------------------------------------------------------
       !  Local variables 
       !-------------------------------------------------------------------------
-      INTEGER            :: i,j
+      INTEGER               :: i,j
       INTEGER, DIMENSION(2) :: ldc
       REAL(MK)              :: t0
 
@@ -311,8 +314,6 @@
                   NULLIFY(work_field(i,j)%uc)
                   NULLIFY(work_field(i,j)%fc)
                   NULLIFY(work_field(i,j)%err)
-                  NULLIFY(work_field(i,j)%mask_red)
-                  NULLIFY(work_field(i,j)%mask_black)
                   NULLIFY(work_field(i,j)%bcvalue)
               ENDDO
           ENDDO
@@ -327,13 +328,10 @@
                   work_field(i,j)%uc => field(i,j)%uc
                   work_field(i,j)%fc => field(i,j)%fc
                   work_field(i,j)%err => field(i,j)%err
-                  work_field(i,j)%mask_red => field(i,j)%mask_red
-                  work_field(i,j)%mask_black => field(i,j)%mask_black
                   work_field(i,j)%bcvalue => field(i,j)%bcvalue
               ENDDO
           ENDDO
       ENDIF
-
       IF (ldealloc) THEN
           !---------------------------------------------------------------------
           !  Deallocate the old contents
@@ -366,24 +364,6 @@
      &                       'residual FIELD%ERR',__LINE__,info)
                       ENDIF
                       NULLIFY(field(i,j)%err)
-                  ENDIF
-                  IF (ASSOCIATED(field(i,j)%mask_red)) THEN
-                      DEALLOCATE(field(i,j)%mask_red,STAT=info)
-                      IF (info .NE. 0) THEN
-                          info = ppm_error_error
-                          CALL ppm_error(ppm_err_dealloc,'ppm_mg_alloc_field',&
-     &                       'MASK FIELD%MASK_RED',__LINE__,info)
-                      ENDIF
-                      NULLIFY(field(i,j)%mask_red)
-                  ENDIF
-                  IF (ASSOCIATED(field(i,j)%mask_black)) THEN
-                      DEALLOCATE(field(i,j)%mask_black,STAT=info)
-                      IF (info .NE. 0) THEN
-                          info = ppm_error_error
-                          CALL ppm_error(ppm_err_dealloc,'ppm_mg_alloc_field',&
-     &                       'MASK FIELD%MASK_BLACK',__LINE__,info)
-                      ENDIF
-                      NULLIFY(field(i,j)%mask_black)
                   ENDIF
                   IF (ASSOCIATED(field(i,j)%bcvalue)) THEN
                       DEALLOCATE(field(i,j)%bcvalue,STAT=info)

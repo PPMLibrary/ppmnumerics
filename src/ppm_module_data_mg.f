@@ -1,38 +1,41 @@
-      !-------------------------------------------------------------------------
-      ! Module         :            ppm_module_data_mg
-      !-------------------------------------------------------------------------
-      !
-      ! Purpose       : multigrid data module
-      !               
-      !
-      ! Remarks       :
-      !
-      ! References    : 
-      !
-      ! Revisions     :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_module_data_mg.f,v $
-      !  Revision 1.1.1.1  2006/07/25 15:18:20  menahel
-      !  initial import
-      !
-      !  Revision 1.5  2005/12/08 12:42:36  kotsalie
-      !  commiting dirichlet
-      !
-      !  Revision 1.4  2004/10/29 16:00:47  kotsalie
-      !  RED BLACK SOR
-      !
-      !  Revision 1.3  2004/09/28 14:18:19  kotsalie
-      !  Added 4th order
-      !
-      !  Revision 1.2  2004/09/22 18:40:26  kotsalie
-      !  MG new version
-      !
-      !-------------------------------------------------------------------------
-      !  Parallel Particle Mesh Library (PPM)
-      !  Institute of Computational Science
-      !  ETH Zentrum, Hirschengraben 84
-      !  CH-8092 Zurich, Switzerland
-      !-------------------------------------------------------------------------
+       !------------------------------------------------------------------------
+       ! Module         :            ppm_module_data_mg
+       !------------------------------------------------------------------------
+       !
+       ! Purpose       : multigrid data module
+       !               
+       !
+       ! Remarks       :
+       !
+       ! References    : 
+       !
+       ! Revisions     :
+       !------------------------------------------------------------------------
+       !  $Log: ppm_module_data_mg.f,v $
+       !  Revision 1.1.1.1  2007/07/13 10:18:57  ivos
+       !  CBL version of the PPM library
+       !
+       !  Revision 1.6  2006/07/21 11:30:57  kotsalie
+       !  FRIDAY
+       !
+       !  Revision 1.5  2005/12/08 12:42:36  kotsalie
+       !  commiting dirichlet
+       !
+       !  Revision 1.4  2004/10/29 16:00:47  kotsalie
+       !  RED BLACK SOR
+       !
+       !  Revision 1.3  2004/09/28 14:18:19  kotsalie
+       !  Added 4th order
+       !
+       !  Revision 1.2  2004/09/22 18:40:26  kotsalie
+       !  MG new version
+       !
+       !------------------------------------------------------------------------
+       !  Parallel Particle Mesh Library (PPM)
+       !  Institute of Computational Science
+       !  ETH Zentrum, Hirschengraben 84
+       !  CH-8092 Zurich, Switzerland
+       !------------------------------------------------------------------------
 
 
 #define __SINGLE_PRECISION 1
@@ -355,7 +358,7 @@ MODULE ppm_module_data_mg
   !-----------------------------------------------------------------------------
   !Stopping index for the iteration through the mesh points.
   !-----------------------------------------------------------------------------
-  INTEGER,  DIMENSION(:,:,:), POINTER  :: stop 
+  INTEGER,  DIMENSION(:,:,:), POINTER  :: istop 
   !-----------------------------------------------------------------------------
   !Factor for coarsening the mesh
   !-----------------------------------------------------------------------------

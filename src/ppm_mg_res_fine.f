@@ -1,6 +1,6 @@
-!-----------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 !  Subroutine   :            ppm_mg_res 
-!-----------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 !  Purpose      : In this routine we compute the residual in each level
 !            
 !                  
@@ -15,10 +15,13 @@
 !  References   :
 !
 !  Revisions    :
-!-------------------------------------------------------------------------
+!-------------------------------------------------------------------------------
 !  $Log: ppm_mg_res_fine.f,v $
-!  Revision 1.1.1.1  2006/07/25 15:18:20  menahel
-!  initial import
+!  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
+!  CBL version of the PPM library
+!
+!  Revision 1.7  2006/07/21 11:30:56  kotsalie
+!  FRIDAY
 !
 !  Revision 1.5  2006/02/08 19:56:02  kotsalie
 !  fixed multiple domains
@@ -35,12 +38,12 @@
 !  Revision 1.1  2004/09/22 18:46:21  kotsalie
 !  MG new version
 !
-!------------------------------------------------------------------------  
+!-----------------------------------------------------------------------------
 !  Parallel Particle Mesh Library (PPM)
 !  Institute of Computational Science
 !  ETH Zentrum, Hirschengraben 84
 !  CH-8092 Zurich, Switzerland
-!------------------------------------------------------------------------- 
+!------------------------------------------------------------------------------
 
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
@@ -75,32 +78,29 @@
 #endif
 #endif
 #endif
-
-        !---------------------------------------------------------------------- 
-        !  Includes
         !----------------------------------------------------------------------
+        !  Includes
+        !-----------------------------------------------------------------------
 #include "ppm_define.h"
-
-        !-------------------------------------------------------------------    
+        !-------------------------------------------------------------------
         !  Modules 
-        !--------------------------------------------------------------------
+        !-----------------------------------------------------------------------
         USE ppm_module_data
         USE ppm_module_data_mg
+        USE ppm_module_data_mesh
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_error
         USE ppm_module_alloc
-        USE ppm_module_data_mesh
-
         IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_single
 #else
         INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
-        !-------------------------------------------------------------------    
-        !  Arguments     
         !-------------------------------------------------------------------
+        !  Arguments     
+        !-----------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
         REAL(MK),DIMENSION(:,:,:),POINTER     ::  u
@@ -126,9 +126,9 @@
         REAL(MK),                  INTENT(OUT)     ::  E
         INTEGER,                   INTENT(INOUT)   ::  info
         INTEGER,                   INTENT(IN   )   ::  topo_id
-        !---------------------------------------------------------------------  
-        !  Local variables 
         !---------------------------------------------------------------------
+        !  Local variables 
+        !-----------------------------------------------------------------------
         CHARACTER(LEN=256) :: cbuf
         INTEGER                                    ::  i,j,isub,color
         INTEGER                                    ::  ilda,isweep,count
@@ -176,7 +176,6 @@
 #endif
 #endif
 #endif
-
         !-----------------------------------------------------------------------
         !Externals
         !-----------------------------------------------------------------------
@@ -184,10 +183,7 @@
         !-----------------------------------------------------------------------
         !Initialize
         !-----------------------------------------------------------------------
-
         CALL substart('ppm_mg_res',t0,info)
-         
-
         !-----------------------------------------------------------------------
         !  Check arguments
         !-----------------------------------------------------------------------
@@ -229,8 +225,6 @@
         !Definition of necessary variables and allocation of arrays
         !-----------------------------------------------------------------------
         topoid=topo_id
-
-
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
@@ -260,90 +254,29 @@
 #endif
 #endif
 #endif
-
-
 #if  __DIM == __SFIELD
 #if  __MESH_DIM == __2D
-
         !-----------------------------------------------------------------------
         !Implementation
-        !----------------------------------------------------------------------- 
-         IF (order.EQ.ppm_param_order_2) THEN
-                 DO isub=1,nsubs
-                   aa=0
-                   bb=0
-                   cc=0
-                   dd=0
-
-                IF (.NOT.lperiodic) THEN
-                 DO iface=1,4
-                    IF (bcdef_vec(ilda,isub,iface).EQ.ppm_param_bcdef_periodic) THEN
-                   !DO NOTHING
-                    ELSEIF (bcdef_vec(ilda,isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
-                      IF (iface.EQ.1) THEN
-                        aa=1
-                      ELSEIF (iface.EQ.2) THEN
-                        bb=1
-                      ELSEIF (iface.EQ.3) THEN
-                       cc=1
-                      ELSEIF (iface.EQ.4) THEN
-                       dd=1
-		             ENDIF
-                     ENDIF 
-                    ENDDO !iface
-               ENDIF !periodic
-            ENDDO
+        !----------------------------------------------------------------------
           E =-HUGE(E)
           DO isub=1,nsubs
-            DO j=start(2,isub,1)+cc,stop(2,isub,1)-dd
-               DO i=start(1,isub,1)+aa,stop(1,isub,1)-bb
+            DO j=start(2,isub,1),istop(2,isub,1)
+               DO i=start(1,isub,1),istop(1,isub,1)
                      res  = (u(i-1,j,isub)+u(i+1,j,isub))*c2 + &
      &                      (u(i,j-1,isub)+u(i,j+1,isub))*c3 - &
      &                       u(i,j,isub)*c4-f(i,j,isub)
-
                      E   = MAX(E,abs(res))
                      mgfield(isub,1)%err(i,j)=-res
                      mgfield(isub,1)%uc(i,j)=u(i,j,isub)
                ENDDO
             ENDDO
           ENDDO
-         ELSEIF (order.EQ.ppm_param_order_4) THEN
-
-        c22=c2/12.0_MK
-        c33=c3/12.0_MK
-        c44=c4*1.25_MK
-
-
-          E =-HUGE(E)
-          DO isub=1,nsubs
-            DO j=start(2,isub,1),stop(2,isub,1)
-               DO i=start(1,isub,1),stop(1,isub,1)
-                     res  = (16.0_MK*u(i-1,j,isub)+&
-     &                       16.0_MK*u(i+1,j,isub)-&
-     &                       u(i-2,j,isub)-u(i+2,j,isub))*c22 + &
-     &                      (16.0_MK*u(i,j-1,isub)+16.0_MK*u(i,j+1,isub)-&
-     &                       u(i,j-2,isub)-u(i,j+2,isub))*c33 - &
-     &                       u(i,j,isub)*c44-f(i,j,isub)
-
-                     E   = MAX(E,abs(res))
-                     mgfield(isub,1)%err(i,j)=-res
-                     mgfield(isub,1)%uc(i,j)=u(i,j,isub)
-               ENDDO
-            ENDDO
-          ENDDO
-
-
-         ENDIF
-
-
-
-
 #elif __MESH_DIM == __3D
-
         !-----------------------------------------------------------------------
         !Implementation
-        !----------------------------------------------------------------------- 
-
+        !----------------------------------------------------------------------
+                 E =-HUGE(E)
                  DO isub=1,nsubs
                    aa=0
                    bb=0
@@ -351,12 +284,11 @@
                    dd=0
                    ee=0
                    gg=0
-
                 IF (.NOT.lperiodic) THEN
                  DO iface=1,6
-                    IF (bcdef_vec(ilda,isub,iface).EQ.ppm_param_bcdef_periodic) THEN
+                    IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_periodic) THEN
                    !DO NOTHING
-                    ELSEIF (bcdef_vec(ilda,isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
+                    ELSEIF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
                       IF (iface.EQ.1) THEN
                         aa=1
                       ELSEIF (iface.EQ.2) THEN
@@ -369,17 +301,13 @@
                        ee=1
                       ELSEIF (iface.EQ.6) Then
                        gg=1
-		             ENDIF
+                             ENDIF
                      ENDIF 
                     ENDDO !iface
                ENDIF !periodic
-            ENDDO
-
-        E =-HUGE(E)
-        DO isub=1,nsubs
-           DO k=start(3,isub,1)+ee,stop(3,isub,1)-gg
-              DO j=start(2,isub,1)+cc,stop(2,isub,1)-dd
-                DO i=start(1,isub,1)+aa,stop(1,isub,1)-bb
+           DO k=start(3,isub,1)+ee,istop(3,isub,1)-gg
+              DO j=start(2,isub,1)+cc,istop(2,isub,1)-dd
+                DO i=start(1,isub,1)+aa,istop(1,isub,1)-bb
                        res  = (u(i-1,j,k,isub)+u(i+1,j,k,isub))*c2 + &
      &                        (u(i,j-1,k,isub)+u(i,j+1,k,isub))*c3 + &
      &                        (u(i,j,k-1,isub)+u(i,j,k+1,isub))*c4 - &
@@ -391,51 +319,20 @@
               ENDDO
            ENDDO
         ENDDO
-
-
-
 #endif
 #elif __DIM == __VFIELD
 #if  __MESH_DIM == __2D
-
-                 DO isub=1,nsubs
-                   DO ilda=1,vecdim
-                   aa=0
-                   bb=0
-                   cc=0
-                   dd=0
-
-                IF (.NOT.lperiodic) THEN
-                 DO iface=1,4
-                    IF (bcdef_vec(ilda,isub,iface).EQ.ppm_param_bcdef_periodic) THEN
-                   !DO NOTHING
-                    ELSEIF (bcdef_vec(ilda,isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
-                      IF (iface.EQ.1) THEN
-                        aa=1
-                      ELSEIF (iface.EQ.2) THEN
-                        bb=1
-                      ELSEIF (iface.EQ.3) THEN
-                       cc=1
-                      ELSEIF (iface.EQ.4) THEN
-                       dd=1
-		             ENDIF
-                     ENDIF 
-                    ENDDO !iface
-               ENDIF !periodic
-              ENDDO
-            ENDDO
         !-----------------------------------------------------------------------
         !Implementation
-        !----------------------------------------------------------------------- 
+         !----------------------------------------------------------------------
         E =-HUGE(E)
         DO isub=1,nsubs
-           DO j=start(2,isub,1)+cc,stop(2,isub,1)-dd
-              DO i=start(1,isub,1)+aa,stop(1,isub,1)-bb
+           DO j=start(2,isub,1),istop(2,isub,1)
+              DO i=start(1,isub,1),istop(1,isub,1)
                DO ilda=1,vecdim
                     res  = (u(ilda,i-1,j,isub)+u(ilda,i+1,j,isub))*c2 + &
      &                     (u(ilda,i,j-1,isub)+u(ilda,i,j+1,isub))*c3 - &
      &                      u(ilda,i,j,isub)*c4-f(ilda,i,j,isub)
-
                     E   = MAX(E,abs(res))
                     mgfield(isub,1)%err(ilda,i,j)=-res
                     mgfield(isub,1)%uc(ilda,i,j)=u(ilda,i,j,isub)
@@ -443,18 +340,11 @@
               ENDDO
            ENDDO
         ENDDO
-        
-
-
 #elif __MESH_DIM == __3D
-
         !-----------------------------------------------------------------------
         !Implementation
-        !----------------------------------------------------------------------- 
-
-        
-      IF (order.EQ.ppm_param_order_2) THEN 
-
+        !----------------------------------------------------------------------
+                 E =-HUGE(E)
                  DO isub=1,nsubs
                    aa=0
                    bb=0
@@ -463,7 +353,6 @@
                    ee=0
                    gg=0
                    DO ilda=1,vecdim
-
                 IF (.NOT.lperiodic) THEN
                  DO iface=1,6
                     IF (bcdef_vec(ilda,isub,iface).EQ.ppm_param_bcdef_periodic) THEN
@@ -481,60 +370,43 @@
                        ee=1
                       ELSEIF (iface.EQ.6) Then
                        gg=1
-		             ENDIF
+                      ENDIF
                      ENDIF 
                     ENDDO !iface
                ENDIF !periodic
               ENDDO
-            !ENDDO
-
-          
-        E =-HUGE(E)
-        !DO isub=1,nsubs
-           DO k=start(3,isub,1)+ee,stop(3,isub,1)-gg
-              DO j=start(2,isub,1)+cc,stop(2,isub,1)-dd
-                DO i=start(1,isub,1)+aa,stop(1,isub,1)-bb
+           DO k=start(3,isub,1)+ee,istop(3,isub,1)-gg
+              DO j=start(2,isub,1)+cc,istop(2,isub,1)-dd
+                DO i=start(1,isub,1)+aa,istop(1,isub,1)-bb
 #ifdef __VECTOR
                        res  = (u(1,i-1,j,k,isub)+u(1,i+1,j,k,isub))*c2 +&
      &                        (u(1,i,j-1,k,isub)+u(1,i,j+1,k,isub))*c3 +&
      &                        (u(1,i,j,k-1,isub)+u(1,i,j,k+1,isub))*c4 -&
      &                         u(1,i,j,k,isub)*c5-f(1,i,j,k,isub)
-
                        E   = MAX(E,abs(res))
                        mgfield(isub,1)%err(1,i,j,k)=-res
                        mgfield(isub,1)%uc(1,i,j,k)=u(1,i,j,k,isub)
-
                        res  = (u(2,i-1,j,k,isub)+u(2,i+1,j,k,isub))*c2 +&
      &                        (u(2,i,j-1,k,isub)+u(2,i,j+1,k,isub))*c3 +&
      &                        (u(2,i,j,k-1,isub)+u(2,i,j,k+1,isub))*c4 -&
      &                         u(2,i,j,k,isub)*c5-f(2,i,j,k,isub)
-
                        E   = MAX(E,abs(res))
                        mgfield(isub,1)%err(2,i,j,k)=-res
                        mgfield(isub,1)%uc(2,i,j,k)=u(2,i,j,k,isub)
-
-
                        res  = (u(3,i-1,j,k,isub)+u(3,i+1,j,k,isub))*c2 +&
      &                        (u(3,i,j-1,k,isub)+u(3,i,j+1,k,isub))*c3 +&
      &                        (u(3,i,j,k-1,isub)+u(3,i,j,k+1,isub))*c4 -&
      &                         u(3,i,j,k,isub)*c5-f(3,i,j,k,isub)
-
                        E   = MAX(E,abs(res))
                        mgfield(isub,1)%err(3,i,j,k)=-res
                        mgfield(isub,1)%uc(3,i,j,k)=u(3,i,j,k,isub)
-
 #else
                  DO ilda=1,vecdim
                        res  = (u(ilda,i-1,j,k,isub)+u(ilda,i+1,j,k,isub))*c2 +&
      &                        (u(ilda,i,j-1,k,isub)+u(ilda,i,j+1,k,isub))*c3 +&
      &                        (u(ilda,i,j,k-1,isub)+u(ilda,i,j,k+1,isub))*c4 -&
      &                         u(ilda,i,j,k,isub)*c5-f(ilda,i,j,k,isub)
-
                        E   = MAX(E,abs(res))
-                       IF (ilda.EQ.1.AND.ABS(res).GT.0.0) THEN
-                        
-                           !PRINT *,'RES:',res,i,j,k,isub
-                       ENDIF
                        mgfield(isub,1)%err(ilda,i,j,k)=-res
                        mgfield(isub,1)%uc(ilda,i,j,k)=u(ilda,i,j,k,isub)
                   ENDDO
@@ -543,21 +415,15 @@
               ENDDO
            ENDDO
         ENDDO
-
-       ELSEIF (order.EQ.ppm_param_order_4) THEN 
-   
-      ENDIF 
-
 #endif
 #endif
-
-
-        !---------------------------------------------------------------------- 
-        !  Return 
         !----------------------------------------------------------------------
+        !  Return 
+        !-----------------------------------------------------------------------
 9999    CONTINUE
         CALL substop('ppm_mg_res',t0,info)
         RETURN
+
 #if __DIM == __SFIELD
 #if   __MESH_DIM   == __2D
 #if    __KIND == __SINGLE_PRECISION
@@ -587,7 +453,3 @@
 #endif
 #endif
 #endif
-
-
-
-
