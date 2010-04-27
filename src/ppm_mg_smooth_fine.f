@@ -114,7 +114,7 @@
          USE ppm_module_error
          USE ppm_module_alloc
          USE ppm_module_map
-         USE ppm_module_data_mesh
+         
          IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
          INTEGER, PARAMETER :: MK = ppm_kind_single

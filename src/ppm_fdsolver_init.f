@@ -138,7 +138,7 @@
       !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
-      USE ppm_module_data_mesh
+      
       USE ppm_module_mktopo
       USE ppm_module_typedef
       USE ppm_module_data_fieldsolver

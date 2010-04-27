@@ -231,7 +231,7 @@
       !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
-      USE ppm_module_data_mesh
+      
       USE ppm_module_mktopo
       USE ppm_module_mesh_define
       USE ppm_module_fdsolver_map

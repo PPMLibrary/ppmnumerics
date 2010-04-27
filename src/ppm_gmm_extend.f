@@ -95,7 +95,7 @@
       !  Modules 
       !-------------------------------------------------------------------------
       USE ppm_module_data
-      USE ppm_module_data_mesh
+      
       USE ppm_module_data_gmm
       USE ppm_module_gmm_init
       USE ppm_module_gmm_cpt

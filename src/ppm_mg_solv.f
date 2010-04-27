@@ -121,7 +121,7 @@
          !----------------------------------------------------------------------
         USE ppm_module_data
         USE ppm_module_data_mg
-        USE ppm_module_data_mesh
+        
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_error
@@ -183,6 +183,7 @@
          REAL(MK)                             :: gEu 
          INTEGER                              :: MPI_PREC
          TYPE(ppm_t_topo),      POINTER       :: topo
+         TYPE(ppm_t_equi_mesh), POINTER       :: mesh
 #if __MESH_DIM == __3D
          REAL(MK)                             :: c5,dz,rdz2
          INTEGER,DIMENSION(4)                 :: ldl4,ldu4
@@ -267,6 +268,7 @@
         ENDIF
 #endif
 		topo => ppm_topo(topo_id)%t
+		mesh => topo%mesh(meshid_g(1))
         !----------------------------------------------------------------------
         !  Check arguments
         !----------------------------------------------------------------------
@@ -282,15 +284,15 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(u(:,:,i),1).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(1,idom)+2*ghostsize(1)) THEN
+              IF (SIZE(u(:,:,i),1).LT.mesh%nnodes(1,idom)+ &
+     &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in x-dir!',__LINE__,info)  
                  GOTO 9999    
               ENDIF
-              IF (SIZE(u(:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(2,idom)+2*ghostsize(2)) THEN
+              IF (SIZE(u(:,:,i),2).LT.mesh%nnodes(2,idom) &
+     &                                             +2*ghostsize(2)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in y-dir!',__LINE__,info)
@@ -306,15 +308,13 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(f(:,:,i),1).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                  topoid)%nnodes(1,idom)) THEN
+              IF (SIZE(f(:,:,i),1).LT. mesh%nnodes(1,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'rhs mess with mesh points in x-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(f(:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(2,idom)) THEN
+              IF (SIZE(f(:,:,i),2).LT. mesh%nnodes(2,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'rhs mess with mesh points in y-dir!',__LINE__,info)
@@ -331,22 +331,22 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(u(:,:,:,i),1).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                   topoid)%nnodes(1,idom)+2*ghostsize(1)) THEN
+              IF (SIZE(u(:,:,:,i),1).LT.mesh%nnodes(1,idom)+ &
+     &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in x-dir!',__LINE__,info)  
                  GOTO 9999    
               ENDIF
-              IF (SIZE(u(:,:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(2,idom)+2*ghostsize(2)) THEN
+              IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(2,idom)+ &
+     &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in y-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(u(:,:,:,i),3).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                   topoid)%nnodes(3,idom)+2*ghostsize(3)) THEN
+              IF (SIZE(u(:,:,:,i),3).LT.mesh%nnodes(3,idom)+ &
+     &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in z-dir!',__LINE__,info)
@@ -362,22 +362,19 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(f(:,:,:,i),1).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                    topoid)%nnodes(1,idom)) THEN
+              IF (SIZE(f(:,:,:,i),1).LT.mesh%nnodes(1,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &                   'rhs mess with mesh points in x-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(f(:,:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                          topoid)%nnodes(2,idom)) THEN
+              IF (SIZE(f(:,:,:,i),2).LT.mesh%nnodes(2,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &            'rhs mess with mesh points in y-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(f(:,:,:,i),3).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                         topoid)%nnodes(3,idom)) THEN
+              IF (SIZE(f(:,:,:,i),3).LT.mesh%nnodes(3,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'rhs mess with mesh points in z-dir!',__LINE__,info)
@@ -396,15 +393,13 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(u(:,:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(1,idom)+2) THEN
+              IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(1,idom)+2) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in x-dir!',__LINE__,info)  
                  GOTO 9999    
               ENDIF
-              IF (SIZE(u(:,:,:,i),3).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(2,idom)+2) THEN
+              IF (SIZE(u(:,:,:,i),3).LT.mesh%nnodes(2,idom)+2) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in y-dir!',__LINE__,info)
@@ -420,15 +415,13 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(f(:,:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                  topoid)%nnodes(1,idom)) THEN
+              IF (SIZE(f(:,:,:,i),2).LT.mesh%nnodes(1,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'rhs mess with mesh points in x-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(f(:,:,:,i),3).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(2,idom)) THEN
+              IF (SIZE(f(:,:,:,i),3).LT.mesh%nnodes(2,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'rhs mess with mesh points in y-dir!',__LINE__,info)
@@ -445,22 +438,22 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(u(:,:,:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                   topoid)%nnodes(1,idom)+2*ghostsize(1)) THEN
+              IF (SIZE(u(:,:,:,:,i),2).LT.mesh%nnodes(1,idom)+ &
+     &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in x-dir!',__LINE__,info)  
                  GOTO 9999    
               ENDIF
-              IF (SIZE(u(:,:,:,:,i),3).LT.ppm_cart_mesh(meshid_g(1),  &
-     &           topoid)%nnodes(2,idom)+2*ghostsize(2)) THEN
+              IF (SIZE(u(:,:,:,:,i),3).LT.mesh%nnodes(2,idom)+ &
+     &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in y-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(u(:,:,:,:,i),4).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                   topoid)%nnodes(3,idom)+2*ghostsize(3)) THEN
+              IF (SIZE(u(:,:,:,:,i),4).LT.mesh%nnodes(3,idom)+ &
+     &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'solution mess with mesh points in z-dir!',__LINE__,info)
@@ -476,22 +469,19 @@
            topoid=topo_id
            DO i=1,nsubs
               idom=topo%isublist(i)
-              IF (SIZE(f(:,:,:,:,i),2).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                    topoid)%nnodes(1,idom)) THEN
+              IF (SIZE(f(:,:,:,:,i),2).LT.mesh%nnodes(1,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &                   'rhs mess with mesh points in x-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(f(:,:,:,:,i),3).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                          topoid)%nnodes(2,idom)) THEN
+              IF (SIZE(f(:,:,:,:,i),3).LT.mesh%nnodes(2,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &            'rhs mess with mesh points in y-dir!',__LINE__,info)
                  GOTO 9999
               ENDIF
-              IF (SIZE(f(:,:,:,:,i),4).LT.ppm_cart_mesh(meshid_g(1),  &
-     &                                         topoid)%nnodes(3,idom)) THEN
+              IF (SIZE(f(:,:,:,:,i),4).LT.mesh%nnodes(3,idom)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
      &             'rhs mess with mesh points in z-dir!',__LINE__,info)

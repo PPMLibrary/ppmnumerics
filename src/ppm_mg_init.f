@@ -149,7 +149,7 @@
          !  Modules 
          !----------------------------------------------------------------------
          USE ppm_module_data
-         USE ppm_module_data_mesh
+         
          USE ppm_module_data_mg
          USE ppm_module_mg_alloc
          USE ppm_module_alloc
@@ -908,9 +908,9 @@
                ldl3(1) = 1-ghostsize(1)
                ldl3(2) = 1-ghostsize(2)
                ldl3(3) = 1-ghostsize(3)
-               ldu3(1) = ppm_cart_mesh(meshid,topoid)%nnodes(1,idom)+ghostsize(1)
-               ldu3(2) = ppm_cart_mesh(meshid,topoid)%nnodes(2,idom)+ghostsize(2)
-               ldu3(3) = ppm_cart_mesh(meshid,topoid)%nnodes(3,idom)+ghostsize(3)
+               ldu3(1) = mesh%nnodes(1,idom)+ghostsize(1)
+               ldu3(2) = mesh%nnodes(2,idom)+ghostsize(2)
+               ldu3(3) = mesh%nnodes(3,idom)+ghostsize(3)
                CALL ppm_alloc(mgfield(i,mlev)%uc,ldl3,ldu3,iopt,info)
                IF (info .NE. 0) THEN
                   info = ppm_error_fatal
@@ -921,9 +921,9 @@
                tuc=>mgfield(i,mlev)%uc
                tuc=0.0_MK              
                iopt = ppm_param_alloc_fit
-               ldu3(1) = ppm_cart_mesh(meshid,topoid)%nnodes(1,idom)
-               ldu3(2) = ppm_cart_mesh(meshid,topoid)%nnodes(2,idom)
-               ldu3(3) = ppm_cart_mesh(meshid,topoid)%nnodes(3,idom)
+               ldu3(1) = mesh%nnodes(1,idom)
+               ldu3(2) = mesh%nnodes(2,idom)
+               ldu3(3) = mesh%nnodes(3,idom)
                CALL ppm_alloc(mgfield(i,mlev)%fc,ldu3,iopt,info)
                IF (info .NE. 0) THEN
                   info = ppm_error_fatal
@@ -936,9 +936,9 @@
                ldl3(1) = 1-ghostsize(1)
                ldl3(2) = 1-ghostsize(2)
                ldl3(3) = 1-ghostsize(3)
-               ldu3(1) = ppm_cart_mesh(meshid,topoid)%nnodes(1,idom)+ghostsize(1)
-               ldu3(2) = ppm_cart_mesh(meshid,topoid)%nnodes(2,idom)+ghostsize(2)
-               ldu3(3) = ppm_cart_mesh(meshid,topoid)%nnodes(3,idom)+ghostsize(3)
+               ldu3(1) = mesh%nnodes(1,idom)+ghostsize(1)
+               ldu3(2) = mesh%nnodes(2,idom)+ghostsize(2)
+               ldu3(3) = mesh%nnodes(3,idom)+ghostsize(3)
                CALL ppm_alloc(mgfield(i,mlev)%err,ldl3,ldu3,iopt,info)
                IF (info .NE. 0) THEN
                   info = ppm_error_fatal
