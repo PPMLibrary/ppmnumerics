@@ -121,7 +121,7 @@
          !----------------------------------------------------------------------
         USE ppm_module_data
         USE ppm_module_data_mg
-        
+        USE ppm_module_data_mesh
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_error
@@ -131,6 +131,7 @@
         USE ppm_module_mg_res
         USE ppm_module_mg_prolong
         USE ppm_module_mg_smooth
+        USE ppm_module_write
          IMPLICIT NONE
 #ifdef __MPI
        INCLUDE  'mpif.h'
@@ -583,8 +584,8 @@
               ENDIF
              uc_dummy(:,:,:,:)=0.0_MK
 #endif
-           CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(i),&
-     &                             ghostsize,ppm_param_map_init,info) 
+           CALL ppm_map_field_ghost_init(topoid,mesh_id_g(i),&
+     &                             ghostsize,info)
 #if __MESH_DIM == __2D
              iopt = ppm_param_dealloc
              ldl3(1) = 1-ghostsize(1)
@@ -658,8 +659,8 @@
               ENDIF
              uc_dummy(:,:,:,:,:)=0.0_MK
 #endif
-           CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(i),&
-     &                             ghostsize,ppm_param_map_init,info) 
+           CALL ppm_map_field_ghost_init(topoid,mesh_id_g(i),&
+     &                             ghostsize,info)
 #if __MESH_DIM == __2D
              iopt = ppm_param_dealloc
              ldl4(1) = 1-ghostsize(1)

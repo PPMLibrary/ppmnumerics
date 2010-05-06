@@ -33,5 +33,11 @@
          USE ppm_module_mg_init
          USE ppm_module_mg_solv
          USE ppm_module_mg_finalize
+         USE ppm_module_mg_alloc
+         USE ppm_module_mg_core
+         USE ppm_module_mg_prolong
+         USE ppm_module_mg_res
+         USE ppm_module_mg_restrict
+         USE ppm_module_mg_smooth
          
       END MODULE ppm_module_mg

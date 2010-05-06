@@ -102,6 +102,8 @@
       USE ppm_module_substart
       USE ppm_module_substop
       USE ppm_module_error
+      USE ppm_module_write
+
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single

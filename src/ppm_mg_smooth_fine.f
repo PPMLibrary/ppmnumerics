@@ -114,7 +114,8 @@
          USE ppm_module_error
          USE ppm_module_alloc
          USE ppm_module_map
-         
+         USE ppm_module_data_mesh
+         USE ppm_module_write
          IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
          INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -353,14 +354,14 @@ dz=dz_d
               !----------------------------------------------------------------
               !Communicate
               !----------------------------------------------------------------
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
             DO isub=1,nsubs
               DO j=start(2,isub,1),istop(2,isub,1)
                  DO i=start(1,isub,1)+mod(j+color,2),istop(1,isub,1),2
@@ -373,14 +374,13 @@ dz=dz_d
              ENDDO !isub
         ENDDO!DO color
         IF (isweep.EQ.nsweep) THEN
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
 
         ENDIF
       ENDDO
@@ -481,14 +481,13 @@ dz=dz_d
               !Communicate red(even) if color==0 or communicate black(odd)
               !if color==1
               !----------------------------------------------------------------
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
               DO isub=1,nsubs
               DO k=start(3,isub,1)+e(isub),istop(3,isub,1)-g(isub)
                  DO j=start(2,isub,1)+c(isub),istop(2,isub,1)-d(isub)
@@ -512,14 +511,13 @@ dz=dz_d
            ENDDO!subs
         ENDDO!DO color
         IF (isweep.EQ.nsweep) THEN
-             CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
         ENDIF
       ENDDO
 #endif
@@ -535,14 +533,14 @@ dz=dz_d
               !Communicate red(even) if color==0 or communicate black(odd)
               !if color==1
               !----------------------------------------------------------------
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
+        &                          vecdim,ghostsize,info)
            DO isub=1,nsubs
               DO j=start(2,isub,1),istop(2,isub,1)
                  DO i=start(1,isub,1)+mod(j+color,2),istop(1,isub,1),2
@@ -557,14 +555,14 @@ dz=dz_d
            ENDDO
         ENDDO!DO color
         IF (isweep.EQ.nsweep) THEN
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
+        &                          vecdim,ghostsize,info)
          ENDIF
        ENDDO
 #elif __MESH_DIM == __3D
@@ -671,14 +669,14 @@ dz=dz_d
               !Communicate red(even) if color==0 or communicate black(odd)
               !if color==1
               !----------------------------------------------------------------
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
+        &                          vecdim,ghostsize,info)
 #ifdef  __VECTOR
              DO isub=1,nsubs
               DO k=start(3,isub,1)+e(isub),istop(3,isub,1)-g(isub)
@@ -747,14 +745,14 @@ dz=dz_d
 #endif
           ENDDO!DO color
             IF (isweep.EQ.nsweep) THEN
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                    ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(u,vecdim,topoid,mesh_id_g(mlev),&
-     &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
+        &                          vecdim,ghostsize,info)
            ENDIF
        ENDDO
             iopt = ppm_param_dealloc

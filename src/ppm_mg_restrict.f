@@ -97,9 +97,12 @@
         !-----------------------------------------------------------------------
         USE ppm_module_data
         USE ppm_module_data_mg
-        USE ppm_module_error
+        USE ppm_module_alloc
         USE ppm_module_substart
         USE ppm_module_substop
+        USE ppm_module_error
+        USE ppm_module_write
+        USE ppm_module_map
         IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
            INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -274,14 +277,15 @@
               ENDDO
             ENDDO   
           ENDDO 
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlevm1),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                         info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                          ghostsize,info)
           DO isub=1,nsubs
             terr=>mgfield(isub,mlevm1)%err 
             pfc=>mgfield(isub,mlev)%fc 
@@ -352,14 +356,15 @@
             ENDDO   
            ENDDO
           ENDDO 
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(uc_dummy,topoid,mesh_id_g(mlevm1),&
-        &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlevm1),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                         info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                          ghostsize,info)
 
 
             DO isub=1,nsubs
@@ -477,14 +482,16 @@
              ENDDO   
             ENDDO
           ENDDO 
-              CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_ghost_get,info)
-              CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_push,info)
-              CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-        &                         ghostsize,ppm_param_map_send,info)
-              CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-        &                          ghostsize,ppm_param_map_pop,info)
+
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlevm1),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                         vecdim,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                          vecdim,ghostsize,info)
           DO isub=1,nsubs
             terr=>mgfield(isub,mlevm1)%err
             pfc=>mgfield(isub,mlev)%fc
@@ -573,14 +580,15 @@
             ENDDO
           ENDDO  
         ENDDO 
-        CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-       &                         ghostsize,ppm_param_map_ghost_get,info)
-        CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-       &                         ghostsize,ppm_param_map_push,info)
-        CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-       &                         ghostsize,ppm_param_map_send,info)
-        CALL ppm_map_field_ghost(uc_dummy,vecdim,topoid,mesh_id_g(mlevm1),&
-       &                          ghostsize,ppm_param_map_pop,info)
+              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlevm1),&
+        &                         ghostsize,info)
+              CALL ppm_map_field_push(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                         vecdim,info)
+              CALL ppm_map_field_send(info)
+              !TODO: I'm not 100% sure about that since the signature
+              !has been changed dramatically
+              CALL ppm_map_field_pop(topoid,mesh_id_g(mlevm1),uc_dummy,&
+        &                          vecdim,ghostsize,info)
          DO isub=1,nsubs
            terr=>mgfield(isub,mlevm1)%err
            pfc=>mgfield(isub,mlev)%fc
