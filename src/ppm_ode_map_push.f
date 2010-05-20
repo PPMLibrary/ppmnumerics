@@ -91,7 +91,6 @@
         INTEGER                                   :: ldasend
         INTEGER                                   :: throwaway
         INTEGER                                   :: mid, umidmax, umidmin
-        INTEGER                                   :: to_topo
         !-----------------------------------------------------------------------
         !  call substart
         !-----------------------------------------------------------------------
@@ -175,9 +174,7 @@
         ldasend = lda*ppm_ode_sent(mid)
         IF(ldasend.EQ.0) GOTO 9999
         
-        to_topo = -1
-        CALL ppm_map_part(bfr,ldasend,Npart,mpart,to_topo,& 
-             & ppm_param_map_push, info)
+        CALL ppm_map_part_push(bfr,ldasend,Npart,info)
         IF(info.NE.0) THEN
            GOTO 9999
         END IF

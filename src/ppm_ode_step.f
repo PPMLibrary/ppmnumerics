@@ -133,6 +133,7 @@
         !-----------------------------------------------------------------------
         USE ppm_module_data_ode
         USE ppm_module_data
+        USE ppm_module_check_topoid
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_error
@@ -146,8 +147,9 @@
 #endif
 #if     __KIND == __SINGLE_PRECISION
         INTERFACE
-           FUNCTION rhsfunc(xp,up,dup,lda,npart,ipack,&
+           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,&
                 &lpack,rpack,info)
+             INTEGER                          , INTENT(IN)  :: topoid
              INTEGER                          , INTENT(IN)  :: lda,npart
              INTEGER                          , INTENT(OUT) :: info
 #if     __MODE == __SCA
@@ -166,8 +168,9 @@
         END INTERFACE
 #else
         INTERFACE
-           FUNCTION rhsfunc(xp,up,dup,lda,npart,ipack,&
+           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,&
                 &lpack,rpack,info)
+             INTEGER                          , INTENT(IN)  :: topoid
              INTEGER                          , INTENT(IN)  :: lda,npart
              INTEGER                          , INTENT(OUT) :: info
 #if     __MODE == __SCA
@@ -214,6 +217,8 @@
         INTEGER                                   :: stsn
         REAL(mk), DIMENSION(20)                   :: stsnu
         REAL(mk)                                  :: tau
+        INTEGER                                   :: topoid
+        LOGICAL                                   :: topo_valid
         !-----------------------------------------------------------------------
         !  fill the nu parameters for the sts scheme
         !-----------------------------------------------------------------------
@@ -334,7 +339,15 @@
                    & 'BFR is empty',__LINE__,info)
               GOTO 9999
            END IF
+           CALL ppm_check_topoid(ppm_ode_topoid,topo_valid,info)
+           IF (.NOT. topo_valid) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'topoid not valid',__LINE__,info)
+              GOTO 9999
+           ENDIF
         END IF ! (ppm_debug.GT.0)
+        topoid = ppm_ode_topoid
         mid = ppm_internal_mid(odeid)
         !-----------------------------------------------------------------------
         ! check state if finished, bail out
@@ -620,13 +633,13 @@
               !-----------------------------------------------------------------
               DO i=1,Npart
 #if      __MODE == __SCA
-                 up(i)   = bfr(1,i) + 1.0_MK/6.0_MK*dt*                        &
-        &                  (bfr(2,i) + 2.0_MK*bfr(3,i) + 2.0_MK*bfr(4,i)+ dup(i))
+                 up(i) = bfr(1,i) + 1.0_MK/6.0_MK*dt*                    &
+     &                   (bfr(2,i) + 2.0_MK*bfr(3,i) + 2.0_MK*bfr(4,i) + up(i))
 #elif    __MODE == __VEC
         DO ilda=1,lda
-           up(ilda,i) = bfr(ilda,i) +  1.0_MK/6.0_MK*dt*                   & 
-           &                (bfr((lda+ilda),i) + 2.0_MK*bfr((2*lda+ilda),i)  &
-           &                             + 2.0_MK*bfr((3*lda+ilda),i)+ dup(ilda,i))
+           up(ilda,i) = bfr(ilda,i) + 1.0_MK/6.0_MK*dt*                    &
+           &            (bfr((lda+ilda),i) + 2.0_MK*bfr((2*lda+ilda),i) +  &
+           &            2.0_MK*bfr((3*lda+ilda),i)+ dup(ilda,i))
         END DO
 #endif                 
       END DO

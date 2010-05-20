@@ -124,6 +124,11 @@
         INTEGER            :: ppm_max_mid
         INTEGER            :: ppm_max_mid_allocd
 
+        !-----------------------------------------------------------------------
+        ! topology ID to work on
+        !-----------------------------------------------------------------------
+        INTEGER            :: ppm_ode_topoid
+
       CONTAINS
         SUBROUTINE ppm_module_data_ode_activate
 

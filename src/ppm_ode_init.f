@@ -50,7 +50,7 @@
       !  ETH Zentrum, Hirschengraben 84
       !  CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
-      SUBROUTINE ppm_ode_init(info)
+      SUBROUTINE ppm_ode_init(topoid,info)
       !-----------------------------------------------------------------------
       !  Includes
       !-----------------------------------------------------------------------
@@ -67,7 +67,8 @@
         !-----------------------------------------------------------------------
         !  Arguments
         !-----------------------------------------------------------------------
-        INTEGER,                    INTENT(  out) :: info
+        INTEGER,                    INTENT(IN   ) :: topoid
+        INTEGER,                    INTENT(  OUT) :: info
         !-----------------------------------------------------------------------
         ! Local Variables
         !-----------------------------------------------------------------------
@@ -94,7 +95,7 @@
         END IF
         mid = -1
         !-----------------------------------------------------------------------
-        ! nullify some guys
+        ! nullify some module variables
         !-----------------------------------------------------------------------
         NULLIFY(ppm_ode_ischeme);    NULLIFY(ppm_ode_adaptive)
         NULLIFY(ppm_ode_stages);    NULLIFY(ppm_ode_state)
@@ -103,6 +104,11 @@
         NULLIFY(ppm_ode_kscheme)
         ppm_max_mid        = 0
         ppm_max_mid_allocd = 0
+
+        !-----------------------------------------------------------------------
+        ! register the ID of the topology to be used for the ODE solver
+        !-----------------------------------------------------------------------
+        ppm_ode_topoid = topoid
 9999    CONTINUE        
         !-----------------------------------------------------------------------
         ! substop
