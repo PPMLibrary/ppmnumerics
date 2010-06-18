@@ -22,9 +22,10 @@ m4_pattern_allow([AS_TR_SH])
 
 AC_INIT(PPM, 1.0.2)
 
-# Remove existing preprocessing flags
+# Reset existing preprocessing flags
 touch ./src/ppm_define.h
 rm ./src/ppm_define.h
+touch ./src/ppm_define.h
 
 # if MPI is enabled try grabbing those compiler wrappers first
 use_mpi=no 

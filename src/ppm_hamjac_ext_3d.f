@@ -64,13 +64,21 @@
         USE ppm_module_alloc
         USE ppm_module_typedef
         IMPLICIT NONE
+
+#ifdef __MPI
         INCLUDE 'mpif.h'
+#endif
+
 #if    __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_single
+#ifdef __MPI
         INTEGER, PARAMETER :: MPTYPE = MPI_REAL
+#endif
 #elif  __KIND == __DOUBLE_PRECISION       
         INTEGER, PARAMETER :: MK = ppm_kind_double
+#ifdef __MPI
         INTEGER, PARAMETER :: MPTYPE = MPI_DOUBLE_PRECISION
+#endif
 #endif
         !-----------------------------------------------------
         !  Arguments
@@ -228,7 +236,11 @@
 #endif                 
               END DO; END DO; END DO
            END DO
+#ifdef __MPI
            CALL MPI_Allreduce(lres,gres,1,MPTYPE,MPI_MAX,ppm_comm,info)
+#else
+          gres = lres 
+#endif
            !-----------------------------------------------------
            !  maybe put a if(debug)then
            !-----------------------------------------------------
