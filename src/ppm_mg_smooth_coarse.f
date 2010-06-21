@@ -633,8 +633,7 @@
                 CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
         &                         info)
                 CALL ppm_map_field_send(info)
-                !TODO: I'm not 100% sure about that since the signature
-                !has been changed dramatically
+
                 CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
         &                          ghostsize,info)
                ENDIF

@@ -359,8 +359,7 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
+
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
             DO isub=1,nsubs
               DO j=start(2,isub,1),istop(2,isub,1)
