@@ -377,8 +377,7 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
+
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
 
         ENDIF
@@ -484,8 +483,6 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
               DO isub=1,nsubs
               DO k=start(3,isub,1)+e(isub),istop(3,isub,1)-g(isub)
@@ -514,8 +511,6 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,ghostsize,info)
         ENDIF
       ENDDO
@@ -536,8 +531,6 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
         &                          vecdim,ghostsize,info)
            DO isub=1,nsubs
@@ -558,8 +551,6 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
         &                          vecdim,ghostsize,info)
          ENDIF
@@ -672,8 +663,6 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
         &                          vecdim,ghostsize,info)
 #ifdef  __VECTOR
@@ -748,8 +737,6 @@ dz=dz_d
         &                         ghostsize,info)
               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),u,vecdim,info)
               CALL ppm_map_field_send(info)
-              !TODO: I'm not 100% sure about that since the signature
-              !has been changed dramatically
               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),u,&
         &                          vecdim,ghostsize,info)
            ENDIF
