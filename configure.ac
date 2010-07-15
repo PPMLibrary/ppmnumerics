@@ -43,6 +43,10 @@ AC_ARG_ENABLE([mpi],
     use_mpi=yes],
   [AC_MSG_NOTICE([MPI was not enabled. Building non-parallel version of PPM.])])
 
+: ${CFLAGS="-O3"}
+: ${CXXFLAGS="-O3"}
+: ${FCFLAGS="-O3"}
+
 # Checks for basic compiler and flags
 AC_PROG_CXX
 AC_PROG_CPP

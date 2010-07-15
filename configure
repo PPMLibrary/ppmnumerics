@@ -3580,6 +3580,10 @@ $as_echo "$as_me: MPI was not enabled. Building non-parallel version of PPM." >&
 fi
 
 
+: ${CFLAGS="-O3"}
+: ${CXXFLAGS="-O3"}
+: ${FCFLAGS="-O3"}
+
 # Checks for basic compiler and flags
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
@@ -6242,13 +6246,13 @@ $as_echo "$ax_cv_f90_ldflags_ppm $ax_cv_f90_libs_ppm" >&6; }
 if test "$ax_cv_f90_libs_ppm" = "not found"; then
  F90_LDFLAGS_ppm=""
  F90_LIBS_ppm=""
-
-    LDFLAGS="$LDFLAGS $F90_LDFLAGS_ppm"
-    LIBS="$F90_LIBS_ppm $LIBS"
-
+ as_fn_error "cannot compile ppm numerics without ppm core" "$LINENO" 5
 else
  F90_LDFLAGS_ppm=$ax_cv_f90_ldflags_ppm
  F90_LIBS_ppm=$ax_cv_f90_libs_ppm
+
+    LDFLAGS="$LDFLAGS $F90_LDFLAGS_ppm"
+    LIBS="$F90_LIBS_ppm $LIBS"
 
 fi
 

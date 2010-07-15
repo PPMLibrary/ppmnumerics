@@ -79,5 +79,5 @@ AC_DEFUN([AX_F90_LIBRARY_SETUP],[
  AX_F90_LIBRARY([$1],[$4],[$5],$withval,[
     LDFLAGS="$LDFLAGS $AS_TR_SH(F90_LDFLAGS_$1)"
     LIBS="$AS_TR_SH(F90_LIBS_$1) $LIBS"
-   ],[])
+   ],[AC_MSG_ERROR([cannot compile ppm numerics without ppm core])])
 ])

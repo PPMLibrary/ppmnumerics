@@ -94,11 +94,11 @@ AC_MSG_RESULT([AS_VAR_GET(ax_ldflags) AS_VAR_GET(ax_libs)])
 if test "AS_VAR_GET(ax_libs)" = "not found"; then
  AS_TR_SH(F90_LDFLAGS_$1)=""
  AS_TR_SH(F90_LIBS_$1)=""
- $5
+ $6
 else
  AS_TR_SH(F90_LDFLAGS_$1)=AS_VAR_GET(ax_ldflags)
  AS_TR_SH(F90_LIBS_$1)=AS_VAR_GET(ax_libs)
- $6
+ $5
 fi
 AC_SUBST(AS_TR_SH(F90_LDFLAGS_$1))
 AC_SUBST(AS_TR_SH(F90_LIBS_$1))
