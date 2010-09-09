@@ -95,8 +95,7 @@
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_map
-      USE ppm_module_check_topoid
-      USE ppm_module_check_meshid
+      USE ppm_module_check_id
       USE ppm_module_error
 
 

@@ -133,7 +133,7 @@
         !-----------------------------------------------------------------------
         USE ppm_module_data_ode
         USE ppm_module_data
-        USE ppm_module_check_topoid
+        USE ppm_module_check_id
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_error
