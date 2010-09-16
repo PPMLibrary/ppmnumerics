@@ -20,7 +20,7 @@
 AC_PREREQ(2.61)
 m4_pattern_allow([AS_TR_SH])
 
-AC_INIT(PPM, 1.0.2)
+AC_INIT(PPM, 1.1.9)
 
 # Reset existing preprocessing flags
 touch ./src/ppm_define.h
@@ -163,17 +163,6 @@ AC_ARG_ENABLE([debug],[AS_HELP_STRING([--enable-debug],
   [enable debug mode (default is no)])],
   [AC_SUBST(DEBUG,-O0)])
 
-
-# Switch language back to C for checking libraries
-AC_LANG([C])
-
-# Checks for header files
-AC_HEADER_STDC
-AC_CHECK_HEADERS([stdlib.h])
-
-# Checks for typedefs and structures
-AC_C_CONST
-AC_C_INLINE
 
 # Generate Makefiles
 AC_CONFIG_FILES([Makefile])
