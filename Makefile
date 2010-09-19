@@ -21,11 +21,11 @@ prefix = /usr/local
 exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 builddir = .
-LIBS = -lppm -lm 
-LDFLAGS = -L/Users/omar/sw/metis/gcc/lib -L../../ngtopo-libppm/libppm/lib
-CFLAGS = -g -O2
+LIBS = -lppm -lppm -lm 
+LDFLAGS = -L/Users/omar/sw/metis/gcc/lib -L../../ngtopo-libppm/libppm/lib -L../../ngtopo-libppm/libppm/lib
+CFLAGS = -O3
 FCLIBS =  -L/Users/omar/sw/metis/gcc/lib -L/opt/local/lib/gcc44/gcc/x86_64-apple-darwin10/4.4.4 -L/opt/local/lib/gcc44/gcc/x86_64-apple-darwin10/4.4.4/../../.. -lgfortranbegin -lgfortran
-FCFLAGS = -g -O2 -ffree-form -I../../ngtopo-libppm/libppm/include
+FCFLAGS = -O3 -ffree-form -I../../ngtopo-libppm/libppm/include
 FC = gfortran-mp-4.4
 CC = gcc-mp-4.4
 CXX = g++-mp-4.4
@@ -66,6 +66,7 @@ $(shell test -d $(OBJ_DIR) || mkdir $(OBJ_DIR))
 $(shell test -d $(MODULES_DIR) || mkdir $(MODULES_DIR))
 $(shell test -d $(builddir)/lib || mkdir $(builddir)/lib)
 $(shell test -d $(libdir) || mkdir $(libdir))
+$(warning done.)
 
 .DEFAULT: ;
 
@@ -80,7 +81,6 @@ $(TARGET): $(OBJECTS)
 # 2) we add the dependency file as a target
 # 3) find INCLUDE and USE statements that are not inside a comment
 $(OBJ_DIR)/%.d: $(SRC_DIR)/%.f
-	@echo '[ quietly making' $@ ']'
 	@$(CPP) $(CPPINCLS) -M $< | \
         sed -e 's#$*.o#$(OBJ_DIR)/$*.o $@#' \
             -e 's#$$#\\#' \
@@ -128,4 +128,6 @@ install: all
 new: clean all install
 
 # This ensures all dependency files are up-to-date
-include $(DEPENDENCIES)
+# WARNING: The directive below will fail silently, in case of problems
+# remove the leading s: include $(DEPENDENCIES)
+sinclude $(DEPENDENCIES)
