@@ -9,10 +9,10 @@
 #  References   :
 #
 #  Revisions    : This autoconf was written by Justin Park  8.17.2009
+#                 Revised by Omar Awile
 #-------------------------------------------------------------------------
 #  Parallel Particle Mesh Library (PPM)
-#  Institute of Computational Science
-#  ETH Zentrum, Hirschengraben 84
+#  ETH Zurich
 #  CH-8092 Zurich, Switzerland
 #-------------------------------------------------------------------------
 
