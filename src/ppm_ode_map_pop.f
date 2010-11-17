@@ -90,8 +90,8 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-
       !-------------------------------------------------------------------------
+
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_ode_map_pop_s(odeid,bfr,lda,Npart,mpart,info)
 #elif __KIND == __DOUBLE_PRECISION
@@ -108,6 +108,7 @@
         USE ppm_module_data
         USE ppm_module_substart
         USE ppm_module_substop
+        USE ppm_module_map
         USE ppm_module_error
         USE ppm_module_alloc
         IMPLICIT NONE

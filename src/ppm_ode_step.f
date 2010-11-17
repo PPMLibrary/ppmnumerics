@@ -126,8 +126,8 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-
       !-------------------------------------------------------------------------
+
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_ode_step_ss(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
