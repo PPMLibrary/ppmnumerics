@@ -152,7 +152,6 @@
          USE ppm_module_data_mg
          USE ppm_module_mg_alloc
          USE ppm_module_alloc
-         USE ppm_module_mg_alloc
          USE ppm_module_error
          USE ppm_module_write
          USE ppm_module_mesh
@@ -390,28 +389,28 @@
           !  compare the west boundary
           !---------------------------------------------------------------------
           IF (ABS(min_sub(1,idom)-min_phys(1)) .LT. &
-      &       lmyeps*(max_sub(1,i)-min_sub(1,i))) THEN
+      &       lmyeps*(max_sub(1,idom)-min_sub(1,idom))) THEN
              bcdef_sca(isub,1)=ibcdef(1)
           ENDIF
           !---------------------------------------------------------------------
           !  compare the east boundary
           !---------------------------------------------------------------------
           IF (ABS(max_sub(1,idom)-max_phys(1)) .LT. &
-      &       lmyeps*(max_sub(1,i)-min_sub(1,i))) THEN
+      &       lmyeps*(max_sub(1,idom)-min_sub(1,idom))) THEN
              bcdef_sca(isub,2)=ibcdef(2)
           ENDIF
           !---------------------------------------------------------------------
           !  compare the south boundary
           !---------------------------------------------------------------------
           IF (ABS(min_sub(2,idom)-min_phys(2)) .LT. &
-      &       lmyeps*(max_sub(2,i)-min_sub(2,i))) THEN
+      &       lmyeps*(max_sub(2,idom)-min_sub(2,idom))) THEN
              bcdef_sca(isub,3)=ibcdef(3)
           ENDIF
           !---------------------------------------------------------------------
           !  compare the north boundary
           !---------------------------------------------------------------------
           IF (ABS(max_sub(2,idom)-max_phys(2)) .LT. &
-      &       lmyeps*(max_sub(2,i)-min_sub(2,i))) THEN
+      &       lmyeps*(max_sub(2,idom)-min_sub(2,idom))) THEN
              bcdef_sca(isub,4)=ibcdef(4)
           ENDIF
           !-----------------------------------------------------------------
@@ -419,14 +418,14 @@
           !---------------------------------------------------------------------
 #if __MESH_DIM == __3D
           IF (ABS(min_sub(3,idom)-min_phys(3)) .LT. &
-      &       lmyeps*(max_sub(3,i)-min_sub(3,i))) THEN
+      &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
              bcdef_sca(isub,5)=ibcdef(5)
           ENDIF
           !---------------------------------------------------------------------
           !  compare the north boundary
           !---------------------------------------------------------------------
           IF (ABS(max_sub(3,idom)-max_phys(3)) .LT. &
-      &       lmyeps*(max_sub(3,i)-min_sub(3,i))) THEN
+      &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
              bcdef_sca(isub,6)=ibcdef(6)
           ENDIF
 #endif         
@@ -460,28 +459,28 @@
            !  compare the west boundary
            !---------------------------------------------------------------------
            IF (ABS(min_sub(1,idom)-min_phys(1)) .LT. &
-      &       lmyeps*(max_sub(1,i)-min_sub(1,i))) THEN
+      &       lmyeps*(max_sub(1,idom)-min_sub(1,idom))) THEN
              bcdef_vec(ilda,isub,1)=ibcdef(ilda,1)
            ENDIF
            !---------------------------------------------------------------------
            !  compare the east boundary
            !---------------------------------------------------------------------
            IF (ABS(max_sub(1,idom)-max_phys(1)) .LT. &
-       &       lmyeps*(max_sub(1,i)-min_sub(1,i))) THEN
+       &       lmyeps*(max_sub(1,idom)-min_sub(1,idom))) THEN
              bcdef_vec(ilda,isub,2)=ibcdef(ilda,2)
           ENDIF
           !---------------------------------------------------------------------
           !  compare the south boundary
           !---------------------------------------------------------------------
           IF (ABS(min_sub(2,idom)-min_phys(2)) .LT. &
-      &       lmyeps*(max_sub(2,i)-min_sub(2,i))) THEN
+      &       lmyeps*(max_sub(2,idom)-min_sub(2,idom))) THEN
              bcdef_vec(ilda,isub,3)=ibcdef(ilda,3)
           ENDIF
           !---------------------------------------------------------------------
           !  compare the north boundary
           !---------------------------------------------------------------------
           IF (ABS(max_sub(2,idom)-max_phys(2)) .LT. &
-      &       lmyeps*(max_sub(2,i)-min_sub(2,i))) THEN
+      &       lmyeps*(max_sub(2,idom)-min_sub(2,idom))) THEN
              bcdef_vec(ilda,isub,4)=ibcdef(ilda,4)
           ENDIF
 #if __MESH_DIM == __3D
@@ -489,14 +488,14 @@
           !  compare the south boundary
           !---------------------------------------------------------------------
           IF (ABS(min_sub(3,idom)-min_phys(3)) .LT. &
-      &       lmyeps*(max_sub(3,i)-min_sub(3,i))) THEN
+      &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
              bcdef_vec(ilda,isub,5)=ibcdef(ilda,5)
           ENDIF
           !---------------------------------------------------------------------
           !  compare the north boundary
           !---------------------------------------------------------------------
           IF (ABS(max_sub(3,idom)-max_phys(3)) .LT. &
-      &       lmyeps*(max_sub(3,i)-min_sub(3,i))) THEN
+      &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
              bcdef_vec(ilda,isub,6)=ibcdef(ilda,6)
           ENDIF
 #endif
@@ -1124,7 +1123,7 @@
               ENDDO 
            ENDIF !lperiodic
 #endif
-       ENDDO!DO i=1,nsubs
+           ENDDO!DO i=1,nsubs
 #endif
             factor(:)=2
             mesh_id_g(mlev)=lmesh_id
