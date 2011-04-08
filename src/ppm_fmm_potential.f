@@ -182,6 +182,7 @@
       USE ppm_module_map_part_util
       USE ppm_module_util_cart2sph
       USE ppm_module_write
+      USE ppm_module_topo_check
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Includes
@@ -372,7 +373,7 @@
       !  Check that particles have been mapped correctly
       !-------------------------------------------------------------------------
       IF(ppm_debug.GT.0)THEN
-         CALL ppm_topo_check(tp,Ntp,OK,info)
+         CALL ppm_topo_check(topoid,tp,Ntp,OK,info)
          IF (info .NE. 0) THEN
             CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
          &    'Failed to check topology.',info)
