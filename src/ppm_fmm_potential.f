@@ -179,6 +179,9 @@
       USE ppm_module_substop
       USE ppm_module_error
       USE ppm_module_alloc
+      USE ppm_module_map_part_util
+      USE ppm_module_util_cart2sph
+      USE ppm_module_write
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Includes

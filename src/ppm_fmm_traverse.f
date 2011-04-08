@@ -120,6 +120,11 @@
       USE ppm_module_data_fmm
       USE ppm_module_error
       USE ppm_module_typedef
+      USE ppm_module_util_cart2sph
+      USE ppm_module_write
+      USE ppm_module_substart
+      USE ppm_module_substop
+
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Includes

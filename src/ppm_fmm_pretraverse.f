@@ -133,6 +133,11 @@
       USE ppm_module_data_fmm
       USE ppm_module_error
       USE ppm_module_typedef
+      USE ppm_module_alloc
+      USE ppm_module_write
+      USE ppm_module_substart
+      USE ppm_module_substop
+
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Includes

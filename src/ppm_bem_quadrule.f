@@ -107,6 +107,8 @@
       USE ppm_module_bem_quadrule_npoints
       USE ppm_module_numerics_data
       USE ppm_module_error
+      USE ppm_module_substart
+      USE ppm_module_substop
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Type kind

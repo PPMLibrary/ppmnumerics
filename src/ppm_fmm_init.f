@@ -61,7 +61,7 @@
       USE ppm_module_substart
       USE ppm_module_substop
       USE ppm_module_write
-
+      USE ppm_module_topo_check
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Includes

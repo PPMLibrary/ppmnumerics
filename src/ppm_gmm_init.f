@@ -41,6 +41,11 @@
       
       USE ppm_module_error
       USE ppm_module_typedef
+      USE ppm_module_check_id
+      USE ppm_module_alloc
+      USE ppm_module_substart
+      USE ppm_module_substop
+
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Arguments     

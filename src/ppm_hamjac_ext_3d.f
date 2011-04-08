@@ -63,6 +63,7 @@
         USE ppm_module_error
         USE ppm_module_alloc
         USE ppm_module_typedef
+        USE ppm_module_write
         IMPLICIT NONE
 
 #ifdef __MPI
