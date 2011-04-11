@@ -114,7 +114,7 @@
         !-----------------------------------------------------
         !  Local variables
         !-----------------------------------------------------
-        INTEGER                               :: isub,isubl,i,j,k,maptype
+        INTEGER                               :: isub,isubl,i,j,k
         INTEGER                               :: istep,iopt
 #if   __MODE == __SCA
         INTEGER                               :: ldl(4), ldu(4)
@@ -184,38 +184,24 @@
         dx(1)       = len_phys(1)/REAL(mesh%nm(1)-1,mk)
         dx(2)       = len_phys(2)/REAL(mesh%nm(2)-1,mk)
         dx(3)       = len_phys(3)/REAL(mesh%nm(3)-1,mk)
-        !--- ready to blast
-        maptype = ppm_param_map_init
-        CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
         !--- map the gowas
-        maptype = ppm_param_map_ghost_get
-        CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
-        maptype = ppm_param_map_push
-        CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
-        maptype = ppm_param_map_send
-        CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
-        maptype = ppm_param_map_pop
-        CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
+        CALL ppm_map_field_ghost_get(topo_id,mesh_id,phi,ghostsize,info)
+        CALL ppm_map_field_push(topo_id,mesh_id,phi,ghostsize,info)
+        CALL ppm_map_field_send(info)
+        CALL ppm_map_field_pop(topo_id,mesh_id,phi,ghostsize,info)
            !--- map the function
         DO istep=1,maxstep
 #if   __MODE == __SCA
-           maptype = ppm_param_map_ghost_get
-           CALL ppm_map_field_ghost(psi,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_push
-           CALL ppm_map_field_ghost(psi,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_send
-           CALL ppm_map_field_ghost(psi,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_pop
-           CALL ppm_map_field_ghost(psi,topo_id,mesh_id,ghostsize,maptype,info)
+           CALL ppm_map_field_ghost_get(psi,topo_id,mesh_id,ghostsize,info)
+           CALL ppm_map_field_push(topo_id,mesh_id,psi,ghostsize,info)
+           CALL ppm_map_field_send(info)
+           CALL ppm_map_field_pop(topo_id,mesh_id,psi,ghostsize,info)
+
 #elif __MODE == __VEC
-           maptype = ppm_param_map_ghost_get
-           CALL ppm_map_field_ghost(psi,lda,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_push
-           CALL ppm_map_field_ghost(psi,lda,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_send
-           CALL ppm_map_field_ghost(psi,lda,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_pop
-           CALL ppm_map_field_ghost(psi,lda,topo_id,mesh_id,ghostsize,maptype,info)
+           CALL ppm_map_field_ghost_get(topo_id,mesh_id,psi,lda,ghostsize,info)
+           CALL ppm_map_field_push(topo_id,mesh_id,psi,lda,ghostsize,info)
+           CALL ppm_map_field_send(info)
+           CALL ppm_map_field_pop(psi,lda,topo_id,mesh_id,ghostsize,info)
 #endif           
            !     IF (ppm_debug .GT. 0) THEN
            !     ENDIF

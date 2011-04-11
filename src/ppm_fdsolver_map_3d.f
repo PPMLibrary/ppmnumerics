@@ -234,31 +234,15 @@
       !  Map field 
       !-------------------------------------------------------------------------
 #if   __DIM == __SFIELD
-      maptype = ppm_param_map_global;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
-      maptype = ppm_param_map_push;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
-      maptype = ppm_param_map_send;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
-      maptype = ppm_param_map_pop;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
+      CALL ppm_map_field_global(from_topo,to_topo,from_mesh,to_mesh,info)
+      CALL ppm_map_field_push(from_topo,from_mesh,DATA_fv,lda,info)
+      CALL ppm_map_field_send(info)
+      CALL ppm_map_field_pop(to_topo,to_mesh,DATA_fv,lda,ghostsize,info)
 #elif __DIM == __VFIELD
-      maptype = ppm_param_map_global;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
-      maptype = ppm_param_map_push;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
-      maptype = ppm_param_map_send;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
-      maptype = ppm_param_map_pop;
-      CALL ppm_map_field(from_topo,to_topo,from_mesh,to_mesh,DATA_fv,lda, &
-     &           ghostsize,maptype,info)
+      CALL ppm_map_field_global(from_topo,to_topo,from_mesh,to_mesh,info)
+      CALL ppm_map_field_push(from_topo,from_mesh,DATA_fv,lda,info)
+      CALL ppm_map_field_send(info)
+      CALL ppm_map_field_pop(to_topo,to_mesh,DATA_fv,lda,ghostsize,info)
 #endif
       !-------------------------------------------------------------------------
       !  Return

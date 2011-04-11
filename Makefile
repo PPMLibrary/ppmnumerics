@@ -2,7 +2,7 @@
 #  File         :  Makefile.in
 #-------------------------------------------------------------------------
 #
-#  Purpose      :  Compilation
+#  Purpose      :  Makefile template
 #
 #  Remarks      :
 #
@@ -11,8 +11,7 @@
 #  Revisions    :
 #-------------------------------------------------------------------------
 #  Parallel Particle Mesh Library (PPM)
-#  Institute of Computational Science
-#  ETH Zentrum, Hirschengraben 84
+#  ETH Zurich
 #  CH-8092 Zurich, Switzerland
 #-------------------------------------------------------------------------
 
@@ -22,13 +21,13 @@ exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 builddir = .
 LIBS = -lppm -lppm -lm 
-LDFLAGS = -L/Users/omar/sw/metis/gcc/lib -L../../ngtopo-libppm/libppm/lib -L../../ngtopo-libppm/libppm/lib
+LDFLAGS = -L/home/omar/sw/metis/gcc/lib -L../../ppmcore/libppm/lib -L../../ppmcore/libppm/lib
 CFLAGS = -O3
-FCLIBS =  -L/Users/omar/sw/metis/gcc/lib -L/opt/local/lib/gcc44/gcc/x86_64-apple-darwin10/4.4.4 -L/opt/local/lib/gcc44/gcc/x86_64-apple-darwin10/4.4.4/../../.. -lgfortranbegin -lgfortran
-FCFLAGS = -O3 -ffree-form -I../../ngtopo-libppm/libppm/include
-FC = gfortran-mp-4.4
-CC = gcc-mp-4.4
-CXX = g++-mp-4.4
+FCLIBS =  -L/home/omar/sw/metis/gcc/lib -L/opt/openmpi/1.5/intel/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/opt/openmpi/1.5/intel/lib -L/opt/intel/composerxe-2011.0.084/compiler/lib/intel64 -L/opt/intel/composerxe-2011.0.084/ipp/../compiler/lib/intel64 -L/opt/intel/composerxe-2011.0.084/ipp/lib/intel64 -L/opt/intel/composerxe-2011.0.084/mkl/lib/intel64 -L/opt/intel/composerxe-2011.0.084/tbb/lib/intel64//cc4.1.0_libc2.4_kernel2.6.16.21 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5/../../.. -L/usr/lib/x86_64-linux-gnu -lgfortranbegin -lgfortran -lm
+FCFLAGS = -O3 -ffree-form -I../../ppmcore/libppm/include
+FC = gfortran
+CC = gcc
+CXX = g++
 DEBUG = 
 MODFLAG = -I
 

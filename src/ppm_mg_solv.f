@@ -584,8 +584,6 @@
               ENDIF
              uc_dummy(:,:,:,:)=0.0_MK
 #endif
-           CALL ppm_map_field_ghost_init(topoid,mesh_id_g(i),&
-     &                             ghostsize,info)
 #if __MESH_DIM == __2D
              iopt = ppm_param_dealloc
              ldl3(1) = 1-ghostsize(1)
@@ -659,8 +657,6 @@
               ENDIF
              uc_dummy(:,:,:,:,:)=0.0_MK
 #endif
-           CALL ppm_map_field_ghost_init(topoid,mesh_id_g(i),&
-     &                             ghostsize,info)
 #if __MESH_DIM == __2D
              iopt = ppm_param_dealloc
              ldl4(1) = 1-ghostsize(1)

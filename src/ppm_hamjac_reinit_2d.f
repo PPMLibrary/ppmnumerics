@@ -135,21 +135,14 @@
            GOTO 9999
         END IF
 
-        !--- ready to blast
-        maptype = ppm_param_map_init
-        CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
 
         !--- COMMENT Thu May 26 21:05:23 PDT 2005:  simple euler here, do TVD
         DO istep=1,maxstep
            !--- map the gowas
-           maptype = ppm_param_map_ghost_get
-           CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_push
-           CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_send
-           CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
-           maptype = ppm_param_map_pop
-           CALL ppm_map_field_ghost(phi,topo_id,mesh_id,ghostsize,maptype,info)
+           CALL ppm_map_field_ghost_get(topo_id,mesh_id,ghostsize,info)
+           CALL ppm_map_field_push(topo_id,mesh_id,phi,info)
+           CALL ppm_map_field_send(info)
+           CALL ppm_map_field_pop(topo_id,mesh_id,phi,ghostsize,info)
            
            CALL ppm_hamjac_reinit_step(phi,tphi,trgt,res,topo_id,mesh_id&
                 &,                  ghostsize,info)

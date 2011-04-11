@@ -360,24 +360,14 @@
       !-------------------------------------------------------------------------
       !  Initialize the ghost layers.
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_ghost(fdta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_init,info)
-      IF (info .NE. ppm_param_success) THEN
-          info = ppm_error_error
-          CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
-     &        'ghost mapping init failed',__LINE__,info)
-          GOTO 9999
-      ENDIF
-      CALL ppm_map_field_ghost(fdta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_ghost_get,info)
+      CALL ppm_map_field_ghost_get(gmm_topoid,gmm_meshid,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
      &        'ghost get mapping failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(fdta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_push,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -385,8 +375,7 @@
           GOTO 9999
       ENDIF
       IF (PRESENT(udata)) THEN
-          CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_push,info)
+          CALL ppm_map_field_push(gmm_topoid,gmm_meshid,dta,ghostsize,info)
           IF (info .NE. ppm_param_success) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -394,8 +383,7 @@
               GOTO 9999
           ENDIF
       ENDIF
-      CALL ppm_map_field_ghost(fdta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_send,info)
+      CALL ppm_map_field_send(info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -403,8 +391,7 @@
           GOTO 9999
       ENDIF
       IF (PRESENT(udata)) THEN
-          CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_pop,info)
+          CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,dta,ghostsize,info)
           IF (info .NE. ppm_param_success) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -412,8 +399,7 @@
               GOTO 9999
           ENDIF
       ENDIF
-      CALL ppm_map_field_ghost(fdta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_pop,info)
+      CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,fdta,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -547,24 +533,21 @@
       !-------------------------------------------------------------------------
       !  Initialize ghost layers for state array
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_ghost(gmm_state3d,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_push,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state3d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
      &        'pushing status data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state3d,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_send,info)
+      CALL ppm_map_field_send(info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
      &        'sending status ghosts failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state3d,gmm_topoid,gmm_meshid,ghostsize,&
-     &                         ppm_param_map_pop,info)
+      CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,gmm_state3d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -779,24 +762,21 @@
       !-------------------------------------------------------------------------
       !  Initialize ghost layers for state array
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_ghost(gmm_state2d,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_push,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state2d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
      &        'pushing status data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state2d,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_send,info)
+      CALL ppm_map_field_send(info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
      &        'sending status ghosts failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state2d,gmm_topoid,gmm_meshid,ghostsize,&
-     &                         ppm_param_map_pop,info)
+      CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,gmm_state2d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &

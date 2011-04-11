@@ -409,40 +409,35 @@
       !-------------------------------------------------------------------------
       !  Update ghost layers for both dta AND gmm_state3d 
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_push,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,dta,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'pushing field data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state3d,gmm_topoid,gmm_meshid,ghostsize,&
-     &                         ppm_param_map_push,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state3d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'pushing status data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_send,info)
+      CALL ppm_map_field_send(info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'sending ghosts failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state3d,gmm_topoid,gmm_meshid,ghostsize,&
-     &                         ppm_param_map_pop,info)
+      CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,gmm_state3d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'popping status data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_pop,info)
+      CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,dta,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
@@ -584,40 +579,35 @@
       !-------------------------------------------------------------------------
       !  Update ghost layers for both dta AND gmm_state2d
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_push,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,dta,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'pushing field data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state2d,gmm_topoid,gmm_meshid,ghostsize,&
-     &                         ppm_param_map_push,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state2d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'pushing status data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_send,info)
+      CALL ppm_map_field_send(info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'sending ghosts failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(gmm_state2d,gmm_topoid,gmm_meshid,ghostsize,&
-     &                         ppm_param_map_pop,info)
+      CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,gmm_state2d,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &
      &        'popping status data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_ghost(dta,gmm_topoid,gmm_meshid,ghostsize, &
-     &                         ppm_param_map_pop,info)
+      CALL ppm_map_field_pop(gmm_topoid,gmm_meshid,dta,ghostsize,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_extend_fwd',  &

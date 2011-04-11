@@ -224,7 +224,7 @@
       LOGICAL                              :: check,drct,OK
       INTEGER                              :: i,j,k,l,cnt,iopt,m,n
       INTEGER                              :: pcount,ccount
-      INTEGER                              :: mapt,Mpart,root,istat
+      INTEGER                              :: Mpart,root,istat
       INTEGER                              :: first,last,level
       INTEGER                              :: stackpointer,curbox
       INTEGER                              :: pexp,isymm
@@ -338,22 +338,19 @@
       !-------------------------------------------------------------------------
       ! Map target points
       !-------------------------------------------------------------------------
-      mapt = ppm_param_map_global
-      CALL ppm_map_part(topoid,target_topoid,tp,ppm_dim,Ntp,Mpart,mapt,info)
+      CALL ppm_map_part_global(target_topoid,tp,Ntp,info)
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to start global mapping.',info)
           GOTO 9999
       ENDIF
-      mapt = ppm_param_map_send
-      CALL ppm_map_part(topoid,target_topoid,tp,ppm_dim,Ntp,Mpart,mapt,info)
+      CALL ppm_map_part_send(Ntp,Mpart,info)
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to start global mapping.',info)
           GOTO 9999
       ENDIF
-      mapt = ppm_param_map_pop
-      CALL ppm_map_part(topoid,target_topoid,tp,ppm_dim,Ntp,Mpart,mapt,info)
+      CALL ppm_map_part_pop(tp,ppm_dim,Ntp,Mpart,info)
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to start global mapping.',info)
@@ -408,48 +405,47 @@
       !-------------------------------------------------------------------------
       isymm  = 0
       cutoff = 1.0_MK ! can be any number > 0
-      mapt = ppm_param_map_push
+      ! OA: Is this correct???
+      CALL ppm_map_part_ghost_get(topoid,xpunord,ppm_dim,Np,isymm,cutoff,info)
 #if   __DIM == __SFIELD
-      CALL ppm_map_part_ghost(wpunord,Np,Mpart,isymm,cutoff,mapt,info) !strengths
+      CALL ppm_map_part_push(wpunord,Np,info) !strengths
 #else      
-      CALL ppm_map_part_ghost(wpunord,lda,Np,Mpart,isymm,cutoff,mapt,info) !strengths
+      CALL ppm_map_part_push(wpunord,lda,Np,info) !strengths
 #endif      
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to push strengths.',info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_part_ghost(boxpart,Np,Mpart,isymm,cutoff,mapt,info) !boxpart
+      CALL ppm_map_part_push(boxpart,Np,info) !boxpart
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to push strengths.',info)
           GOTO 9999
       ENDIF
-      mapt = ppm_param_map_send
-      CALL ppm_map_part_ghost(boxpart,Np,Mpart,isymm,cutoff,mapt,info)   ! send
+      CALL ppm_map_part_send(Np,Mpart,info)   ! send
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to send particles.',info)
           GOTO 9999
       ENDIF
-      mapt = ppm_param_map_pop
-      CALL ppm_map_part_ghost(boxpart,Np,Mpart,isymm,cutoff,mapt,info)  !boxpart
+      CALL ppm_map_part_pop(boxpart,Np,Mpart,info)  !boxpart
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to push strengths.',info)
           GOTO 9999
       ENDIF      
 #if   __DIM == __SFIELD      
-      CALL ppm_map_part_ghost(wpunord,Np,Mpart,isymm,cutoff,mapt,info) !strengths
+      CALL ppm_map_part_pop(wpunord,Np,Mpart,info) !strengths
 #else
-      CALL ppm_map_part_ghost(wpunord,lda,Np,Mpart,isymm,cutoff,mapt,info) !strengths
+      CALL ppm_map_part_pop(wpunord,lda,Np,Mpart,info) !strengths
 #endif      
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to pop strengths.',info)
           GOTO 9999
       ENDIF !positions
-      CALL ppm_map_part_ghost(xpunord,ppm_dim,Np,Mpart,isymm,cutoff,mapt,info)
+      CALL ppm_map_part_pop(xpunord,ppm_dim,Np,Mpart,info)
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to pop positions.',info)
