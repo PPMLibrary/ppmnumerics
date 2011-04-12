@@ -92,6 +92,8 @@
       USE ppm_module_error
       USE ppm_module_write
       USE ppm_module_alloc
+      USE ppm_module_map_field
+      USE ppm_module_map_field_ghost
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -367,7 +369,7 @@
      &        'ghost get mapping failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -375,7 +377,7 @@
           GOTO 9999
       ENDIF
       IF (PRESENT(udata)) THEN
-          CALL ppm_map_field_push(gmm_topoid,gmm_meshid,dta,ghostsize,info)
+          CALL ppm_map_field_push(gmm_topoid,gmm_meshid,dta,info)
           IF (info .NE. ppm_param_success) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -533,7 +535,7 @@
       !-------------------------------------------------------------------------
       !  Initialize ghost layers for state array
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state3d,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state3d,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -762,7 +764,7 @@
       !-------------------------------------------------------------------------
       !  Initialize ghost layers for state array
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state2d,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state2d,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &

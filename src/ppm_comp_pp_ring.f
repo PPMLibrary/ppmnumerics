@@ -91,6 +91,7 @@
       USE ppm_module_alloc
       USE ppm_module_map
       USE ppm_module_comp_pp_doring
+      USE ppm_module_map_part
       IMPLICIT NONE
 #if   __KIND == __SINGLE_PRECISION | __KIND == __SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single

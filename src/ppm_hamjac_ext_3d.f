@@ -64,6 +64,8 @@
         USE ppm_module_alloc
         USE ppm_module_typedef
         USE ppm_module_write
+        USE ppm_module_map_field
+        USE ppm_module_map_field_ghost
         IMPLICIT NONE
 
 #ifdef __MPI
@@ -185,23 +187,23 @@
         dx(2)       = len_phys(2)/REAL(mesh%nm(2)-1,mk)
         dx(3)       = len_phys(3)/REAL(mesh%nm(3)-1,mk)
         !--- map the gowas
-        CALL ppm_map_field_ghost_get(topo_id,mesh_id,phi,ghostsize,info)
-        CALL ppm_map_field_push(topo_id,mesh_id,phi,ghostsize,info)
+        CALL ppm_map_field_ghost_get(topo_id,mesh_id,ghostsize,info)
+        CALL ppm_map_field_push(topo_id,mesh_id,phi,info)
         CALL ppm_map_field_send(info)
         CALL ppm_map_field_pop(topo_id,mesh_id,phi,ghostsize,info)
            !--- map the function
         DO istep=1,maxstep
 #if   __MODE == __SCA
-           CALL ppm_map_field_ghost_get(psi,topo_id,mesh_id,ghostsize,info)
-           CALL ppm_map_field_push(topo_id,mesh_id,psi,ghostsize,info)
+           CALL ppm_map_field_ghost_get(topo_id,mesh_id,ghostsize,info)
+           CALL ppm_map_field_push(topo_id,mesh_id,psi,info)
            CALL ppm_map_field_send(info)
            CALL ppm_map_field_pop(topo_id,mesh_id,psi,ghostsize,info)
 
 #elif __MODE == __VEC
-           CALL ppm_map_field_ghost_get(topo_id,mesh_id,psi,lda,ghostsize,info)
-           CALL ppm_map_field_push(topo_id,mesh_id,psi,lda,ghostsize,info)
+           CALL ppm_map_field_ghost_get(topo_id,mesh_id,ghostsize,info)
+           CALL ppm_map_field_push(topo_id,mesh_id,psi,lda,info)
            CALL ppm_map_field_send(info)
-           CALL ppm_map_field_pop(psi,lda,topo_id,mesh_id,ghostsize,info)
+           CALL ppm_map_field_pop(topo_id, mesh_id, psi,lda,ghostsize,info)
 #endif           
            !     IF (ppm_debug .GT. 0) THEN
            !     ENDIF

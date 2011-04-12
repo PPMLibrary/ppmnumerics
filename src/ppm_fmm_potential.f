@@ -183,6 +183,9 @@
       USE ppm_module_util_cart2sph
       USE ppm_module_write
       USE ppm_module_topo_check
+      USE ppm_module_map_part_ghost
+      USE ppm_module_map_part
+      USE ppm_module_map_part_global
       IMPLICIT NONE
       !-------------------------------------------------------------------------
       !  Includes

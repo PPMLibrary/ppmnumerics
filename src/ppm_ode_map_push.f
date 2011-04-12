@@ -92,6 +92,7 @@
         USE ppm_module_map
         USE ppm_module_error
         USE ppm_module_alloc
+        USE ppm_module_map_part
         IMPLICIT NONE
 #if     __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: mk = ppm_kind_single

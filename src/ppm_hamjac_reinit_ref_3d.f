@@ -53,6 +53,8 @@
         USE ppm_module_substop
         USE ppm_module_map
         USE ppm_module_typedef
+        USE ppm_module_map_field
+        USE ppm_module_map_field_ghost
         IMPLICIT NONE
 
 #if    __KIND == __SINGLE_PRECISION

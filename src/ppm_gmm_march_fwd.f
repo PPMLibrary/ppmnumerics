@@ -60,6 +60,7 @@
       USE ppm_module_error
       USE ppm_module_alloc
       USE ppm_module_typedef
+      USE ppm_module_map_field
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -434,14 +435,14 @@
       !-------------------------------------------------------------------------
       !  Update ghost layers for both fdta AND gmm_state3d 
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march_fwd',  &
      &        'pushing field data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state3d,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state3d,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march_fwd',  &
@@ -626,14 +627,14 @@
       !-------------------------------------------------------------------------
       !  Update ghost layers for both fdta AND gmm_state2d
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march_fwd',  &
      &        'pushing field data failed',__LINE__,info)
           GOTO 9999
       ENDIF
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state2d,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,gmm_state2d,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march_fwd',  &

@@ -122,6 +122,8 @@
          USE ppm_module_map
          USE ppm_module_data_mesh
          USE ppm_module_write
+         USE ppm_module_map_field
+         USE ppm_module_map_field_ghost
          IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
          INTEGER, PARAMETER :: MK = ppm_kind_single

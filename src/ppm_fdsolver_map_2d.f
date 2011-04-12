@@ -110,7 +110,7 @@
       USE ppm_module_write
       USE ppm_module_substart
       USE ppm_module_substop
-
+      USE ppm_module_map_field
       IMPLICIT NONE
 #if   __KIND == __SINGLE_PRECISION | __KIND == __COMPLEX 
       INTEGER, PARAMETER :: MK = ppm_kind_single

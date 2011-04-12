@@ -52,6 +52,7 @@
         USE ppm_module_alloc
         USE ppm_module_substop
         USE ppm_module_map
+        USE ppm_module_map_field_ghost
         USE ppm_module_typedef
         IMPLICIT NONE
 

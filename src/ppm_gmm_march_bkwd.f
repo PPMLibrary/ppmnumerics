@@ -60,6 +60,7 @@
       USE ppm_module_substop
       USE ppm_module_error
       USE ppm_module_alloc
+      USE ppm_module_map_field
       IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
@@ -330,7 +331,7 @@
       !-------------------------------------------------------------------------
       !  Update ghost layers for fdta
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
@@ -449,7 +450,7 @@
       !-------------------------------------------------------------------------
       !  Update ghost layers for fdta
       !-------------------------------------------------------------------------
-      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,ghostsize,info)
+      CALL ppm_map_field_push(gmm_topoid,gmm_meshid,fdta,info)
       IF (info .NE. ppm_param_success) THEN
           info = ppm_error_error
           CALL ppm_error(ppm_err_sub_failed,'ppm_gmm_march',  &
