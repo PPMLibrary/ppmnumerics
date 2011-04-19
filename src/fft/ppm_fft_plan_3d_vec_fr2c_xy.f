@@ -1,24 +1,23 @@
       !-------------------------------------------------------------------------
-      !  Subroutine   : ppm_fft_exec_3d_vec_fr2c_xy
+      !  Subroutine   : ppm_fft_plan_3d_vec_fr2c_xy
       !-------------------------------------------------------------------------
       ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
-      ! FFTW execute wrapper for 3d arrays, 2d real to complex 
+      ! FFTW plan wrapper for 3d arrays, 2d real to complex
       ! (forward) FFT in the xy directions
       ! The routine does not work with fields that include ghost layers
       !-------------------------------------------------------------------------
 #if __KIND == __SINGLE
-#define __ROUTINE ppm_fft_exec_3d_vec_fr2c_xy_s
+#define __ROUTINE ppm_fft_plan_3d_vec_fr2c_xy_s
 #define __PREC ppm_kind_single
 #elif __KIND == __DOUBLE
-#define __ROUTINE ppm_fft_exec_3d_vec_fr2c_xy_d
+#define __ROUTINE ppm_fft_plan_3d_vec_fr2c_xy_d
 #define __PREC ppm_kind_double
 #endif
       SUBROUTINE __ROUTINE(topoid,meshid,ppmplan,infield,outfield,info)
-      !!! FFTW execute wrapper for 3d arrays, 2d real to complex 
+      !!! FFTW plan wrapper for 3d arrays, 2d real to complex
       !!! (forward) FFT in the xy directions
-      !!! Before calling this routine a ppm_fft_plan_ routine must be called
       !!! The routine does not work with fields that include ghost layers
       USE ppm_module_substart
       USE ppm_module_substop
@@ -55,7 +54,6 @@
       ! Local variables
       !-------------------------------------------------------------------------
       REAL(__PREC)                  :: t0
-      INTEGER                       :: k
       INTEGER                       :: isub,isubl
       INTEGER                       :: nsubs
       INTEGER,DIMENSION(:),POINTER  :: isublist
@@ -65,39 +63,93 @@
       !-------------------------------------------------------------------------
       ! Initialise routine
       !-------------------------------------------------------------------------
-      CALL substart('ppm_fft_exec',t0,info)
+      CALL substart('ppm_fft_plan',t0,info)
 
       !-------------------------------------------------------------------------
       ! Get topology and mesh values
       !-------------------------------------------------------------------------
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
-         CALL ppm_write(ppm_rank,'ppm_fft_exec','Failed to get topology.',isub)
+         CALL ppm_write(ppm_rank,'ppm_fft_plan','Failed to get topology.',isub)
          GOTO 9999
       ENDIF
-      nsubs    = topology%nsublist
+      nsubs = topology%nsublist
       ALLOCATE(isublist(nsubs))
       DO isub=1,nsubs
         isublist(isub) = topology%isublist(isub)
       ENDDO
-      mesh     = topology%mesh(meshid)
+      mesh  = topology%mesh(meshid)
 
       !-------------------------------------------------------------------------
-      ! Execute plan
+      ! Setup parameters for this particular routine
       !-------------------------------------------------------------------------
+      !the dimension of the FFT (1D/2D/3D)
+      ppmplan%rank=2
+      !the number of points along each direction of the piece to be transformed
+      ALLOCATE(ppmplan%nx(ppmplan%rank,nsubs))
+      !the direction of the transform
+      ppmplan%sign=FFTW_FORWARD
+      !the method to setup the optimal plan
+      ppmplan%flag=FFTW_MEASURE
+      !the number of components to transform - 3 component vector
+      ppmplan%howmany=3
+      !the size of the input array - full size (assuming LBOUND=1 thus UBOUND)
+      ALLOCATE(ppmplan%inembed(ppmplan%rank))
+      ppmplan%inembed(1) = UBOUND(infield,2)
+      ppmplan%inembed(2) = UBOUND(infield,3)
+      !the size of the output array - full size (assuming LBOUND=1 thus UBOUND)
+      ALLOCATE(ppmplan%onembed(ppmplan%rank))
+      ppmplan%onembed(1) = UBOUND(outfield,2)
+      ppmplan%onembed(2) = UBOUND(outfield,3)
+      !istride tells how the same componenet data points are spaced in memory
+      !e.g. for 2/3 component vector istride = 2/3 or for scalar istride = 1
+      ppmplan%istride = 3
+      ppmplan%ostride = 3
+      !idist tells how multiple arrays are spaced in memory. I.e. a memory 
+      !offset. e.g. vector components (idist=1) or scalar 2D arrays in 
+      !3D array(idist=NxNy)
+      ppmplan%idist = 1
+      ppmplan%odist = 1
+
+      !-------------------------------------------------------------------------
+      ! Allocate plan array
+      !-------------------------------------------------------------------------
+      IF(ASSOCIATED(ppmplan%plan)) THEN
+         DEALLOCATE(ppmplan%plan,stat=info)
+         IF (info .NE. 0) THEN
+            CALL ppm_write(ppm_rank,'ppm_fft_plan','Failed to deallocate plan-array.',isub)
+            GOTO 9999
+         ENDIF
+      END IF
+      ALLOCATE(ppmplan%plan(nsubs))
+
       DO isub=1,nsubs
          isubl=isublist(isub)
-         DO k=1,mesh%nnodes(3,isubl) !@ add '-1' to exclude n+1 slabs
-            CALL dfftw_execute_dft_r2c(ppmplan%plan(isub),&
-            & infield(1,1,1,k,isub),outfield(1,1,1,k,isub))
-         END DO
+         !@ maybe the -1 needs to be removed when doing cell data
+         !we subtract the -1 to avoid the periodic vertex point
+         ppmplan%nx(1,isub) = mesh%nnodes(1,isubl)-1
+         ppmplan%nx(2,isub) = mesh%nnodes(2,isubl)-1
+
+         CALL dfftw_plan_many_dft_r2c(ppmplan%plan(isub),ppmplan%rank,&
+         & ppmplan%nx(:,isub),ppmplan%howmany,infield(1,1,1,1,isub),&
+         & ppmplan%inembed(1),ppmplan%istride,ppmplan%idist,&
+         & outfield(1,1,1,1,isub),ppmplan%onembed(1),ppmplan%ostride,&
+         & ppmplan%odist,ppmplan%flag)
       END DO
+
 
       !-------------------------------------------------------------------------
       ! Return
       !-------------------------------------------------------------------------
  9999 CONTINUE
-      CALL substop('ppm_fft_exec',t0,info)
+      CALL substop('ppm_fft_plan',t0,info)
       RETURN
 
-      END SUBROUTINE __ROUTINE
+      END SUBROUTINE __ROUTINE 
+#if __KIND == __SINGLE
+#undef __ROUTINE
+#undef __PREC
+#elif __KIND == __DOUBLE
+#undef __ROUTINE
+#undef __PREC
+#endif

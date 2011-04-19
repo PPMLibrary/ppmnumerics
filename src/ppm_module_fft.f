@@ -118,35 +118,35 @@
 #define __KIND __SINGLE
 
       !FORWARD TRANSFORMS - PLAN
-#include "fft/ppm_fft_plan_3d_vec_fc2c_z.f90"
-#include "fft/ppm_fft_plan_3d_vec_fr2c_xy.f90"
+#include "fft/ppm_fft_plan_3d_vec_fc2c_z.f"
+#include "fft/ppm_fft_plan_3d_vec_fr2c_xy.f"
       !BACKWARD TRANSFORMS - PLAN
-#include "fft/ppm_fft_plan_3d_vec_bc2c_z.f90"
-#include "fft/ppm_fft_plan_3d_vec_bc2r_xy.f90"
+#include "fft/ppm_fft_plan_3d_vec_bc2c_z.f"
+#include "fft/ppm_fft_plan_3d_vec_bc2r_xy.f"
       !EXECUTION OF PLANS
-#include "fft/ppm_fft_exec_3d_vec_c2c_z.f90"
-#include "fft/ppm_fft_exec_3d_vec_fr2c_xy.f90"
-#include "fft/ppm_fft_exec_3d_vec_bc2r_xy.f90"
+#include "fft/ppm_fft_exec_3d_vec_c2c_z.f"
+#include "fft/ppm_fft_exec_3d_vec_fr2c_xy.f"
+#include "fft/ppm_fft_exec_3d_vec_bc2r_xy.f"
       !NORMALIZATION
-#include "fft/ppm_fft_normalize_r.f90"
-#include "fft/ppm_fft_normalize_c.f90"
+#include "fft/ppm_fft_normalize_r.f"
+#include "fft/ppm_fft_normalize_c.f"
 
 #undef __KIND
 #define __KIND __DOUBLE
 
       !FORWARD TRANSFORMS - PLAN
-#include "fft/ppm_fft_plan_3d_vec_fc2c_z.f90"
-#include "fft/ppm_fft_plan_3d_vec_fr2c_xy.f90"
+#include "fft/ppm_fft_plan_3d_vec_fc2c_z.f"
+#include "fft/ppm_fft_plan_3d_vec_fr2c_xy.f"
       !BACKWARD TRANSFORMS - PLAN
-#include "fft/ppm_fft_plan_3d_vec_bc2c_z.f90"
-#include "fft/ppm_fft_plan_3d_vec_bc2r_xy.f90"
+#include "fft/ppm_fft_plan_3d_vec_bc2c_z.f"
+#include "fft/ppm_fft_plan_3d_vec_bc2r_xy.f"
       !EXECUTION OF PLANS
-#include "fft/ppm_fft_exec_3d_vec_c2c_z.f90"
-#include "fft/ppm_fft_exec_3d_vec_fr2c_xy.f90"
-#include "fft/ppm_fft_exec_3d_vec_bc2r_xy.f90"
+#include "fft/ppm_fft_exec_3d_vec_c2c_z.f"
+#include "fft/ppm_fft_exec_3d_vec_fr2c_xy.f"
+#include "fft/ppm_fft_exec_3d_vec_bc2r_xy.f"
       !NORMALIZATION
-#include "fft/ppm_fft_normalize_r.f90"
-#include "fft/ppm_fft_normalize_c.f90"
+#include "fft/ppm_fft_normalize_r.f"
+#include "fft/ppm_fft_normalize_c.f"
 
 #undef __KIND
       END MODULE ppm_module_fft

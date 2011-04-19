@@ -186,14 +186,14 @@
 #define __DIM  3
 #define __ZEROSI (/0,0,0/)
 #define __ROUTINE ppm_poisson_init_predef
-#include "poisson/ppm_poisson_init_predef.f90"
+#include "poisson/ppm_poisson_init_predef.f"
 #undef __ROUTINE
 #define __ROUTINE ppm_poisson_solve
 #define __NCOM  3
-#include "poisson/ppm_poisson_solve.f90"
+#include "poisson/ppm_poisson_solve.f"
 #undef __ROUTINE
 #define __ROUTINE ppm_poisson_fd
-#include "poisson/ppm_poisson_fd.f90"
+#include "poisson/ppm_poisson_fd.f"
 #undef __ROUTINE
 #undef __DIM
 #undef __NCOM

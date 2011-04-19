@@ -16,18 +16,18 @@
 #-------------------------------------------------------------------------
 
 # These variables are set when configure is ran
-prefix = /usr/local
+prefix = /usr/local/ppm/build
 exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 builddir = .
 LIBS = -lppm -lppm -lm 
-LDFLAGS = -L/home/omar/sw/metis/gcc/lib -L../../ppmcore/libppm/lib -L../../ppmcore/libppm/lib
+LDFLAGS = -L/usr/local/metis-4.0_gcc -L/home/jtra/phd/naga/src/libppm/lib -L/home/jtra/phd/naga/src/libppm/lib
 CFLAGS = -O3
-FCLIBS =  -L/home/omar/sw/metis/gcc/lib -L/opt/openmpi/1.5/intel/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/opt/openmpi/1.5/intel/lib -L/opt/intel/composerxe-2011.0.084/compiler/lib/intel64 -L/opt/intel/composerxe-2011.0.084/ipp/../compiler/lib/intel64 -L/opt/intel/composerxe-2011.0.084/ipp/lib/intel64 -L/opt/intel/composerxe-2011.0.084/mkl/lib/intel64 -L/opt/intel/composerxe-2011.0.084/tbb/lib/intel64//cc4.1.0_libc2.4_kernel2.6.16.21 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5/../../.. -L/usr/lib/x86_64-linux-gnu -lgfortranbegin -lgfortran -lm
-FCFLAGS = -O3 -ffree-form -I../../ppmcore/libppm/include
-FC = gfortran
-CC = gcc
-CXX = g++
+FCLIBS =  -L/usr/local/metis-4.0_gcc -L/usr/local/openmpi-1.4.3_gcc/lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.3 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.3/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.3/../../.. -lmpi_f90 -lmpi_f77 -lmpi -lopen-rte -lopen-pal -ldl -lnsl -lutil -lgfortranbegin -lgfortran -lm -lpthread
+FCFLAGS = -O3 -ffree-form -I/home/jtra/phd/naga/src/libppm/include
+FC = mpif90
+CC = mpicc
+CXX = mpic++
 DEBUG = 
 MODFLAG = -I
 

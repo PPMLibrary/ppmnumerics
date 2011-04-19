@@ -1,23 +1,25 @@
       !-------------------------------------------------------------------------
-      !  Subroutine   : ppm_fft_plan_3d_vec_bc2c_z
+      !  Subroutine   : ppm_fft_plan_3d_vec_bc2r_xy
       !-------------------------------------------------------------------------
       ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
-      ! FFTW plan wrapper for 3d arrays, 1d complex to complex
-      ! (backward) FFT in the z direction
+      ! FFTW plan wrapper for 3d arrays, 2d complex to real
+      ! (backward) FFT in the xy directions
       ! The routine does not work with fields that include ghost layers
+      !
+      ! For the C2R inverse transform FFTW always destroys the input data
       !-------------------------------------------------------------------------
 #if __KIND == __SINGLE
-#define __ROUTINE ppm_fft_plan_3d_vec_bc2c_z_s
+#define __ROUTINE ppm_fft_plan_3d_vec_bc2r_xy_s
 #define __PREC ppm_kind_single
 #elif __KIND == __DOUBLE
-#define __ROUTINE ppm_fft_plan_3d_vec_bc2c_z_d
+#define __ROUTINE ppm_fft_plan_3d_vec_bc2r_xy_d
 #define __PREC ppm_kind_double
 #endif
       SUBROUTINE __ROUTINE(topoid,meshid,ppmplan,infield,outfield,info)
-      !!! FFTW plan wrapper for 3d arrays, 1d complex to complex
-      !!! (backward) FFT in the z direction
+      !!! FFTW plan wrapper for 3d arrays, 2d complex to real
+      !!! (backward) FFT in the xy directions
       !!! The routine does not work with fields that include ghost layers
       USE ppm_module_substart
       USE ppm_module_substop
@@ -44,8 +46,8 @@
       !COMPLEX(__PREC),DIMENSION(:,:,:,:,:),POINTER,INTENT(INOUT)     :: infield
       COMPLEX(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: infield
       !!!output field for the result of the fourier transform
-      !COMPLEX(__PREC),DIMENSION(:,:,:,:,:),POINTER,INTENT(INOUT)     :: outfield
-      COMPLEX(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: outfield
+      !REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER,INTENT(INOUT)        :: outfield
+      REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER                      :: outfield
       !!!Returns status, 0 upon success
       INTEGER,INTENT(OUT)                                            :: info
       !in time perhaps an argument for alternate directions
@@ -84,7 +86,7 @@
       ! Setup parameters for this particular routine
       !-------------------------------------------------------------------------
       !the dimension of the FFT (1D/2D/3D)
-      ppmplan%rank=1
+      ppmplan%rank=2
       !the number of points along each direction of the piece to be transformed
       ALLOCATE(ppmplan%nx(ppmplan%rank,nsubs))
       !the direction of the transform
@@ -95,17 +97,19 @@
       ppmplan%howmany=3
       !the size of the input array - full size (assuming LBOUND=1 thus UBOUND)
       ALLOCATE(ppmplan%inembed(ppmplan%rank))
-      ppmplan%inembed(1) = UBOUND(infield,4)
+      ppmplan%inembed(1) = UBOUND(infield,2)
+      ppmplan%inembed(2) = UBOUND(infield,3)
       !the size of the output array - full size (assuming LBOUND=1 thus UBOUND)
       ALLOCATE(ppmplan%onembed(ppmplan%rank))
-      ppmplan%onembed(1) = UBOUND(outfield,4)
+      ppmplan%onembed(1) = UBOUND(outfield,2)
+      ppmplan%onembed(2) = UBOUND(outfield,3)
       !istride tells how the same componenet data points are spaced in memory
-      !e.g. z values recur every x-dim*y-dim*component values
-      ppmplan%istride = UBOUND(infield,2) *UBOUND(infield,3)*3
-      ppmplan%ostride = UBOUND(outfield,2)*UBOUND(outfield,3)*3
+      !e.g. for 2/3 component vector istride = 2/3 or for scalar istride = 1
+      ppmplan%istride = 3
+      ppmplan%ostride = 3
       !idist tells how multiple arrays are spaced in memory. I.e. a memory 
-      !offset. e.g. vector components (idist=1) or scalar 2D arrays in 
-      !3D array(idist=NxNy)
+      !offset. e.g. vector components (idist=1) or scalar 2D arrays 
+      !in 3D array(idist=NxNy)
       ppmplan%idist = 1
       ppmplan%odist = 1
 
@@ -125,13 +129,13 @@
          isubl=isublist(isub)
          !@ maybe the -1 needs to be removed when doing cell data
          !we subtract the -1 to avoid the periodic vertex point
-         ppmplan%nx(1,isub) = mesh%nnodes(3,isubl)-1
+         ppmplan%nx(1,isub) = mesh%nnodes(1,isubl)-1
+         ppmplan%nx(2,isub) = mesh%nnodes(2,isubl)-1
 
-         CALL dfftw_plan_many_dft(ppmplan%plan(isub),ppmplan%rank,&
-         & ppmplan%nx(:,isub),ppmplan%howmany,infield(1,1,1,1,isub),&
-         & ppmplan%inembed(1),ppmplan%istride,ppmplan%idist,&
-         & outfield(1,1,1,1,isub),ppmplan%onembed(1),ppmplan%ostride,&
-         & ppmplan%odist,ppmplan%sign,ppmplan%flag)
+         CALL dfftw_plan_many_dft_c2r(ppmplan%plan(isub),ppmplan%rank,&
+         & ppmplan%nx,ppmplan%howmany,infield(1,1,1,1,isub),ppmplan%inembed(1),&
+         & ppmplan%istride,ppmplan%idist,outfield(1,1,1,1,isub),&
+         & ppmplan%onembed(1),ppmplan%ostride,ppmplan%odist,ppmplan%flag)
       END DO
 
 
@@ -143,3 +147,10 @@
       RETURN
 
       END SUBROUTINE __ROUTINE 
+#if __KIND == __SINGLE
+#undef __ROUTINE
+#undef __PREC
+#elif __KIND == __DOUBLE
+#undef __ROUTINE
+#undef __PREC
+#endif

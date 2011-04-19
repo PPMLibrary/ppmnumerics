@@ -1,30 +1,25 @@
       !-------------------------------------------------------------------------
-      !  Subroutine   : ppm_fft_normalize_r
+      !  Subroutine   : ppm_fft_exec_3d_vec_fr2c_xy
       !-------------------------------------------------------------------------
       ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
-      ! The routine does not work with fields that include ghost layers.
-      ! Fields are noralized in the 1/N - fashion that scales fields to the
-      ! proper level after being FFTed and iFFTed
-      ! The routines are not meant for production code as the normalization can
-      ! be done for all dimensions in one pass - which may and should be done
-      ! in a routine (looping through the data anyway) following the FFTs.
+      ! FFTW execute wrapper for 3d arrays, 2d real to complex 
+      ! (forward) FFT in the xy directions
+      ! The routine does not work with fields that include ghost layers
       !-------------------------------------------------------------------------
 #if __KIND == __SINGLE
-#define __ROUTINE ppm_fft_normalize_rs
+#define __ROUTINE ppm_fft_exec_3d_vec_fr2c_xy_s
 #define __PREC ppm_kind_single
 #elif __KIND == __DOUBLE
-#define __ROUTINE ppm_fft_normalize_rd
+#define __ROUTINE ppm_fft_exec_3d_vec_fr2c_xy_d
 #define __PREC ppm_kind_double
 #endif
-      SUBROUTINE __ROUTINE(topoid,meshid,ppmplan,infield,info)
-      !!! The routine does not work with fields that include ghost layers.
-      !!! Fields are noralized in the 1/N - fashion that scales fields to the
-      !!! proper level after being FFTed and iFFTed
-      !!! The routines are not meant for production code as the normalization
-      !!! can be done for all dimensions in one pass - which may and should be
-      !!! done in a routine (looping through the data anyway) following the FFTs
+      SUBROUTINE __ROUTINE(topoid,meshid,ppmplan,infield,outfield,info)
+      !!! FFTW execute wrapper for 3d arrays, 2d real to complex 
+      !!! (forward) FFT in the xy directions
+      !!! Before calling this routine a ppm_fft_plan_ routine must be called
+      !!! The routine does not work with fields that include ghost layers
       USE ppm_module_substart
       USE ppm_module_substop
       USE ppm_module_typedef
@@ -46,9 +41,12 @@
       INTEGER,INTENT(IN)                                             :: meshid
       !!!ppm fft plan type
       TYPE(ppm_fft_plan),INTENT(INOUT)                               :: ppmplan
-      !!!input field to normalize
+      !!!input field to fourier transform
       !REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER,INTENT(INOUT)        :: infield
       REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER                      :: infield
+      !!!output field for the result of the fourier transform
+      !COMPLEX(__PREC),DIMENSION(:,:,:,:,:),POINTER,INTENT(INOUT)     :: outfield
+      COMPLEX(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: outfield
       !!!Returns status, 0 upon success
       INTEGER,INTENT(OUT)                                            :: info
       !in time perhaps an argument for alternate directions
@@ -56,12 +54,8 @@
       !-------------------------------------------------------------------------
       ! Local variables
       !-------------------------------------------------------------------------
-      !timer
-      INTEGER,PARAMETER             :: MK = ppm_kind_double
       REAL(__PREC)                  :: t0
-      !normalization factor
-      REAL(MK)                      :: fac
-      INTEGER                       :: i,j,k
+      INTEGER                       :: k
       INTEGER                       :: isub,isubl
       INTEGER                       :: nsubs
       INTEGER,DIMENSION(:),POINTER  :: isublist
@@ -71,50 +65,46 @@
       !-------------------------------------------------------------------------
       ! Initialise routine
       !-------------------------------------------------------------------------
-      CALL substart('ppm_fft_normalize',t0,info)
+      CALL substart('ppm_fft_exec',t0,info)
 
       !-------------------------------------------------------------------------
       ! Get topology and mesh values
       !-------------------------------------------------------------------------
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
-         CALL ppm_write(ppm_rank,'ppm_fft_plan','Failed to get topology.',isub)
+         CALL ppm_write(ppm_rank,'ppm_fft_exec','Failed to get topology.',isub)
          GOTO 9999
       ENDIF
-      nsubs = topology%nsublist
+      nsubs    = topology%nsublist
       ALLOCATE(isublist(nsubs))
       DO isub=1,nsubs
         isublist(isub) = topology%isublist(isub)
       ENDDO
-      mesh  = topology%mesh(meshid)
+      mesh     = topology%mesh(meshid)
 
+      !-------------------------------------------------------------------------
+      ! Execute plan
+      !-------------------------------------------------------------------------
       DO isub=1,nsubs
          isubl=isublist(isub)
-         !determine normalization factor
-         IF (ppmplan%rank .EQ. 1) THEN
-            fac = 1.0_MK/REAL((mesh%nm(3)-1),MK)
-         ELSE IF (ppmplan%rank .EQ. 2) THEN
-            fac = 1.0_MK/REAL((mesh%nm(1)-1)*(mesh%nm(2)-1),MK)
-         ENDIF
-
-         DO k=1,mesh%nnodes(3,isubl)
-            DO j=1,mesh%nnodes(2,isubl)
-               DO i=1,mesh%nnodes(1,isubl)
-                  infield(1,i,j,k,isub) = fac*infield(1,i,j,k,isub)
-                  infield(2,i,j,k,isub) = fac*infield(2,i,j,k,isub)
-                  infield(3,i,j,k,isub) = fac*infield(3,i,j,k,isub)
-               END DO
-            END DO
+         DO k=1,mesh%nnodes(3,isubl) !@ add '-1' to exclude n+1 slabs
+            CALL dfftw_execute_dft_r2c(ppmplan%plan(isub),&
+            & infield(1,1,1,k,isub),outfield(1,1,1,k,isub))
          END DO
       END DO
-
 
       !-------------------------------------------------------------------------
       ! Return
       !-------------------------------------------------------------------------
  9999 CONTINUE
-      CALL substop('ppm_fft_normalize',t0,info)
+      CALL substop('ppm_fft_exec',t0,info)
       RETURN
 
       END SUBROUTINE __ROUTINE
-
+#if __KIND == __SINGLE
+#undef __ROUTINE
+#undef __PREC
+#elif __KIND == __DOUBLE
+#undef __ROUTINE
+#undef __PREC
+#endif
