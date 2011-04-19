@@ -3,7 +3,7 @@
       !-------------------------------------------------------------------------
       ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
-      !
+  !
       ! Notes on the init routine:
       !   Arguments:
       !     topoid
@@ -181,10 +181,23 @@
       CONTAINS
 #define __KIND __SINGLE
 
+#define __PREC ppm_kind_double
+        !!#define __CMPLXDEF DCMPLX
+#define __DIM  3
+#define __ZEROSI (/0,0,0/)
+#define __ROUTINE ppm_poisson_init_predef
 #include "poisson/ppm_poisson_init_predef.f90"
+#undef __ROUTINE
+#define __ROUTINE ppm_poisson_solve
+#define __NCOM  3
 #include "poisson/ppm_poisson_solve.f90"
+#undef __ROUTINE
+#define __ROUTINE ppm_poisson_fd
 #include "poisson/ppm_poisson_fd.f90"
-
+#undef __ROUTINE
+#undef __DIM
+#undef __NCOM
+#undef __ZEROSI
 #undef __KIND
 #define __KIND __DOUBLE
 

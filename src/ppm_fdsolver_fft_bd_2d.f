@@ -194,8 +194,8 @@
       !-------------------------------------------------------------------------
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       Nx_out = (Nx_in-1)*2
-#el#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
-   Nx_out = Nx_in -1
+#elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
+      Nx_out = Nx_in -1
 #endif
       Ny_out=Ny_in
       lda(1)=Nx_out+1

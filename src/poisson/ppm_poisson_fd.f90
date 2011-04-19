@@ -2,10 +2,6 @@
       ! ppm_poisson_fd.f90
       !-------------------------------------------------------------------------
       !-------------------------------------------------------------------------
-      #define __ROUTINE ppm_poisson_fd
-      #define __DIM  3
-      #define __NCOM  3
-      #define __ZEROSI (/0,0,0/)
       SUBROUTINE __ROUTINE(topoid,meshid,fieldin,fieldout,dtype,info)
 
       USE ppm_module_topo_get

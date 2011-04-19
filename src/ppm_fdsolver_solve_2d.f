@@ -228,7 +228,9 @@
       !  Arguments
       !-------------------------------------------------------------------------
       ! mesh ID of the data
-      INTEGER                    , INTENT(IN)      :: mesh_id_data
+      ! Note F.Perignon: I remove the INTENT(IN) for mesh_id_data to make the lib work, but I guess it's
+      ! not a proper solution ...
+      INTEGER                       :: mesh_id_data
       ! topo ID of the field
       INTEGER                    , INTENT(IN)      :: field_topoid
 #if   __DIM == __SFIELD
