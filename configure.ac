@@ -78,22 +78,33 @@ if test "x${use_mpi}" == xyes; then
     AC_LANG([C])
 fi
 
-# for now let's use the C compiler to check the vendor we're using here
-# this of course means that we HAVE to set all compiler flags to compilers of
-# the same vendor (which is anyway a good idea)
-AX_COMPILER_VENDOR
-
-
 # Checks for libraries and set preprocessing flags
 
-# this test should be omitted if the compiler is intel, they provide their own
-# math implementation
-if test "x${ax_cv_c_compiler_vendor}" != xintel; then
-  AC_CHECK_LIB([m],[sqrt])
-fi
 
 # Make sure that the libraries are compiled with Fortran
 AC_LANG([Fortran])
+
+# Check the compiler vendor.. this list should be extended of course
+# but let's hope that this will work in most cases
+AC_MSG_CHECKING([your Fortran compiler vendor])
+vendor=none
+for vendorkp in gnu:gfortran intel:Intel sun:Sun portland:Portland; do
+    str=`echo $vendorkp | cut -d: -f2`
+    if `$FC -V 2>&1 | grep -q $str`; then 
+        vendor=`echo $vendorkp | cut -d: -f1`;
+        AC_MSG_RESULT([$vendor])
+        break;
+    fi; 
+done
+if test "x${vendor}" = xnone; then
+    AC_MSG_RESULT([unknown])
+fi;
+
+# this test should be omitted if the compiler is intel, they provide their own
+# math implementation
+if test "x${vendor}" != xintel; then
+  AC_CHECK_LIB([m],[sqrt])
+fi
 
 AX_F90_MODULE_EXTENSION
 if test x$ax_cv_f90_modext = xunknown ; then
@@ -106,25 +117,20 @@ AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
     call ppm_finalize(info)
    ])
 
-# Check to see if fftw3 was enabled with -enable-fftw3
-#use_fftw3=no
-#AC_ARG_ENABLE([fftw3],,[use_fftw3=yes])
 
-# If it was enabled than check that the library exists
-#if test "x${use_fftw3}" = xyes; then
-#  have_fftw=no
-#  AC_CHECK_LIB([fftw3],[dfftw_execute])
-#  AC_SEARCH_LIBS([dfftw_execute],[fftw3],[have_fftw=yes])
-#  if test "x${have_fftw}" = xno; then
-#    echo "------------------------------------------"
-#    echo " You are trying to use FFTW to build PPM. "
-#    echo " Either the library is missing or incorrectly compiled/linked."
-#    echo " It can be downloaded at: http://www.fftw.org/download.html"
-#    echo "------------------------------------------"
-#    (exit 1); exit 1;
-#  fi
-#  echo "#define __FFTW" >> ./src/ppm_define.h
-#fi
+# check for fftw3
+have_fftw=no
+AC_CHECK_LIB([fftw3],[dfftw_execute])
+AC_SEARCH_LIBS([dfftw_execute],[fftw3],[have_fftw=yes])
+if test "x${have_fftw}" = xno; then
+  echo "------------------------------------------"
+  echo " You are trying to use FFTW to build PPM. "
+  echo " Either the library is missing or incorrectly compiled/linked."
+  echo " It can be downloaded at: http://www.fftw.org/download.html"
+  echo "------------------------------------------"
+  (exit 1); exit 1;
+fi
+echo "#define __FFTW" >> ./src/ppm_define.h
 
 # Check to see if linux was enabled with -enable-linux
 AC_ARG_ENABLE([linux],[AS_HELP_STRING([--enable-linux],
@@ -159,10 +165,32 @@ AC_ARG_ENABLE([no-microinstr],[AS_HELP_STRING([--enable-no-microinstr],
   [enable __NOMICROINSTRUCTIONS (default is no)])],
   [echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h])
 
-AC_ARG_ENABLE([debug],[AS_HELP_STRING([--enable-debug],
-  [enable debug mode (default is no)])],
-  [AC_SUBST(DEBUG,-O0)])
+dev_compile=no
+AC_ARG_ENABLE([dev],[AS_HELP_STRING([--enable-dev],
+  [enable development mode (default is no)])],[dev_compile=yes])
+if test "x${dev_compile}" = xyes; then
+    if test "x${vendor}" == xintel; then
+        AC_SUBST(DEBUG,["-g -O1 -check pointers -check bounds -traceback"])
+    elif test "x${vendor}" == xgnu; then
+      AC_SUBST(DEBUG,["-g -O0 -fbounds-check -fbacktrace"])
+    else
+      AC_SUBST(DEBUG,["-g"])
+    fi
+fi
 
+debug_compile=no
+AC_ARG_ENABLE([debug],[AS_HELP_STRING([--enable-debug],
+  [enable debug mode (default is no)])],[debug_compile=yes])
+if test "x${debug_compile}" = xyes; then
+    echo "#define __DEBUG" >> ./src/ppm_define.h
+    if test "x${vendor}" == xintel; then
+        AC_SUBST(DEBUG,["-O1 -g -debug all -check all -fp-stack-check -heap-arrays -ftrapuv -check pointers -check bounds -traceback"])
+    elif test "x${vendor}" == xgnu; then
+      AC_SUBST(DEBUG,["-O0 -g -fbounds-check -fbacktrace -ftrapv -fno-automatic"])
+    else
+      AC_SUBST(DEBUG,["-O1 -g"])
+    fi
+fi
 
 # Generate Makefiles
 AC_CONFIG_FILES([Makefile])

@@ -11,7 +11,6 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-m4_include([m4/ax_compiler_vendor.m4])
 m4_include([m4/ax_f90_header.m4])
 m4_include([m4/ax_f90_internal_headmod.m4])
 m4_include([m4/ax_f90_library.m4])

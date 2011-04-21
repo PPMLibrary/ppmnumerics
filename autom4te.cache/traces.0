@@ -1,4 +1,4 @@
-m4trace:m4/ax_compiler_vendor.m4:49: -1- AC_DEFUN([AX_COMPILER_VENDOR], [
+m4trace:/usr/share/aclocal/ax_compiler_vendor.m4:47: -1- AC_DEFUN([AX_COMPILER_VENDOR], [
 AC_CACHE_CHECK([for _AC_LANG compiler vendor], ax_cv_[]_AC_LANG_ABBREV[]_compiler_vendor,
  [ax_cv_[]_AC_LANG_ABBREV[]_compiler_vendor=unknown
   # note: don't check for gcc first since some other compilers define __GNUC__
@@ -440,43 +440,43 @@ m4trace:configure.ac:61: -1- AX_F90_MODULE_FLAG
 m4trace:configure.ac:62: -1- m4_pattern_allow([^ax_cv_f90_modflag$])
 m4trace:configure.ac:84: -1- AX_COMPILER_VENDOR
 m4trace:configure.ac:92: -1- m4_pattern_allow([^HAVE_LIBM$])
-m4trace:configure.ac:98: -1- AX_F90_MODULE_EXTENSION
-m4trace:configure.ac:103: -1- AX_F90_LIBRARY_SETUP([ppm], [], [ppm_module_finalize.$ax_cv_f90_modext], [libppm*], [
+m4trace:configure.ac:114: -1- AX_F90_MODULE_EXTENSION
+m4trace:configure.ac:119: -1- AX_F90_LIBRARY_SETUP([ppm], [], [ppm_module_finalize.$ax_cv_f90_modext], [libppm*], [
     use ppm_module_finalize
     integer :: info
     call ppm_finalize(info)
    ])
-m4trace:configure.ac:103: -1- AX_F90_HEADER([ppm], [], [
+m4trace:configure.ac:119: -1- AX_F90_HEADER([ppm], [], [
     use ppm_module_finalize
     integer :: info
     call ppm_finalize(info)
    ], [$withval], [
       FCFLAGS="$FCFLAGS $AS_TR_SH(F90_HEADER_ppm)"
      ], [])
-m4trace:configure.ac:103: -1- AX_F90_INTERNAL_HEADMOD([ppm fortran 90 header], [], [-I], [
+m4trace:configure.ac:119: -1- AX_F90_INTERNAL_HEADMOD([ppm fortran 90 header], [], [-I], [
     use ppm_module_finalize
     integer :: info
     call ppm_finalize(info)
    ], [F90_HEADER_ppm], [$withval], [
       FCFLAGS="$FCFLAGS $AS_TR_SH(F90_HEADER_ppm)"
      ], [])
-m4trace:configure.ac:103: -1- m4_pattern_allow([^F90_HEADER_ppm$])
-m4trace:configure.ac:103: -1- AX_F90_MODULE([ppm], [ppm_module_finalize.$ax_cv_f90_modext], [
+m4trace:configure.ac:119: -1- m4_pattern_allow([^F90_HEADER_ppm$])
+m4trace:configure.ac:119: -1- AX_F90_MODULE([ppm], [ppm_module_finalize.$ax_cv_f90_modext], [
     use ppm_module_finalize
     integer :: info
     call ppm_finalize(info)
    ], [$withval], [
       FCFLAGS="$FCFLAGS $AS_TR_SH(F90_MODULE_ppm)"
      ], [])
-m4trace:configure.ac:103: -1- AX_F90_INTERNAL_HEADMOD([ppm fortran 90 module], [ppm_module_finalize.$ax_cv_f90_modext], ["$ax_cv_f90_modflag"], [
+m4trace:configure.ac:119: -1- AX_F90_INTERNAL_HEADMOD([ppm fortran 90 module], [ppm_module_finalize.$ax_cv_f90_modext], ["$ax_cv_f90_modflag"], [
     use ppm_module_finalize
     integer :: info
     call ppm_finalize(info)
    ], [F90_MODULE_ppm], [$withval], [
       FCFLAGS="$FCFLAGS $AS_TR_SH(F90_MODULE_ppm)"
      ], [])
-m4trace:configure.ac:103: -1- m4_pattern_allow([^F90_MODULE_ppm$])
-m4trace:configure.ac:103: -1- AX_F90_LIBRARY([ppm], [libppm*], [
+m4trace:configure.ac:119: -1- m4_pattern_allow([^F90_MODULE_ppm$])
+m4trace:configure.ac:119: -1- AX_F90_LIBRARY([ppm], [libppm*], [
     use ppm_module_finalize
     integer :: info
     call ppm_finalize(info)
@@ -484,8 +484,14 @@ m4trace:configure.ac:103: -1- AX_F90_LIBRARY([ppm], [libppm*], [
     LDFLAGS="$LDFLAGS $AS_TR_SH(F90_LDFLAGS_ppm)"
     LIBS="$AS_TR_SH(F90_LIBS_ppm) $LIBS"
    ], [AC_MSG_ERROR([cannot compile ppm numerics without ppm core])])
-m4trace:configure.ac:103: -1- m4_pattern_allow([^F90_LDFLAGS_ppm$])
-m4trace:configure.ac:103: -1- m4_pattern_allow([^F90_LIBS_ppm$])
-m4trace:configure.ac:162: -1- m4_pattern_allow([^DEBUG$])
-m4trace:configure.ac:169: -1- m4_pattern_allow([^LIB@&t@OBJS$])
-m4trace:configure.ac:169: -1- m4_pattern_allow([^LTLIBOBJS$])
+m4trace:configure.ac:119: -1- m4_pattern_allow([^F90_LDFLAGS_ppm$])
+m4trace:configure.ac:119: -1- m4_pattern_allow([^F90_LIBS_ppm$])
+m4trace:configure.ac:132: -1- m4_pattern_allow([^HAVE_LIBFFTW3$])
+m4trace:configure.ac:183: -1- m4_pattern_allow([^DEBUG$])
+m4trace:configure.ac:185: -1- m4_pattern_allow([^DEBUG$])
+m4trace:configure.ac:187: -1- m4_pattern_allow([^DEBUG$])
+m4trace:configure.ac:197: -1- m4_pattern_allow([^DEBUG$])
+m4trace:configure.ac:199: -1- m4_pattern_allow([^DEBUG$])
+m4trace:configure.ac:201: -1- m4_pattern_allow([^DEBUG$])
+m4trace:configure.ac:207: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.ac:207: -1- m4_pattern_allow([^LTLIBOBJS$])
