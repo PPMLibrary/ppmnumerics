@@ -335,7 +335,7 @@
 #endif
 
     !-----------------------------------------------------------------------
-    ! Apply the Green's function
+    ! Apply the Greens function
     ! ... depending on the case
     !-----------------------------------------------------------------------
     !!kill?: ppmpoisson%fldgrnc = -10000000.0_MK

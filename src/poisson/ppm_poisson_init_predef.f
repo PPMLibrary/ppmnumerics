@@ -55,7 +55,7 @@
     INTEGER ,DIMENSION(__DIM)               :: indl,indu
     INTEGER,PARAMETER                       :: MK = __PREC
     REAL(__PREC),PARAMETER                  :: PI=ACOS(-1.0_MK) !@ use ppm pi
-    !factor for the Green's function, including FFT normalization
+    !factor for the Greens function, including FFT normalization
     REAL(__PREC)                            :: normfac
     INTEGER                                 :: i,j,k
     INTEGER                                 :: kx,ky,kz

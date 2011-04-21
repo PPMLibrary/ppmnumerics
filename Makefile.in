@@ -89,6 +89,7 @@ $(OBJ_DIR)/%.d: $(SRC_DIR)/%.f
         sed -e 's#^[ \t]*##' \
             -e '/^!/d' \
             -e '/mpif.h/d' \
+            -e '/fftw3.f/d' \
             -e 's#INCLUDE #$(SRC_DIR)/#' \
             -e 's#$$# \\#' \
             -e "s#'##g" >> $@

@@ -283,7 +283,7 @@
       REAL(MK), DIMENSION(:,:,:,:,:),  POINTER     :: DATA_fv
 #endif
       ! mesh ID of the data
-      ! Note F.Perignon: I remove the INTENT(IN) for mesh_id_data to make the lib work, but I guess it's
+      ! Note F.Perignon: I remove the INTENT(IN) for mesh_id_data to make the lib work, but I guess its
       ! not a proper solution ...
       INTEGER                        :: mesh_id_data
       ! topo ID of the field

@@ -16,15 +16,15 @@
 #-------------------------------------------------------------------------
 
 # These variables are set when configure is ran
-prefix = /usr/local/ppm/build
+prefix = /usr/local
 exec_prefix = ${prefix}
 libdir = ${exec_prefix}/lib
 builddir = .
-LIBS = -lppm -lppm -lm 
-LDFLAGS = -L/usr/local/metis-4.0_gcc -L/home/jtra/phd/naga/src/libppm/lib -L/home/jtra/phd/naga/src/libppm/lib
+LIBS = -lppm -lppm 
+LDFLAGS = -L/home/omar/sw/metis/intel/lib -L../../ppmcore/libppm/lib -L../../ppmcore/libppm/lib
 CFLAGS = -O3
-FCLIBS =  -L/usr/local/metis-4.0_gcc -L/usr/local/openmpi-1.4.3_gcc/lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.3 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.3/../../../../lib -L/lib/../lib -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.3/../../.. -lmpi_f90 -lmpi_f77 -lmpi -lopen-rte -lopen-pal -ldl -lnsl -lutil -lgfortranbegin -lgfortran -lm -lpthread
-FCFLAGS = -O3 -ffree-form -I/home/jtra/phd/naga/src/libppm/include
+FCLIBS =  -L/home/omar/sw/metis/intel/lib -L/opt/openmpi/1.5/intel/lib -L/opt/openmpi/1.5/intel/lib/ -L/opt/intel/composerxe-2011.0.084/compiler/lib/intel64 -L/opt/intel/composerxe-2011.0.084/ipp/../compiler/lib/intel64 -L/opt/intel/composerxe-2011.0.084/ipp/lib/intel64 -L/opt/intel/composerxe-2011.0.084/mkl/lib/intel64 -L/opt/intel/composerxe-2011.0.084/tbb/lib/intel64//cc4.1.0_libc2.4_kernel2.6.16.21 -L/opt/openmpi/1.5/intel/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5/../../../../lib64 -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5/../../../../lib -L/lib/../lib64 -L/lib/../lib -L/usr/lib/../lib64 -L/usr/lib/../lib -L/usr/lib/gcc/x86_64-linux-gnu/4.4.5/../../.. -L/lib64 -L/lib -L/usr/lib64 -L/usr/lib -L/usr/lib/x86_64-linux-gnu -lmpi_f90 -lmpi_f77 -lmpi -ldl -lnsl -lutil -lifport -lifcore -limf -lsvml -lm -lipgo -lirc -lpthread -lirc_s
+FCFLAGS = -O3 -FR -I../../ppmcore/libppm/include
 FC = mpif90
 CC = mpicc
 CXX = mpic++
@@ -89,6 +89,7 @@ $(OBJ_DIR)/%.d: $(SRC_DIR)/%.f
         sed -e 's#^[ \t]*##' \
             -e '/^!/d' \
             -e '/mpif.h/d' \
+            -e '/fftw3.f/d' \
             -e 's#INCLUDE #$(SRC_DIR)/#' \
             -e 's#$$# \\#' \
             -e "s#'##g" >> $@
