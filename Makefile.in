@@ -19,6 +19,7 @@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 libdir = @libdir@
+includedir = @includedir@
 builddir = @builddir@
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
@@ -66,6 +67,8 @@ $(shell test -d $(MODULES_DIR) || mkdir $(MODULES_DIR))
 $(shell test -d $(builddir)/lib || mkdir $(builddir)/lib)
 $(shell test -d $(libdir) || mkdir $(libdir))
 $(warning done.)
+
+.PHONY: all clean install new test
 
 .DEFAULT: ;
 
@@ -116,16 +119,18 @@ clean:
 	rm -fR $(OBJ_DIR)
 	rm -fR $(MODULES_DIR)
 	rm -fR $(builddir)/lib
-	rm -f $(libdir)/$(LIB_PPM)
 
 # This copies the PPM library into libdir
 install: all
 	@echo '[ deploying to '$(libdir)']'
 	@cp $(TARGET) $(libdir)
 	@ranlib $(libdir)/$(LIB_PPM)
+	@echo '[ deploying modules to '$(includedir)/ppm']'
+	@mkdir -p $(includedir)/ppm
+	@cp $(MODULES_DIR)/* $(includedir)/ppm
 
-# This cleans, compiles, and copies the PPM library
-new: clean all install
+# This compiles, and copies the PPM library
+new: all install
 
 # This ensures all dependency files are up-to-date
 # WARNING: The directive below will fail silently, in case of problems
