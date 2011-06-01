@@ -3,7 +3,7 @@
       !-------------------------------------------------------------------------
       ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
-  !
+      !
       ! Notes on the init routine:
       !   Arguments:
       !     topoid
@@ -20,6 +20,7 @@
       !
       !
       ! Add finalize routine
+      ! This routine needs to be modified to allow cell centred data
       !-------------------------------------------------------------------------
 #define __SINGLE 0
 #define __DOUBLE 1
@@ -45,6 +46,10 @@
       TYPE ppm_poisson_plan
          INTEGER                                              :: derivatives
          INTEGER                                              :: case
+
+         REAL(ppm_kind_double)                                :: normkx
+         REAL(ppm_kind_double)                                :: normky
+         REAL(ppm_kind_double)                                :: normkz
 
 
          INTEGER                                              :: topoidxy
@@ -138,7 +143,7 @@
          !!!dummy array for the right hand side, for free space, vector fields
          REAL(ppm_kind_double),DIMENSION(:,:,:,:),POINTER     :: fldgrnr=>NULL()
          !!!real Greens field, z-pencils, scalar
-         COMPLEX(ppm_kind_double),DIMENSION(:,:,:,:,:),POINTER  :: fldgrnc=>NULL() !@tmp
+         COMPLEX(ppm_kind_double),DIMENSION(:,:,:,:),POINTER  :: fldgrnc=>NULL()
          !!!complex Greens field, z-pencils, scalar
          REAL(ppm_kind_double),DIMENSION(:,:,:,:,:),POINTER   :: drv_vr=>NULL()
          !!!dummy array for the right hand side, for free space, vector fields
@@ -178,6 +183,10 @@
          MODULE PROCEDURE ppm_poisson_fd
       END INTERFACE
 
+      INTERFACE ppm_poisson_extrapolateghost
+         MODULE PROCEDURE ppm_poisson_extrapolateghost_vr
+      END INTERFACE
+
       CONTAINS
 #define __KIND __SINGLE
 
@@ -185,19 +194,23 @@
         !!#define __CMPLXDEF DCMPLX
 #define __DIM  3
 #define __ZEROSI (/0,0,0/)
+#define __NCOM  3
 #define __ROUTINE ppm_poisson_init_predef
 #include "poisson/ppm_poisson_init_predef.f"
 #undef __ROUTINE
 #define __ROUTINE ppm_poisson_solve
-#define __NCOM  3
 #include "poisson/ppm_poisson_solve.f"
 #undef __ROUTINE
 #define __ROUTINE ppm_poisson_fd
 #include "poisson/ppm_poisson_fd.f"
 #undef __ROUTINE
+#define __ROUTINE ppm_poisson_extrapolateghost_vr
+#include "poisson/ppm_poisson_extrapolateghost.f"
+#undef __ROUTINE
+#undef __ZEROSI
 #undef __DIM
 #undef __NCOM
-#undef __ZEROSI
+
 #undef __KIND
 #define __KIND __DOUBLE
 

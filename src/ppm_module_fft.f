@@ -31,6 +31,11 @@
       !  a normalization routine exists for debugging purposes
       !
       !  sofar all fftw calls are to double precision routines!
+      !
+      !  The routines respects the periodic N+1 points periodic BC cf topo%bcdef
+      !  but also does full domain FFTs for freespace BC
+      !  It does not work on mixed periodic/freespace BC in the XY direction
+      !  topo%bcdef(1) is assumed to be in x, (2) to be in y, (3) z, (4) x...
       !-------------------------------------------------------------------------
 #define __SINGLE 0
 #define __DOUBLE 1
