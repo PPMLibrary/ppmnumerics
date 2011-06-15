@@ -1,13 +1,28 @@
       !-------------------------------------------------------------------------
-      ! ppm_poisson_fd.f90
+      !  Subroutine   : ppm_poisson_fd.f90
       !-------------------------------------------------------------------------
-      !@ TODO: Somewhere check if fieldin is equal to fieldout and give a warning
+      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      !                    Center for Fluid Dynamics (DTU)
+      !
       !-------------------------------------------------------------------------
-      !!#define __ROUTINE ppm_poisson_fd
-      !!#define __DIM  3
-      !!#define __NCOM  3
-      !!#define __ZEROSI (/0,0,0/)
       SUBROUTINE __ROUTINE(topoid,meshid,fieldin,fieldout,dtype,info)
+      !!! This routine computes the finite difference gradients, curl etc of 
+      !!! fieldin and outputs to fieldout. Both in and out fields are on
+      !!! the mesh with meshid belonging to the topology with id topoid.
+      !!! The finite difference to be carried out is determined by dtype which
+      !!! must be one of the following:
+      !!! * ppm_poisson_drv_curl_fd2
+      !!! * ppm_poisson_drv_grad_fd2 (not implemented yet)
+      !!! * ppm_poisson_drv_lapl_fd2 (not implemented yet)
+      !!! * ppm_poisson_drv_div_fd2  (not implemented yet)
+      !!! * ppm_poisson_drv_curl_fd4
+      !!! * ppm_poisson_drv_grad_fd4 (not implemented yet)
+      !!! * ppm_poisson_drv_lapl_fd4 (not implemented yet)
+      !!! * ppm_poisson_drv_div_fd4  (not implemented yet)
+      !!!
+      !!! [NOTE] fieldin and fieldout must NOT be the same array. A check
+      !!! should be added.
+      !@ TODO: Somewhere check if fieldin is equal to fieldout and give a warning
 
       USE ppm_module_topo_get
 
@@ -16,12 +31,25 @@
       ! Arguments
       !-------------------------------------------------------------------------
       INTEGER, INTENT(IN)                                         :: topoid
+      !!! ID of the topology
       INTEGER, INTENT(IN)                                         :: meshid
+      !!! Mesh ID
       REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: fieldin
+      !!! Input field data
       REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: fieldout
-      !INTEGER,DIMENSION(__DIM),INTENT(IN)                         :: gstw
+      !!! Output field data
       INTEGER, INTENT(IN)                                         :: dtype
+      !!! Derivation type. Can be one of the types:
+      !!! * ppm_poisson_drv_curl_fd2
+      !!! * ppm_poisson_drv_grad_fd2 (not implemented yet)
+      !!! * ppm_poisson_drv_lapl_fd2 (not implemented yet)
+      !!! * ppm_poisson_drv_div_fd2  (not implemented yet)
+      !!! * ppm_poisson_drv_curl_fd4
+      !!! * ppm_poisson_drv_grad_fd4 (not implemented yet)
+      !!! * ppm_poisson_drv_lapl_fd4 (not implemented yet)
+      !!! * ppm_poisson_drv_div_fd4  (not implemented yet)
       INTEGER, INTENT(OUT)                                        :: info
+      !!! Return status, 0 upon succes
 
       !-------------------------------------------------------------------------
       ! Local variables
@@ -40,7 +68,6 @@
       !-------------------------------------------------------------------------
       CALL substart('ppm_poisson_fd',t0,info)
 
-      !@ perhaps ensure that fieldin .NE. fieldout
       !-------------------------------------------------------------------------
       ! Get topology and mesh values
       !-------------------------------------------------------------------------

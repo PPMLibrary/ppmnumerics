@@ -1,11 +1,23 @@
       !-------------------------------------------------------------------------
-      ! ppm_poisson_extrapolateghost.f90
+      !  Subroutine   : ppm_poisson_extrapolateghost.f90
       !-------------------------------------------------------------------------
-!!#define __ROUTINE ppm_poisson_extrapolateghost_vr
-!!#define __DIM  3
-!!#define __NCOM  3
-!!#define __ZEROSI (/0,0,0/)
+      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      !                    Center for Fluid Dynamics (DTU)
+      !
+      !-------------------------------------------------------------------------
       SUBROUTINE __ROUTINE(topoid,meshid,field,nextra,nbase,gstw,info)
+      !!! This routine extrapolates field values of field with topology and mesh
+      !!! id topoid,meshid respectively into the ghost layer of width gstw.
+      !!! nbase points are used to extrapolate into nextra points.
+      !!!
+      !!! [NOTE]
+      !!! Presently extrapolation can only be done to 1 or two points into the
+      !!! ghostlayer always based on 4 points (fourth order spatial convergence)
+      !!! A general nbase,nextra extrapolation can be implemented vi solution
+      !!! of a small linear system of equations. This has not been done.
+      !!! This routine is in need of loop unrollling in particular for
+      !!! typical choices of nbase,nextra pairs. Extrapolation is necessary for
+      !!! e.g. freespace FD curl of stream function
 
       USE ppm_module_topo_get
 
@@ -51,18 +63,14 @@
       !-------------------------------------------------------------------------
       ! Compare the number of points to extrapolate to the ghost layer width
       !-------------------------------------------------------------------------
-      IF (iextra .GT. gstw(1) .OR. &
-        & iextra .GT. gstw(2) .OR. &
-        & iextra .GT. gstw(3)) THEN
+      IF (nextra .GT. gstw(1) .OR. &
+        & nextra .GT. gstw(2) .OR. &
+        & nextra .GT. gstw(3)) THEN
          CALL ppm_write(ppm_rank,'ppm_poisson_extrapolateghost',&
          & 'The points to extrapolate exceeds the ghost layer.',info)
          info = -1
          GOTO 9999
       ENDIF
-
-      !-------------------------------------------------------------------------
-      !@ Check what has been implemented in this routine so far
-      !-------------------------------------------------------------------------
 
       !-------------------------------------------------------------------------
       ! Determine weights

@@ -18,9 +18,13 @@
       !     derivatives (optional): none,curl,gradient,laplace, - spectral/FD
       !     possibly the option to de- and reallocate arrays of slabs/pencils
       !
+      ! The fields returned from the subroutine have been ghosted/extrapolated
+      ! as necessary.
       !
       ! Add finalize routine
       ! This routine needs to be modified to allow cell centred data
+      ! These routines should all be renamed - potentially not just Poisson 
+      ! equations can be solved.
       !-------------------------------------------------------------------------
 #define __SINGLE 0
 #define __DOUBLE 1

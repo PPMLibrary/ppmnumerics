@@ -1,16 +1,29 @@
       !-------------------------------------------------------------------------
-      ! ppm_poisson_init_predef.f90
+      !  Subroutine   : ppm_poisson_init_predef.f90
       !-------------------------------------------------------------------------
-      ! Routine to initialise the convolution using build in Greens function
+      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      !                    Center for Fluid Dynamics (DTU)
+      !
       !-------------------------------------------------------------------------
-!!#define __PREC ppm_kind_double
-!!#define __CMPLXDEF DCMPLX
-!!#define __DIM  3
-!!#define __NCOM  3
-!!#define __ZEROSI (/0,0,0/)
-!!#define __ROUTINE ppm_poisson_init_predef
       SUBROUTINE __ROUTINE(topoid,meshid,ppmpoisson,fieldin,fieldout,green,info&
                                 &,bc,derive)
+      !!! Routine to initialise Green's function solution of the Poisson
+      !!! equation. green is the flag defining which Green's function to use:
+      !!! * ppm_poisson_grn_pois_per - Poisson equation, periodic boundaries
+      !!! * ppm_poisson_grn_pois_fre - Poisson equation, freespace boundaries (not implemented)
+      !!! * ppm_poisson_grn_reprojec - Do vorticity reprojection to kill divergence
+      !!! Eventually the routine should be overloaded to accept custom Green's
+      !!! functions such that more general convolutions can be performed.
+      !!! green should be expanded to include more buildin Green's functions.
+      !!!
+      !!! The routine should accept an optional flag to toggle deallocation of
+      !!! work arrays between calls to ppm_poisson_solve
+      !!!
+      !!! [NOTE]
+      !!! When meshid > 1 works with the mapping the memory consumption can be
+      !!! halved. Sketches have been implemented.
+      !!! This routine should also be renamed to _init
+
 
       USE ppm_module_mktopo
       USE ppm_module_topo_get
@@ -24,33 +37,49 @@
       ! Arguments
       !-------------------------------------------------------------------------
       INTEGER, INTENT(IN)                                         :: topoid
+      !!! Topology ID
       INTEGER, INTENT(IN)                                         :: meshid
+      !!! Mesh ID
       TYPE(ppm_poisson_plan),INTENT(INOUT)                        :: ppmpoisson
-      !@ strictly speaking fieldin is not being used in the init routine
+      !!! The PPM Poisson plan type (inspired by the FFTW plan)
       REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: fieldin
+      !!! Input data field
+      !@ strictly speaking fieldin is not being used in the init routine
       REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: fieldout
-      !REAL(__PREC),DIMENSION(:,:,:,:,:),POINTER                   :: green
+      !!! Output data field
       INTEGER, INTENT(IN)                                         :: green
       !!!flag to select build-in Greens functions:
       !!!ppm_poisson_grn_pois_per - Poisson equation, periodic boundaries
       !!!ppm_poisson_grn_pois_fre - Poisson equation, freespace boundaries (not implemented)
       !!!ppm_poisson_grn_reprojec - Do vorticity reprojection to kill divergence
+      !!!
+      !!!Eventually this should also accept custom Green's function
       INTEGER, INTENT(OUT)                                        :: info
       INTEGER,INTENT(IN),OPTIONAL                                 :: bc
       !!!boundary condition for the convolution. Can be on of the following:
       !!!ppm_poisson_grn_pois_per, ppm_poisson_grn_pois_fre.
       !!!One could argue that this is redundant in the build-in case
-      !!!@ Isnt this redundant because of green?
+      !@ Isnt this redundant because of green?
       INTEGER,INTENT(IN),OPTIONAL                                 :: derive
       !!!flag to toggle various derivatives of the solution (not to be used with
       !!!green=ppm_poisson_grn_reprojec):
-      !!!ppm_poisson_drv_none
-      !!!ppm_poisson_drv_curl_fd (not implemented)
-      !!!ppm_poisson_drv_grad_fd (not implemented)
-      !!!ppm_poisson_drv_lapl_fd (not implemented)
-      !!!ppm_poisson_drv_curl_sp (not implemented)
-      !!!ppm_poisson_drv_grad_sp (not implemented)
-      !!!ppm_poisson_drv_lapl_sp (not implemented)
+      !!! * ppm_poisson_drv_none
+      !!! * ppm_poisson_drv_curl_sp  (not fully implemented)
+      !!! * ppm_poisson_drv_grad_sp  (not implemented)
+      !!! * ppm_poisson_drv_lapl_sp  (not implemented)
+      !!! * ppm_poisson_drv_div_sp   (not implemented)
+      !!! * ppm_poisson_drv_curl_fd2
+      !!! * ppm_poisson_drv_grad_fd2 (not implemented)
+      !!! * ppm_poisson_drv_lapl_fd2 (not implemented)
+      !!! * ppm_poisson_drv_div_fd2  (not implemented)
+      !!! * ppm_poisson_drv_curl_fd4
+      !!! * ppm_poisson_drv_grad_fd4 (not implemented)
+      !!! * ppm_poisson_drv_lapl_fd4 (not implemented)
+      !!! * ppm_poisson_drv_div_fd4  (not implemented)
+      !!!
+      !!! curl=curl, grad=gradient,lapl=laplace operator,div=divergence
+      !!! sp=spectrally, fd2=2nd order finite differences, fd4=4th order FD
+      !!!
       !!!The spectral derivatives can only be computed in this routine. Since 
       !!!the flag exists finite difference derivatives have also been included.
 
