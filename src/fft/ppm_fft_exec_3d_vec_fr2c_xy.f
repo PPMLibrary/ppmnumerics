@@ -101,3 +101,5 @@
       RETURN
 
       END SUBROUTINE __ROUTINE
+#undef __ROUTINE
+#undef __PREC

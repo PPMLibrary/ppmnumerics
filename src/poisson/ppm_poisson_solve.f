@@ -9,10 +9,10 @@
       !-------------------------------------------------------------------------
       SUBROUTINE __ROUTINE(topoid,meshid,ppmpoisson,fieldin,fieldout,gstw,info,&
                          & tmpcase)
-      !!! Routine to perform the Green's function solution of the Poisson
+      !!! Routine to perform the Greens function solution of the Poisson
       !!! equation. All settings are defined in ppm_poisson_initdef and stored 
       !!! in the ppmpoisson plan. The tmpcase argument allows the use of a
-      !!! different Green's function or operation than initialised. This is 
+      !!! different Greens function or operation than initialised. This is 
       !!! particularly useful for vorticity reprojection 
       !!! (ppm_poisson_grn_reprojec).
       !!! 
@@ -21,9 +21,6 @@
       USE ppm_module_map_field
       USE ppm_module_map_field_global
       USE ppm_module_map
-      USE ppm_module_typedef !@
-      USE ppm_module_data !@
-      USE ppm_module_finalize !@
 
       IMPLICIT NONE
       include 'mpif.h'
@@ -62,10 +59,6 @@
       REAL(__PREC)                      :: kx,ky,kz
       REAL(__PREC)                      :: phix,phiy,phiz
       REAL(__PREC)                      :: normfac
-      TYPE(ppm_t_equi_mesh), POINTER   :: mesh        => NULL()
-      TYPE(ppm_t_equi_mesh), POINTER   :: target_mesh => NULL()
-      TYPE(ppm_t_topo),      POINTER   :: topo        => NULL()
-      TYPE(ppm_t_topo),      POINTER   :: target_topo => NULL()
 
 #ifndef __NOPE
 INTEGER                           :: trank !@
@@ -353,7 +346,7 @@ trank =0
 #endif
 
       !-----------------------------------------------------------------------
-      ! Apply the periodic Green's function
+      ! Apply the periodic Greens function
       !-----------------------------------------------------------------------
       IF (presentcase .EQ. ppm_poisson_grn_pois_per) THEN
         DO isub=1,ppmpoisson%nsublistz
@@ -372,7 +365,7 @@ trank =0
           ENDDO
         ENDDO
       !-----------------------------------------------------------------------
-      ! Apply the free-space Green's function
+      ! Apply the free-space Greens function
       !-----------------------------------------------------------------------
       ELSE IF (presentcase .EQ. ppm_poisson_grn_pois_fre) THEN
         DO isub=1,ppmpoisson%nsublistz
@@ -646,20 +639,6 @@ trank =0
         CALL ppm_write(ppm_rank, 'ppm_poisson_solve','Failed to push vector field.',info2)
         GOTO 9999
       ENDIF
-      topo => ppm_topo(topoid)%t!@
-      mesh => topo%mesh(meshid) !@
-      target_topo => ppm_topo(ppmpoisson%topoidxy)%t !@
-      target_mesh => target_topo%mesh(ppmpoisson%meshidxy) !@
-      DO isub=1,topo%nsublist
-        isubl=topo%isublist(isub)
-        !@write(*,*) 'johannestest rank', ppm_rank,'istart', mesh%istart(:,isubl), &
-        !@'nnodes',mesh%nnodes(:,isubl), mesh%nm
-      ENDDO
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        !@write(*,*) 'johannestestxy rank', ppm_rank,'istart', target_mesh%istart(:,isubl), &
-        !@'nnodes', target_mesh%nnodes(:,isubl), target_mesh%nm
-      ENDDO
 
       !Send
       CALL ppm_map_field_send(info)

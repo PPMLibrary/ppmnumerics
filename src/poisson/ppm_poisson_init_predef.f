@@ -7,14 +7,14 @@
       !-------------------------------------------------------------------------
       SUBROUTINE __ROUTINE(topoid,meshid,ppmpoisson,fieldin,fieldout,green,info&
                                 &,bc,derive)
-      !!! Routine to initialise Green's function solution of the Poisson
-      !!! equation. green is the flag defining which Green's function to use:
+      !!! Routine to initialise Greens function solution of the Poisson
+      !!! equation. green is the flag defining which Greens function to use:
       !!! * ppm_poisson_grn_pois_per - Poisson equation, periodic boundaries
       !!! * ppm_poisson_grn_pois_fre - Poisson equation, freespace boundaries (not implemented)
       !!! * ppm_poisson_grn_reprojec - Do vorticity reprojection to kill divergence
-      !!! Eventually the routine should be overloaded to accept custom Green's
+      !!! Eventually the routine should be overloaded to accept custom Greens
       !!! functions such that more general convolutions can be performed.
-      !!! green should be expanded to include more buildin Green's functions.
+      !!! green should be expanded to include more buildin Greens functions.
       !!!
       !!! The routine should accept an optional flag to toggle deallocation of
       !!! work arrays between calls to ppm_poisson_solve
@@ -53,7 +53,7 @@
       !!!ppm_poisson_grn_pois_fre - Poisson equation, freespace boundaries (not implemented)
       !!!ppm_poisson_grn_reprojec - Do vorticity reprojection to kill divergence
       !!!
-      !!!Eventually this should also accept custom Green's function
+      !!!Eventually this should also accept custom Greens function
       INTEGER, INTENT(OUT)                                        :: info
       INTEGER,INTENT(IN),OPTIONAL                                 :: bc
       !!!boundary condition for the convolution. Can be on of the following:
@@ -93,7 +93,7 @@
       INTEGER ,DIMENSION(__DIM)               :: indl,indu
       INTEGER,PARAMETER                       :: MK = __PREC
       REAL(__PREC),PARAMETER                  :: PI=ACOS(-1.0_MK) !@ use ppm pi
-      !factor for the Green's function, including FFT normalization
+      !factor for the Greens function, including FFT normalization
       REAL(__PREC)                            :: normfac
       INTEGER                                 :: i,j,k
       INTEGER                                 :: kx,ky,kz
@@ -512,7 +512,7 @@
       ! then FFTed in those directions, mapped to z-pencils, FFTed in z and
       ! finally copied to ppmpoisson%fldgrnc. The real xy slabs have already
       ! been setup for FFTs etc so they offer a convenient container for the
-      ! FFTing the Green's function instead of setting up the whole apparatus
+      ! FFTing the Greens function instead of setting up the whole apparatus
       ! for this one-time affair.
       ! These loops must run over the padded(extended) domain thus %ndataxy
       ! \nabla \Psi = -\omega
@@ -521,7 +521,7 @@
       !-------------------------------------------------------------------------
       ELSE IF (green .EQ. ppm_poisson_grn_pois_fre) THEN
         !-----------------------------------------------------------------------
-        ! First initialise the real Green's function
+        ! First initialise the real Greens function
         !@alternatively this could come from as input
         !-----------------------------------------------------------------------
         !@write(*,*) 'what the fuck?'
@@ -532,7 +532,7 @@
         & REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK))*dx*dy*dz
         !& REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK)& !this is the correct normalization to bring one field back and forth.
         !remembering FFT normalization of ALL points: !vertex
-        !!& REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK)& !this should be correct normalization. When back and forth transforming the green's function is correct
+        !!& REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK)& !this should be correct normalization. When back and forth transforming the greens function is correct
         !!& *REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3))/8,MK)) !this line is probably not necessary
         !!!& *REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK)) !this line is probably not necessary
         !@write(*,*) ppmpoisson%nmxy, 'johannes'
