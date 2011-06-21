@@ -176,7 +176,7 @@
       INTEGER,PARAMETER                          :: ppm_poisson_grn_reprojec =3
 
       INTERFACE ppm_poisson_init
-         MODULE PROCEDURE ppm_poisson_init_predef
+         MODULE PROCEDURE ppm_poisson_init
       END INTERFACE
 
       INTERFACE ppm_poisson_solve
@@ -199,8 +199,8 @@
 #define __DIM  3
 #define __ZEROSI (/0,0,0/)
 #define __NCOM  3
-#define __ROUTINE ppm_poisson_init_predef
-#include "poisson/ppm_poisson_init_predef.f"
+#define __ROUTINE ppm_poisson_init
+#include "poisson/ppm_poisson_init.f"
 #undef __ROUTINE
 #define __ROUTINE ppm_poisson_solve
 #include "poisson/ppm_poisson_solve.f"

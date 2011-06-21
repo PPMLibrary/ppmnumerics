@@ -1,5 +1,5 @@
       !-------------------------------------------------------------------------
-      !  Subroutine   : ppm_poisson_init_predef.f90
+      !  Subroutine   : ppm_poisson_init.f90
       !-------------------------------------------------------------------------
       ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
@@ -50,7 +50,7 @@
       INTEGER, INTENT(IN)                                         :: green
       !!!flag to select build-in Greens functions:
       !!!ppm_poisson_grn_pois_per - Poisson equation, periodic boundaries
-      !!!ppm_poisson_grn_pois_fre - Poisson equation, freespace boundaries (not implemented)
+      !!!ppm_poisson_grn_pois_fre - Poisson equation, freespace boundaries
       !!!ppm_poisson_grn_reprojec - Do vorticity reprojection to kill divergence
       !!!
       !!!Eventually this should also accept custom Greens function
@@ -64,7 +64,7 @@
       !!!flag to toggle various derivatives of the solution (not to be used with
       !!!green=ppm_poisson_grn_reprojec):
       !!! * ppm_poisson_drv_none
-      !!! * ppm_poisson_drv_curl_sp  (not fully implemented)
+      !!! * ppm_poisson_drv_curl_sp  (only for periodic BC)
       !!! * ppm_poisson_drv_grad_sp  (not implemented)
       !!! * ppm_poisson_drv_lapl_sp  (not implemented)
       !!! * ppm_poisson_drv_div_sp   (not implemented)
@@ -111,7 +111,7 @@
       !-------------------------------------------------------------------------
       ! Initialise routine
       !-------------------------------------------------------------------------
-      CALL substart('ppm_poisson_init_predef',t0,info)
+      CALL substart('ppm_poisson_init',t0,info)
 
       !-------------------------------------------------------------------------
       ! Investigate optional arguments, setup routine accordingly
@@ -130,7 +130,7 @@
       !-------------------------------------------------------------------------
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
-        CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to get topology.',isub)
+        CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to get topology.',isub)
         GOTO 9999
       ENDIF
       !nsubs = topology%nsublist
@@ -173,10 +173,6 @@
         dx = (topology%max_physd(1)-topology%min_physd(1))/(mesh%nm(1)-1)
         dy = (topology%max_physd(2)-topology%min_physd(2))/(mesh%nm(2)-1)
         dz = (topology%max_physd(3)-topology%min_physd(3))/(mesh%nm(3)-1)
-        !maybe they should look like this: - no I think not for declaring the Greens function - after all the above dx is the value we have
-        !dx = (topology%max_physd(1)-topology%min_physd(1))/(mesh%nm(1))
-        !dy = (topology%max_physd(2)-topology%min_physd(2))/(mesh%nm(2))
-        !dz = (topology%max_physd(3)-topology%min_physd(3))/(mesh%nm(3))
       ENDIF
 
       !-------------------------------------------------------------------------
@@ -192,33 +188,29 @@
                                    & LBOUND(fieldout,3):UBOUND(fieldout,3),&
                                    & LBOUND(fieldout,4):UBOUND(fieldout,4),&
                                    & LBOUND(fieldout,5):UBOUND(fieldout,5)))
-        !IF ((      derive .EQ. ppm_poisson_drv_curl_fd2  &
-          !&  .OR.  derive .EQ. ppm_poisson_drv_curl_fd4) &
-          !&  .AND. ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
-          !ppmpoisson%derivatives = derive
-          !ALLOCATE(ppmpoisson%drv_vr(LBOUND(fieldout,1):UBOUND(fieldout,1),&
-                                   !& LBOUND(fieldout,2):UBOUND(fieldout,2),&
-                                   !& LBOUND(fieldout,3):UBOUND(fieldout,3),&
-                                   !& LBOUND(fieldout,4):UBOUND(fieldout,4),&
-                                   !& LBOUND(fieldout,5):UBOUND(fieldout,5)))
-        !ELSE IF ((      derive .EQ. ppm_poisson_drv_curl_fd2  &
-          !&  .OR.  derive .EQ. ppm_poisson_drv_curl_fd4) &
-          !&  .AND. ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
-          !ppmpoisson%derivatives = derive
-          !ALLOCATE(ppmpoisson%drv_vr(LBOUND(fieldout,1):UBOUND(fieldout,1),&
-                                   !& LBOUND(fieldout,2):UBOUND(fieldout,2),&
-                                   !& LBOUND(fieldout,3):UBOUND(fieldout,3),&
-                                   !& LBOUND(fieldout,4):UBOUND(fieldout,4),&
-                                   !& LBOUND(fieldout,5):UBOUND(fieldout,5)))
         ELSE IF (derive .EQ. ppm_poisson_drv_curl_sp) THEN
-          ppmpoisson%normkx = 2*PI/(topology%max_physd(1)-topology%min_physd(1))
-          ppmpoisson%normky = 2*PI/(topology%max_physd(2)-topology%min_physd(2))
-          ppmpoisson%normkz = 2*PI/(topology%max_physd(3)-topology%min_physd(3))
           ppmpoisson%derivatives = ppm_poisson_drv_curl_sp
+          IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
+            ppmpoisson%normkx = &
+              & 2.0_MK*PI/(topology%max_physd(1)-topology%min_physd(1))
+            ppmpoisson%normky = &
+              & 2.0_MK*PI/(topology%max_physd(2)-topology%min_physd(2))
+            ppmpoisson%normkz = &
+              & 2.0_MK*PI/(topology%max_physd(3)-topology%min_physd(3))
+          ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
+            CALL ppm_write(ppm_rank,'ppm_poisson_init', &
+            & 'WARNING: Spectral curl is not fully implemented in Freespace.',isub)
+            ppmpoisson%normkx = &
+              & 2.0_MK*PI/((topology%max_physd(1)-topology%min_physd(1))*2.0_MK)
+            ppmpoisson%normky = &
+              & 2.0_MK*PI/((topology%max_physd(2)-topology%min_physd(2))*2.0_MK)
+            ppmpoisson%normkz = &
+              & 2.0_MK*PI/((topology%max_physd(3)-topology%min_physd(3))*2.0_MK)
+          ENDIF
         ELSE IF (derive .EQ. ppm_poisson_drv_none) THEN
           ppmpoisson%derivatives = ppm_poisson_drv_none
         ELSE
-          CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Undefined derivation input.',isub)
+          CALL ppm_write(ppm_rank,'ppm_poisson_init','Undefined derivation input.',isub)
           GOTO 9999
         ENDIF
       ELSE
@@ -228,7 +220,7 @@
 
 
       !-------------------------------------------------------------------------
-      ! Create new slab topology !@sofar periodic
+      ! Create new slab topology
       !-------------------------------------------------------------------------
       ttopoid = 0
       tmeshid = -1
@@ -241,8 +233,6 @@
       ENDIF
       tmpmin              = topology%min_physd
       tmpmax              = topology%max_physd
-      !!tmpmin2             = topology%min_physd
-      !!tmpmax2             = topology%max_physd
 
       CALL ppm_mktopo(ttopoid,tmeshid,xp,0,&
       & decomposition,assigning,&
@@ -251,7 +241,7 @@
       & __ZEROSI,ppmpoisson%costxy,ppmpoisson%istartxy,ppmpoisson%ndataxy,&
       & ppmpoisson%nmxy,info)
       IF (info .NE. 0) THEN
-        CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to create xy-topology.',isub)
+        CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to create xy-topology.',isub)
         GOTO 9999
       ENDIF
       ppmpoisson%topoidxy = ttopoid
@@ -266,16 +256,14 @@
       CALL ppm_mesh_define(ttopoid,tmeshid,&
       & ppmpoisson%nmxy,ppmpoisson%istartxyc,ppmpoisson%ndataxyc,info) !@nmxyC
       IF (info .NE. 0) THEN
-        CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to create complex xy mesh definition.',isub)
+        CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to create complex xy mesh definition.',isub)
         GOTO 9999
       ENDIF
       ppmpoisson%meshidxyc = tmeshid
-      !write(*,*) ppmpoisson%meshidxy,tmeshid,ttopoid,ppmpoisson%meshidxyc
-      !!write(*,*) ppmpoisson%istartxyc,ppmpoisson%ndataxyc
 
 
       !-------------------------------------------------------------------------
-      ! Create new pencil topology !@sofar periodic
+      ! Create new pencil topology
       !-------------------------------------------------------------------------
       ttopoid = 0
       tmeshid = -1
@@ -286,17 +274,14 @@
       ENDIF
       assigning       = ppm_param_assign_internal
       decomposition   = ppm_param_decomp_zpencil
-      !tmpmin              = topology%min_physd
-      !tmpmax              = topology%max_physd
 
       CALL ppm_mktopo(ttopoid,tmeshid,xp,0,&
       & decomposition,assigning,&
-      !& topology%min_physd,topology%max_physd,bcdef,&
       & tmpmin,tmpmax,bcdef,&
       & __ZEROSI,ppmpoisson%costz,ppmpoisson%istartz,ppmpoisson%ndataz,&
       & ppmpoisson%nmz,info)
       IF (info .NE. 0) THEN
-        CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to create z-topology.',isub)
+        CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to create z-topology.',isub)
         GOTO 9999
       ENDIF
       ppmpoisson%topoidz = ttopoid
@@ -307,19 +292,19 @@
       !-------------------------------------------------------------------------
       CALL ppm_topo_get(ppmpoisson%topoidxy,topologyxy,info)
       IF (info .NE. 0) THEN
-        CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to get xy topology.',isub)
+        CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to get xy topology.',isub)
         GOTO 9999
       ENDIF
 
       !!CALL ppm_topo_get(ppmpoisson%topoidxyc,topologyxyc,info)
       !!IF (info .NE. 0) THEN
-        !!CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to get complex xy topology.',isub)
+        !!CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to get complex xy topology.',isub)
         !!GOTO 9999
       !!ENDIF
 
       CALL ppm_topo_get(ppmpoisson%topoidz,topologyz,info)
       IF (info .NE. 0) THEN
-        CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to get z topology.',isub)
+        CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to get z topology.',isub)
         GOTO 9999
       ENDIF
 
@@ -389,12 +374,8 @@
       ENDDO
 
       !-------------------------------------------------------------------------
-      ! Allocate real and complex xy slabs
+      ! Allocate complex xy slabs
       !-------------------------------------------------------------------------
-      !!ALLOCATE(ppmpoisson%fldxyr(__DIM,&
-      !!& indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
-      !!& 1:ppmpoisson%nsublistxy),stat=info)
-!!
       ALLOCATE(ppmpoisson%fldxyc(__DIM,&
       & indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
       & 1:ppmpoisson%nsublistxy),stat=info)
@@ -434,11 +415,6 @@
         & indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
         & 1:ppmpoisson%nsublistz),stat=info)
       ELSE IF (green .EQ. ppm_poisson_grn_pois_fre) THEN
-        !!!The z-dimension is defined to full extent for the real temporary
-        !!!Greens function array
-        !!ALLOCATE(ppmpoisson%fldgrnr(&
-        !!& indl(1):indu(1),indl(2):indu(2),indl(3):((indu(3)-1)*2),&
-        !!& 1:ppmpoisson%nsublistz),stat=info)
         ALLOCATE(ppmpoisson%fldgrnc(&
         & indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
         & 1:ppmpoisson%nsublistz),stat=info)
@@ -474,10 +450,13 @@
       ! PSI                              = 1/(4*pi2)*1/(kx2 + ky2 + kz2)OMEGA
       !-------------------------------------------------------------------------
       IF (green .EQ. ppm_poisson_grn_pois_per) THEN
-        ! Scaling the spectral coefficients... one minus is due to (i*k)^2 ... how about one due to Poisson?
+        ! Scaling the spectral coefficients... 
+        ! one minus due to (i*k)^2 and another due to the Poisson equation
         normfac = 1.0_MK/(4.0_MK*PI*PI * &
                 !and normalisation of FFTs
-                & REAL((ppmpoisson%nmz(1)-1)*(ppmpoisson%nmz(2)-1)*(ppmpoisson%nmz(3)-1),MK))
+                & REAL((ppmpoisson%nmz(1)-1)* &
+                &      (ppmpoisson%nmz(2)-1)* &
+                &      (ppmpoisson%nmz(3)-1),MK))
         DO isub=1,ppmpoisson%nsublistz
           isubl=ppmpoisson%isublistz(isub)
           DO k=1,ppmpoisson%ndataz(3,isubl)
@@ -524,18 +503,11 @@
         ! First initialise the real Greens function
         !@alternatively this could come from as input
         !-----------------------------------------------------------------------
-        !@write(*,*) 'what the fuck?'
-        !there should NOT be a minus here since this Greens function takes
+        !there should NOT be a minus here since THIS Greens function takes
         !the minus of the Poisson equation into account
         normfac = 1.0_MK/(4.0_MK*PI* &
         !remembering FFT normalization of ALL points: !vertex
         & REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK))*dx*dy*dz
-        !& REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK)& !this is the correct normalization to bring one field back and forth.
-        !remembering FFT normalization of ALL points: !vertex
-        !!& REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK)& !this should be correct normalization. When back and forth transforming the greens function is correct
-        !!& *REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3))/8,MK)) !this line is probably not necessary
-        !!!& *REAL((ppmpoisson%nmxy(1))*(ppmpoisson%nmxy(2))*(ppmpoisson%nmxy(3)),MK)) !this line is probably not necessary
-        !@write(*,*) ppmpoisson%nmxy, 'johannes'
         DO isub=1,ppmpoisson%nsublistxy
           isubl=ppmpoisson%isublistxy(isub)
           DO k=1,ppmpoisson%ndataxy(3,isubl)
@@ -638,13 +610,11 @@
           DO k=1,ppmpoisson%ndataz(3,isubl)
             DO j=1,ppmpoisson%ndataz(2,isubl)
               DO i=1,ppmpoisson%ndataz(1,isubl)
-                ppmpoisson%fldgrnc(i,j,k,isub) = ppmpoisson%fldzc2(1,i,j,k,isub)!+1.0_MK
+                ppmpoisson%fldgrnc(i,j,k,isub) = ppmpoisson%fldzc2(1,i,j,k,isub)
               ENDDO
             ENDDO
           ENDDO
         ENDDO
-
-        !@Deallocate field green r NOPE!
       END IF
 
       !-------------------------------------------------------------------------
@@ -659,7 +629,7 @@
       ! Return
       !-------------------------------------------------------------------------
  9999 CONTINUE
-      CALL substop('ppm_poisson_init_predef',t0,info)
+      CALL substop('ppm_poisson_init',t0,info)
       RETURN
 
       END SUBROUTINE __ROUTINE

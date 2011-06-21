@@ -54,16 +54,13 @@
       INTEGER                           :: i,j,k
       INTEGER                           :: info2
       INTEGER                           :: presentcase
-      REAL(__PREC)                      :: wdotk
+      REAL(__PREC)                      :: wdotgreenr
+      COMPLEX(__PREC)                   :: wdotgreenc
       INTEGER                           :: gi,gj,gk
-      REAL(__PREC)                      :: kx,ky,kz
-      REAL(__PREC)                      :: phix,phiy,phiz
+      COMPLEX(__PREC)                   :: kx,ky,kz
+      COMPLEX(__PREC)                   :: phix,phiy,phiz
       REAL(__PREC)                      :: normfac
 
-#ifndef __NOPE
-INTEGER                           :: trank !@
-trank =0
-#endif
       !-------------------------------------------------------------------------
       ! Initialise routine
       !-------------------------------------------------------------------------
@@ -144,94 +141,6 @@ trank =0
       & ppmpoisson%fldxyr, ppmpoisson%fldxyc, &
       & info)
 
-#ifdef __NOPE
-      if (ppm_rank .EQ. trank)   THEN
-      write(*,*) 'Rfftx12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(A,E12.4,A,$)') '  (',ppmpoisson%fldxyr(1,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'Rffty12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(A,E12.4,A,$)') '  (',ppmpoisson%fldxyr(2,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'Rfftz12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(A,E12.4,A,$)') '  (',ppmpoisson%fldxyr(3,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      ENDIF
-#endif
-
-
-#ifdef __NOPE
-      if (ppm_rank .EQ. trank)   THEN
-      write(*,*) 'fftx12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldxyc(1,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'ffty12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldxyc(2,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'fftz12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldxyc(3,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      ENDIF
-#endif
 
       !-----------------------------------------------------------------------
       ! Map to the pencils (Z)
@@ -283,67 +192,6 @@ trank =0
       & ppmpoisson%fldzc1, ppmpoisson%fldzc2, &
       & info)
 
-#ifdef __NOPE
-      if (ppm_rank .EQ. trank)   THEN
-            write(*,*)
-            write(*,*) !ppmpoisson%fldzc1 = 0.0_MK
-      write(*,*) 'fftx123', ppm_rank
-      DO isub=1,ppmpoisson%nsublistz
-        isubl=ppmpoisson%isublistz(isub)
-        DO k=1,ppmpoisson%ndataz(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataz(1,isubl)-1
-          DO j=1,ppmpoisson%ndataz(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldzc2(1,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'ffty123', ppm_rank
-      DO isub=1,ppmpoisson%nsublistz
-        isubl=ppmpoisson%isublistz(isub)
-        DO k=1,ppmpoisson%ndataz(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataz(1,isubl)-1
-          DO j=1,ppmpoisson%ndataz(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldzc2(2,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'fftz123', ppm_rank
-      DO isub=1,ppmpoisson%nsublistz
-        isubl=ppmpoisson%isublistz(isub)
-        DO k=1,ppmpoisson%ndataz(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataz(1,isubl)-1
-          DO j=1,ppmpoisson%ndataz(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldzc2(3,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-
-      write(*,*)
-      write(*,*)
-      write(*,*) 'green', ppm_rank
-      DO isub=1,ppmpoisson%nsublistz
-        isubl=ppmpoisson%isublistz(isub)
-        DO k=1,ppmpoisson%ndataz(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataz(1,isubl)-1
-          DO j=1,ppmpoisson%ndataz(2,isubl)-1
-              write(*,'(E12.4,$)') REAL(ppmpoisson%fldgrnr(i,j,k,isub))
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      ENDIF
-#endif
 
       !-----------------------------------------------------------------------
       ! Apply the periodic Greens function
@@ -384,17 +232,80 @@ trank =0
           ENDDO
         ENDDO
       !-----------------------------------------------------------------------
+      ! Vorticity re-projection
+      !-----------------------------------------------------------------------
+      ELSE IF (presentcase .EQ. ppm_poisson_grn_reprojec) THEN
+        !remembering to normalize the FFT
+        !normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1)-1)* & !vertex
+                              !& (ppmpoisson%nmz(2)-1)* &
+                              !& (ppmpoisson%nmz(3)-1),MK)
+        DO isub=1,ppmpoisson%nsublistz
+          isubl=ppmpoisson%isublistz(isub)
+          DO k=1,ppmpoisson%ndataz(3,isubl)
+            gk = k - 1 + (ppmpoisson%istartz(3,isubl)-1)
+            IF (gk .GT. (ppmpoisson%nmz(3)-1)/2) gk = gk-(ppmpoisson%nmz(3)-1)
+            kz = REAL(gk,MK)
+            DO j=1,ppmpoisson%ndataz(2,isubl)
+              gj = j - 1 + (ppmpoisson%istartz(2,isubl)-1)
+              IF (gj .GT. (ppmpoisson%nmz(2)-1)/2) gj = gj-(ppmpoisson%nmz(2)-1)
+              ky = REAL(gj,MK)
+              DO i=1,ppmpoisson%ndataz(1,isubl)
+                gi = i - 1 + (ppmpoisson%istartz(1,isubl)-1)
+                IF (gi .GT. (ppmpoisson%nmz(1)-1)/2) gi = gi-(ppmpoisson%nmz(1)-1)
+                kx = REAL(gi,MK)
+
+                !IF (gi .EQ. 0 .AND. gj .EQ. 0 .AND. gk .EQ. 0) THEN
+                  !wdotk = 0.0_mk
+                !ELSE
+                  !wdotk = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
+                        !&  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
+                        !&  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) / &
+                        !&  (kx*kx+ky*ky+kz*kz)
+                !ENDIF
+
+                !ppmpoisson%fldzc2(1,i,j,k,isub) = &
+                  !& (ppmpoisson%fldzc2(1,i,j,k,isub) - wdotk*kx)*normfac
+                !ppmpoisson%fldzc2(2,i,j,k,isub) = &
+                  !& (ppmpoisson%fldzc2(2,i,j,k,isub) - wdotk*ky)*normfac
+                !ppmpoisson%fldzc2(3,i,j,k,isub) = &
+                  !& (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotk*kz)*normfac
+
+                IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
+                  wdotgreenc = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
+                        &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
+                        &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
+                        &  ppmpoisson%fldgrnc( i,j,k,isub)
+                  ppmpoisson%fldzc2(1,i,j,k,isub) = &
+                    & (ppmpoisson%fldzc2(1,i,j,k,isub) - wdotgreenc*kx)
+                  ppmpoisson%fldzc2(2,i,j,k,isub) = &
+                    & (ppmpoisson%fldzc2(2,i,j,k,isub) - wdotgreenc*ky)
+                  ppmpoisson%fldzc2(3,i,j,k,isub) = &
+                    & (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotgreenc*kz)
+                ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
+                  wdotgreenr = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
+                        &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
+                        &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
+                        &  ppmpoisson%fldgrnr( i,j,k,isub)
+                  ppmpoisson%fldzc2(1,i,j,k,isub) = &
+                    & (ppmpoisson%fldzc2(1,i,j,k,isub) - wdotgreenr*kx)
+                  ppmpoisson%fldzc2(2,i,j,k,isub) = &
+                    & (ppmpoisson%fldzc2(2,i,j,k,isub) - wdotgreenr*ky)
+                  ppmpoisson%fldzc2(3,i,j,k,isub) = &
+                    & (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotgreenr*kz)
+                ENDIF
+
+              ENDDO
+            ENDDO
+          ENDDO
+        ENDDO
+      ENDIF
+      !-----------------------------------------------------------------------
       ! Spectral derivatives
       ! normkx, etc contains 2pi/Lx
       !-----------------------------------------------------------------------
       IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_sp .AND.&
          & (presentcase .EQ. ppm_poisson_grn_pois_per .OR. &
             presentcase .EQ. ppm_poisson_grn_pois_fre)) THEN
-        write(*,*) 'curl fft style! not working yet though!'
-        !remembering to normalize the FFT
-        normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1)-1)* & !vertex
-                             & (ppmpoisson%nmz(2)-1)* &
-                             & (ppmpoisson%nmz(3)-1),MK)
         DO isub=1,ppmpoisson%nsublistz
           isubl=ppmpoisson%isublistz(isub)
           DO k=1,ppmpoisson%ndataz(3,isubl)
@@ -414,59 +325,15 @@ trank =0
                 phiy = ppmpoisson%fldzc2(2,i,j,k,isub)
                 phiz = ppmpoisson%fldzc2(3,i,j,k,isub)
 
-                !maybe normfac on kx,ky,kz?
-                ppmpoisson%fldzc2(1,i,j,k,isub) = normfac*(ky*phiz-kz*phiy)
-                ppmpoisson%fldzc2(2,i,j,k,isub) = normfac*(kz*phix-kx*phiz)
-                ppmpoisson%fldzc2(3,i,j,k,isub) = normfac*(kx*phiy-ky*phix)
+                ppmpoisson%fldzc2(1,i,j,k,isub) = (ky*phiz-kz*phiy)
+                ppmpoisson%fldzc2(2,i,j,k,isub) = (kz*phix-kx*phiz)
+                ppmpoisson%fldzc2(3,i,j,k,isub) = (kx*phiy-ky*phix)
               ENDDO
             ENDDO
           ENDDO
         ENDDO
       ENDIF
 
-      !-----------------------------------------------------------------------
-      ! Vorticity re-projection
-      !-----------------------------------------------------------------------
-      ELSE IF (presentcase .EQ. ppm_poisson_grn_reprojec) THEN
-        !remembering to normalize the FFT
-        normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1)-1)* & !vertex
-                              & (ppmpoisson%nmz(2)-1)* &
-                              & (ppmpoisson%nmz(3)-1),MK)
-        DO isub=1,ppmpoisson%nsublistz
-          isubl=ppmpoisson%isublistz(isub)
-          DO k=1,ppmpoisson%ndataz(3,isubl)
-            gk = k - 1 + (ppmpoisson%istartz(3,isubl)-1)
-            IF (gk .GT. (ppmpoisson%nmz(3)-1)/2) gk = gk-(ppmpoisson%nmz(3)-1)
-            kz = REAL(gk,MK)
-            DO j=1,ppmpoisson%ndataz(2,isubl)
-              gj = j - 1 + (ppmpoisson%istartz(2,isubl)-1)
-              IF (gj .GT. (ppmpoisson%nmz(2)-1)/2) gj = gj-(ppmpoisson%nmz(2)-1)
-              ky = REAL(gj,MK)
-              DO i=1,ppmpoisson%ndataz(1,isubl)
-                gi = i - 1 + (ppmpoisson%istartz(1,isubl)-1)
-                IF (gi .GT. (ppmpoisson%nmz(1)-1)/2) gi = gi-(ppmpoisson%nmz(1)-1)
-                kx = REAL(gi,MK)
-
-                IF (gi .EQ. 0 .AND. gj .EQ. 0 .AND. gk .EQ. 0) THEN
-                  wdotk = 0.0_mk
-                ELSE
-                  wdotk = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
-                        &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
-                        &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) / &
-                        &  (kx*kx+ky*ky+kz*kz)
-                ENDIF
-
-                ppmpoisson%fldzc2(1,i,j,k,isub) = &
-                  & (ppmpoisson%fldzc2(1,i,j,k,isub) - wdotk*kx)*normfac
-                ppmpoisson%fldzc2(2,i,j,k,isub) = &
-                  & (ppmpoisson%fldzc2(2,i,j,k,isub) - wdotk*ky)*normfac
-                ppmpoisson%fldzc2(3,i,j,k,isub) = &
-                  & (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotk*kz)*normfac
-              ENDDO
-            ENDDO
-          ENDDO
-        ENDDO
-      ENDIF
 
       !-----------------------------------------------------------------------
       ! IFFT pencil (Z)
@@ -476,51 +343,6 @@ trank =0
       & ppmpoisson%fldzc2, ppmpoisson%fldzc1, &
       & info)
 
-#ifdef __NOPE
-      if (ppm_rank .EQ. trank)   THEN
-            write(*,*)
-            write(*,*)
-      write(*,*) 'ifftx12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistz
-        isubl=ppmpoisson%isublistz(isub)
-        DO k=1,ppmpoisson%ndataz(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataz(1,isubl)-1
-          DO j=1,ppmpoisson%ndataz(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldzc1(1,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'iffty12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistz
-        isubl=ppmpoisson%isublistz(isub)
-        DO k=1,ppmpoisson%ndataz(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataz(1,isubl)-1
-          DO j=1,ppmpoisson%ndataz(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldzc1(2,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'ifftz12', ppm_rank
-      DO isub=1,ppmpoisson%nsublistz
-        isubl=ppmpoisson%isublistz(isub)
-        DO k=1,ppmpoisson%ndataz(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataz(1,isubl)-1
-          DO j=1,ppmpoisson%ndataz(2,isubl)-1
-              write(*,'(A,E12.4,E12.4,A,$)') '  (',ppmpoisson%fldzc1(3,i,j,k,isub),')'
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      ENDIF
-#endif
 
       !-----------------------------------------------------------------------
       ! Map back to slabs (XY)
@@ -570,51 +392,6 @@ trank =0
       & ppmpoisson%fldxyc, ppmpoisson%fldxyr, &
       & info)
 
-#ifdef __NOPE
-      if (ppm_rank .EQ. trank)   THEN
-            write(*,*)
-            write(*,*)
-      write(*,*) 'ifftx', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(E12.4,$)') ppmpoisson%fldxyr(1,i,j,k,isub)
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'iffty', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(E12.4,$)') ppmpoisson%fldxyr(2,i,j,k,isub)
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      write(*,*) 'ifftz', ppm_rank
-      DO isub=1,ppmpoisson%nsublistxy
-        isubl=ppmpoisson%isublistxy(isub)
-        DO k=1,ppmpoisson%ndataxy(3,isubl)-1
-          write(*,*) 'z',k
-            DO i=1,ppmpoisson%ndataxy(1,isubl)-1
-          DO j=1,ppmpoisson%ndataxy(2,isubl)-1
-              write(*,'(E12.4,$)') ppmpoisson%fldxyr(3,i,j,k,isub)
-            END DO
-            write(*,*)
-          END DO
-        END DO
-      END DO
-      ENDIF
-#endif
 
       !-----------------------------------------------------------------------
       ! Map back to standard topology (XYZ)
@@ -718,15 +495,11 @@ trank =0
       ! Perhaps make ppm_poisson_fd take _none as argument. Then maybe no
       ! if-statement is required
       !-------------------------------------------------------------------------
-      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd2 .AND.&
-         & (presentcase .EQ. ppm_poisson_grn_pois_per .OR. &  !@these may be unnecessary - perhaps just the derive value
-            presentcase .EQ. ppm_poisson_grn_pois_fre)) THEN
+      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd2) THEN
          CALL ppm_poisson_fd(topoid,meshid,ppmpoisson%drv_vr,fieldout,&
                            & ppm_poisson_drv_curl_fd2,info)
       ENDIF
-      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd4 .AND.&
-         & (presentcase .EQ. ppm_poisson_grn_pois_per .OR. &  !@these may be unnecessary - perhaps just the derive value
-            presentcase .EQ. ppm_poisson_grn_pois_fre)) THEN
+      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd4) THEN
          CALL ppm_poisson_fd(topoid,meshid,ppmpoisson%drv_vr,fieldout,&
                            & ppm_poisson_drv_curl_fd4,info)
       ENDIF
