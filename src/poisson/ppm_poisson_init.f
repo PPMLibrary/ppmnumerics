@@ -190,22 +190,9 @@
                                    & LBOUND(fieldout,5):UBOUND(fieldout,5)))
         ELSE IF (derive .EQ. ppm_poisson_drv_curl_sp) THEN
           ppmpoisson%derivatives = ppm_poisson_drv_curl_sp
-          IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
-            ppmpoisson%normkx = &
-              & 2.0_MK*PI/(topology%max_physd(1)-topology%min_physd(1))
-            ppmpoisson%normky = &
-              & 2.0_MK*PI/(topology%max_physd(2)-topology%min_physd(2))
-            ppmpoisson%normkz = &
-              & 2.0_MK*PI/(topology%max_physd(3)-topology%min_physd(3))
-          ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
+          IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
             CALL ppm_write(ppm_rank,'ppm_poisson_init', &
             & 'WARNING: Spectral curl is not fully implemented in Freespace.',isub)
-            ppmpoisson%normkx = &
-              & 2.0_MK*PI/((topology%max_physd(1)-topology%min_physd(1))*2.0_MK)
-            ppmpoisson%normky = &
-              & 2.0_MK*PI/((topology%max_physd(2)-topology%min_physd(2))*2.0_MK)
-            ppmpoisson%normkz = &
-              & 2.0_MK*PI/((topology%max_physd(3)-topology%min_physd(3))*2.0_MK)
           ENDIF
         ELSE IF (derive .EQ. ppm_poisson_drv_none) THEN
           ppmpoisson%derivatives = ppm_poisson_drv_none
@@ -215,6 +202,26 @@
         ENDIF
       ELSE
         ppmpoisson%derivatives = ppm_poisson_drv_none
+      ENDIF
+      !-------------------------------------------------------------------------
+      ! Create spectral scaling components always. Just in case some 
+      ! reprojection comes up
+      ! The conditionals need to be for not just the Poisson equation
+      !-------------------------------------------------------------------------
+      IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
+        ppmpoisson%normkx = &
+        & 2.0_MK*PI/(topology%max_physd(1)-topology%min_physd(1))
+        ppmpoisson%normky = &
+        & 2.0_MK*PI/(topology%max_physd(2)-topology%min_physd(2))
+        ppmpoisson%normkz = &
+        & 2.0_MK*PI/(topology%max_physd(3)-topology%min_physd(3))
+      ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
+        ppmpoisson%normkx = &
+        & 2.0_MK*PI/((topology%max_physd(1)-topology%min_physd(1))*2.0_MK)
+        ppmpoisson%normky = &
+        & 2.0_MK*PI/((topology%max_physd(2)-topology%min_physd(2))*2.0_MK)
+        ppmpoisson%normkz = &
+        & 2.0_MK*PI/((topology%max_physd(3)-topology%min_physd(3))*2.0_MK)
       ENDIF
 
 

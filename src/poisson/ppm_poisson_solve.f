@@ -54,8 +54,7 @@
       INTEGER                           :: i,j,k
       INTEGER                           :: info2
       INTEGER                           :: presentcase
-      REAL(__PREC)                      :: wdotgreenr
-      COMPLEX(__PREC)                   :: wdotgreenc
+      COMPLEX(__PREC)                   :: helmholtzpic
       INTEGER                           :: gi,gj,gk
       COMPLEX(__PREC)                   :: kx,ky,kz
       COMPLEX(__PREC)                   :: phix,phiy,phiz
@@ -236,23 +235,29 @@
       !-----------------------------------------------------------------------
       ELSE IF (presentcase .EQ. ppm_poisson_grn_reprojec) THEN
         !remembering to normalize the FFT
-        !normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1)-1)* & !vertex
-                              !& (ppmpoisson%nmz(2)-1)* &
-                              !& (ppmpoisson%nmz(3)-1),MK)
+        IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
+          normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1))* & !vertex
+                               & (ppmpoisson%nmz(2))* &
+                               & (ppmpoisson%nmz(3)),MK)
+        ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
+          normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1)-1)* & !vertex
+                               & (ppmpoisson%nmz(2)-1)* &
+                               & (ppmpoisson%nmz(3)-1),MK)
+        ENDIF
         DO isub=1,ppmpoisson%nsublistz
           isubl=ppmpoisson%isublistz(isub)
           DO k=1,ppmpoisson%ndataz(3,isubl)
             gk = k - 1 + (ppmpoisson%istartz(3,isubl)-1)
             IF (gk .GT. (ppmpoisson%nmz(3)-1)/2) gk = gk-(ppmpoisson%nmz(3)-1)
-            kz = REAL(gk,MK)
+            kz = REAL(gk,MK)*ppmpoisson%normkz
             DO j=1,ppmpoisson%ndataz(2,isubl)
               gj = j - 1 + (ppmpoisson%istartz(2,isubl)-1)
               IF (gj .GT. (ppmpoisson%nmz(2)-1)/2) gj = gj-(ppmpoisson%nmz(2)-1)
-              ky = REAL(gj,MK)
+              ky = REAL(gj,MK)*ppmpoisson%normky
               DO i=1,ppmpoisson%ndataz(1,isubl)
                 gi = i - 1 + (ppmpoisson%istartz(1,isubl)-1)
                 IF (gi .GT. (ppmpoisson%nmz(1)-1)/2) gi = gi-(ppmpoisson%nmz(1)-1)
-                kx = REAL(gi,MK)
+                kx = REAL(gi,MK)*ppmpoisson%normkx
 
                 !IF (gi .EQ. 0 .AND. gj .EQ. 0 .AND. gk .EQ. 0) THEN
                   !wdotk = 0.0_mk
@@ -271,27 +276,27 @@
                   !& (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotk*kz)*normfac
 
                 IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
-                  wdotgreenc = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
-                        &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
-                        &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
-                        &  ppmpoisson%fldgrnc( i,j,k,isub)
-                  ppmpoisson%fldzc2(1,i,j,k,isub) = &
-                    & (ppmpoisson%fldzc2(1,i,j,k,isub) - wdotgreenc*kx)
-                  ppmpoisson%fldzc2(2,i,j,k,isub) = &
-                    & (ppmpoisson%fldzc2(2,i,j,k,isub) - wdotgreenc*ky)
-                  ppmpoisson%fldzc2(3,i,j,k,isub) = &
-                    & (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotgreenc*kz)
+                  helmholtzpic = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
+                               &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
+                               &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
+                               &  ppmpoisson%fldgrnc( i,j,k,isub)
+                      ppmpoisson%fldzc2(1,i,j,k,isub) = & !@formatting
+                   & (ppmpoisson%fldzc2(1,i,j,k,isub)*normfac - helmholtzpic*kx)
+                      ppmpoisson%fldzc2(2,i,j,k,isub) = &
+                   & (ppmpoisson%fldzc2(2,i,j,k,isub)*normfac - helmholtzpic*ky)
+                      ppmpoisson%fldzc2(3,i,j,k,isub) = &
+                   & (ppmpoisson%fldzc2(3,i,j,k,isub)*normfac - helmholtzpic*kz)
                 ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
-                  wdotgreenr = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
-                        &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
-                        &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
-                        &  ppmpoisson%fldgrnr( i,j,k,isub)
-                  ppmpoisson%fldzc2(1,i,j,k,isub) = &
-                    & (ppmpoisson%fldzc2(1,i,j,k,isub) - wdotgreenr*kx)
-                  ppmpoisson%fldzc2(2,i,j,k,isub) = &
-                    & (ppmpoisson%fldzc2(2,i,j,k,isub) - wdotgreenr*ky)
-                  ppmpoisson%fldzc2(3,i,j,k,isub) = &
-                    & (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotgreenr*kz)
+                  helmholtzpic = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
+                               &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
+                               &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
+                               &  ppmpoisson%fldgrnr( i,j,k,isub)
+                      ppmpoisson%fldzc2(1,i,j,k,isub) = & !@formatting
+                   & (ppmpoisson%fldzc2(1,i,j,k,isub)*normfac - helmholtzpic*kx)
+                      ppmpoisson%fldzc2(2,i,j,k,isub) = &
+                   & (ppmpoisson%fldzc2(2,i,j,k,isub)*normfac - helmholtzpic*ky)
+                      ppmpoisson%fldzc2(3,i,j,k,isub) = &
+                   & (ppmpoisson%fldzc2(3,i,j,k,isub)*normfac - helmholtzpic*kz)
                 ENDIF
 
               ENDDO
@@ -495,13 +500,15 @@
       ! Perhaps make ppm_poisson_fd take _none as argument. Then maybe no
       ! if-statement is required
       !-------------------------------------------------------------------------
-      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd2) THEN
-         CALL ppm_poisson_fd(topoid,meshid,ppmpoisson%drv_vr,fieldout,&
-                           & ppm_poisson_drv_curl_fd2,info)
-      ENDIF
-      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd4) THEN
-         CALL ppm_poisson_fd(topoid,meshid,ppmpoisson%drv_vr,fieldout,&
-                           & ppm_poisson_drv_curl_fd4,info)
+      IF (presentcase .NE. ppm_poisson_grn_reprojec) THEN
+        IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd2) THEN
+           CALL ppm_poisson_fd(topoid,meshid,ppmpoisson%drv_vr,fieldout,&
+                             & ppm_poisson_drv_curl_fd2,info)
+        ENDIF
+        IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd4) THEN
+           CALL ppm_poisson_fd(topoid,meshid,ppmpoisson%drv_vr,fieldout,&
+                             & ppm_poisson_drv_curl_fd4,info)
+        ENDIF
       ENDIF
 
       !-------------------------------------------------------------------------
