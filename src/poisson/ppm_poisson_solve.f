@@ -148,8 +148,8 @@
       CALL ppm_map_field_global(&
       & ppmpoisson%topoidxy, &
       & ppmpoisson%topoidz, &
-      !& ppmpoisson%meshidxyc, & !@to be used when meshid>1 works
-      & ppmpoisson%meshidxy, &
+      & ppmpoisson%meshidxyc, & !@to be used when meshid>1 works
+      !& ppmpoisson%meshidxy, &
       & ppmpoisson%meshidz,info)
       IF (info .NE. 0) THEN
         CALL ppm_write(ppm_rank, 'ppm_poisson_solve','Failed to initialise field mapping.',info2)

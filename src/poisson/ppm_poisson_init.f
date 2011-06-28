@@ -88,8 +88,9 @@
       !-------------------------------------------------------------------------
       REAL(__PREC)                            :: t0
       REAL(__PREC),DIMENSION(:,:),POINTER     :: xp      !particle positions
-      TYPE(ppm_t_topo),POINTER                :: topology,topologyxy,topologyxyc,topologyz
-      TYPE(ppm_t_equi_mesh)                   :: mesh!!,meshtmp1,meshtmp2 !@
+      TYPE(ppm_t_topo),POINTER                :: topology,topologyxy,topologyz
+      !!TYPE(ppm_t_topo),POINTER                :: topologyxyc
+      TYPE(ppm_t_equi_mesh)                   :: mesh
       INTEGER ,DIMENSION(__DIM)               :: indl,indu
       INTEGER,PARAMETER                       :: MK = __PREC
       REAL(__PREC),PARAMETER                  :: PI=ACOS(-1.0_MK) !@ use ppm pi
@@ -144,14 +145,13 @@
         ppmpoisson%nmxy (1) =  mesh%nm(1)
         ppmpoisson%nmxy (2) =  mesh%nm(2)
         ppmpoisson%nmxy (3) =  mesh%nm(3)
-        !ppmpoisson%nmxyc(1) = (mesh%nm(1)-1)/2+1
-        ppmpoisson%nmxyc(1) = (mesh%nm(1)) !tmp until meshid>1 works !No keep first component as the size of the complex and real arrays differ - and remember to keep ndataxyc(1) etc
+        !ppmpoisson%nmxyc(1) = (mesh%nm(1)-1)/2+1+1
+        ppmpoisson%nmxyc(1) =  mesh%nm(1)
         ppmpoisson%nmxyc(2) =  mesh%nm(2)
         ppmpoisson%nmxyc(3) =  mesh%nm(3)
-        !ppmpoisson%nmz  (1) = (mesh%nm(1)-1)/2+1!/2+1 !trying to reduce the number of points in matrix+1
-        ppmpoisson%nmz  (1) = (mesh%nm(1)) !tmp until meshid>1 works
-        ppmpoisson%nmz  (2) =  mesh%nm(2)
-        ppmpoisson%nmz  (3) =  mesh%nm(3)
+        ppmpoisson%nmz  (1) = (ppmpoisson%nmxyc(1))
+        ppmpoisson%nmz  (2) = (ppmpoisson%nmxyc(2))
+        ppmpoisson%nmz  (3) = (ppmpoisson%nmxyc(3))
         !Inverse of the size of the domain squared
         Lx2 = 1.0_MK/(topology%max_physd(1)-topology%min_physd(1))**2
         Ly2 = 1.0_MK/(topology%max_physd(2)-topology%min_physd(2))**2
@@ -162,13 +162,13 @@
         ppmpoisson%nmxy (2) =  mesh%nm(2)*2
         ppmpoisson%nmxy (3) =  mesh%nm(3)*2
         !ppmpoisson%nmxyc(1) = (mesh%nm(1)-1)/2+1
-        ppmpoisson%nmxyc(1) = (mesh%nm(1)*2) !tmp until meshid>1 works !No keep first component as the size of the complex and real arrays differ - and remember to keep ndataxyc(1) etc
+        !ppmpoisson%nmxyc(1) =  mesh%nm(1)*2
+        ppmpoisson%nmxyc(1) = (mesh%nm(1)*2-1)/2+1
         ppmpoisson%nmxyc(2) =  mesh%nm(2)*2
         ppmpoisson%nmxyc(3) =  mesh%nm(3)*2
-        !ppmpoisson%nmz  (1) = (mesh%nm(1)-1)/2+1!/2+1 !trying to reduce the number of points in matrix+1
-        ppmpoisson%nmz  (1) = (mesh%nm(1)*2) !tmp until meshid>1 works
-        ppmpoisson%nmz  (2) =  mesh%nm(2)*2
-        ppmpoisson%nmz  (3) =  mesh%nm(3)*2
+        ppmpoisson%nmz  (1) = (ppmpoisson%nmxyc(1))
+        ppmpoisson%nmz  (2) = (ppmpoisson%nmxyc(2))
+        ppmpoisson%nmz  (3) = (ppmpoisson%nmxyc(3))
         !Determine the grid spacing !vertex
         dx = (topology%max_physd(1)-topology%min_physd(1))/(mesh%nm(1)-1)
         dy = (topology%max_physd(2)-topology%min_physd(2))/(mesh%nm(2)-1)
@@ -256,12 +256,11 @@
 
       !-------------------------------------------------------------------------
       ! Create complex slab mesh
-      ! !@ not used until meshid>1 works
       !-------------------------------------------------------------------------
       ttopoid = ppmpoisson%topoidxy
       tmeshid = -1
       CALL ppm_mesh_define(ttopoid,tmeshid,&
-      & ppmpoisson%nmxy,ppmpoisson%istartxyc,ppmpoisson%ndataxyc,info) !@nmxyC
+      & ppmpoisson%nmxyc,ppmpoisson%istartxyc,ppmpoisson%ndataxyc,info)
       IF (info .NE. 0) THEN
         CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to create complex xy mesh definition.',isub)
         GOTO 9999
@@ -429,6 +428,7 @@
 
       !-------------------------------------------------------------------------
       ! Set up xy FFT plans
+      ! The inverse plan takes the returning topology since it has the full size
       !-------------------------------------------------------------------------
       CALL ppm_fft_forward_2d(ppmpoisson%topoidxy,ppmpoisson%meshidxy,&
       & ppmpoisson%planfxy,ppmpoisson%fldxyr,&
@@ -460,10 +460,10 @@
         ! Scaling the spectral coefficients... 
         ! one minus due to (i*k)^2 and another due to the Poisson equation
         normfac = 1.0_MK/(4.0_MK*PI*PI * &
-                !and normalisation of FFTs
-                & REAL((ppmpoisson%nmz(1)-1)* &
-                &      (ppmpoisson%nmz(2)-1)* &
-                &      (ppmpoisson%nmz(3)-1),MK))
+                !and normalisation of FFTs (full domain) !vertex
+                & REAL((mesh%nm(1)-1)* &
+                &      (mesh%nm(2)-1)* &
+                &      (mesh%nm(3)-1),MK))
         DO isub=1,ppmpoisson%nsublistz
           isubl=ppmpoisson%isublistz(isub)
           DO k=1,ppmpoisson%ndataz(3,isubl)
@@ -538,10 +538,33 @@
                 !Take care of singularity
                 !This is nasty as well
                 IF ((kx*kx+ky*ky+kz*kz) .EQ. 0) THEN
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) = 2.0_MK*normfac/(dx) - normfac/(2.0_MK*dx)
+                  !Simply zero
+                  !ppmpoisson%fldxyr(1,i,j,k,isub) = 0.0_MK
+                  !Simply one (H&E style)
+                  !ppmpoisson%fldxyr(1,i,j,k,isub) = 1.0_MK*normfac
+                  !Equal to the neighbour point (first order)
                   !ppmpoisson%fldxyr(1,i,j,k,isub) = normfac/(dx)
-                  ppmpoisson%fldxyr(1,i,j,k,isub) = 0.0_MK
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) = 2.0_MK*normfac/(dx) - normfac/(2.0_MK*dx) + 1.0_MK
+                  !Linear extrapolation into zero (2nd order)
+                  ppmpoisson%fldxyr(1,i,j,k,isub) =   2.0_MK*normfac/(       dx) &
+                                                  & - 1.0_MK*normfac/(2.0_MK*dx)
+                  !extrapolation 3rd order
+                  !ppmpoisson%fldxyr(1,i,j,k,isub) =   3.0_MK*normfac/(       dx) &
+                                                  !& - 3.0_MK*normfac/(2.0_MK*dx) &
+                                                  !& + 1.0_MK*normfac/(3.0_MK*dx)
+                  !extrapolation 4th order
+                  !ppmpoisson%fldxyr(1,i,j,k,isub) =   4.0_MK*normfac/(       dx) &
+                                                  !& - 6.0_MK*normfac/(2.0_MK*dx) &
+                                                  !& + 4.0_MK*normfac/(3.0_MK*dx) &
+                                                  !& - 1.0_MK*normfac/(4.0_MK*dx)
+                  !extrapolation 6th order
+                  !ppmpoisson%fldxyr(1,i,j,k,isub) =   6.0_MK*normfac/(       dx) &
+                                                  !& -15.0_MK*normfac/(2.0_MK*dx) &
+                                                  !& +20.0_MK*normfac/(3.0_MK*dx) &
+                                                  !& -15.0_MK*normfac/(4.0_MK*dx) &
+                                                  !& + 6.0_MK*normfac/(5.0_MK*dx) &
+                                                  !& - 1.0_MK*normfac/(6.0_MK*dx)
+                  !one thousand!!!
+                  !ppmpoisson%fldxyr(1,i,j,k,isub) = normfac*1000.0_MK
                 ENDIF
               ENDDO
             ENDDO
@@ -549,11 +572,10 @@
         ENDDO
         !-------------------------------------------------------------------------
         ! FOURIER TRANSFORM AND MAP GALORE
-        ! @this should be updated when meshid>1 works
         ! This part should be used both for freespace and a custom Greens function
         !-------------------------------------------------------------------------
         !-----------------------------------------------------------------------
-        ! Do slab FFT (XY) - using the non-reduced topology !@what does this mean
+        ! Do slab FFT (XY)
         !-----------------------------------------------------------------------
         CALL ppm_fft_execute_2d(ppmpoisson%topoidxy,&
         & ppmpoisson%meshidxy, ppmpoisson%planfxy, &
@@ -566,8 +588,7 @@
         CALL ppm_map_field_global(&
         & ppmpoisson%topoidxy, &
         & ppmpoisson%topoidz, &
-        !& ppmpoisson%meshidxyc, & !@to be used when meshid>1 works
-        & ppmpoisson%meshidxy, &
+        & ppmpoisson%meshidxyc, &
         & ppmpoisson%meshidz,info)
         IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank, 'ppm_poisson_solve','Failed to initialise field mapping.',isub)
@@ -577,8 +598,7 @@
         !Push the data
         CALL ppm_map_field_push(&
         & ppmpoisson%topoidxy, &
-        & ppmpoisson%meshidxyc,ppmpoisson%fldxyc,__NCOM,info) !@I believe it should say meshidxy here until meshid>1 works. Then the following line will be used
-        !& ppmpoisson%meshidxyc,ppmpoisson%fldxyc,__NCOM,info)!@to be used when meshid>1 works
+        & ppmpoisson%meshidxyc,ppmpoisson%fldxyc,__NCOM,info)
         IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank, 'ppm_poisson_solve','Failed to push vector field.',isub)
           GOTO 9999

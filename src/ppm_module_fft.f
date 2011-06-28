@@ -32,6 +32,8 @@
       !
       !  sofar all fftw calls are to double precision routines!
       !
+      !  All IFFT routines should be called with the 'realest' topoid/meshid
+      !
       !  The routines respects the periodic N+1 points periodic BC cf topo%bcdef
       !  but also does full domain FFTs for freespace BC
       !  It does not work on mixed periodic/freespace BC in the XY direction

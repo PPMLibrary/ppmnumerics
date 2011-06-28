@@ -128,11 +128,11 @@
          !@ maybe the -1 needs to be removed when doing cell data
          !we subtract the -1 to avoid the periodic vertex point
          IF (topology%bcdef(1) .EQ. ppm_param_bcdef_periodic) THEN !vertex
-            ppmplan%nx(1,isub) = mesh%nnodes(1,isubl)-1
-            ppmplan%nx(2,isub) = mesh%nnodes(2,isubl)-1
+            ppmplan%nx(1,isub) = mesh%nm(1)-1
+            ppmplan%nx(2,isub) = mesh%nm(2)-1
          ELSE
-            ppmplan%nx(1,isub) = mesh%nnodes(1,isubl)
-            ppmplan%nx(2,isub) = mesh%nnodes(2,isubl)
+            ppmplan%nx(1,isub) = mesh%nm(1)
+            ppmplan%nx(2,isub) = mesh%nm(2)
          ENDIF
 
          CALL dfftw_plan_many_dft_r2c(ppmplan%plan(isub),ppmplan%rank,&
