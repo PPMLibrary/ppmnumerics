@@ -79,6 +79,79 @@
            MODULE PROCEDURE ppm_ode_step_dv
         END INTERFACE
 
+#ifdef __F2003
+        !-----------------------------------------------------
+        !  Abstract RHS Interface
+        !-----------------------------------------------------
+
+        ABSTRACT INTERFACE
+
+           ! single precision
+
+           ! scalar
+           FUNCTION rhsfunc_ss(topoid,xp,up,dup,lda,npart,ipack,&
+                &lpack,rpack,info)
+             INTEGER                          , INTENT(IN)  :: topoid
+             INTEGER                          , INTENT(IN)  :: lda,npart
+             INTEGER                          , INTENT(OUT) :: info
+             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: xp
+             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER     :: up
+             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER     :: dup
+             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
+             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
+             REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
+             INTEGER                                     :: rhsfunc
+           END FUNCTION rhsfunc
+
+           ! vector
+           FUNCTION rhsfunc_sv(topoid,xp,up,dup,lda,npart,ipack,&
+                &lpack,rpack,info)
+             INTEGER                          , INTENT(IN)  :: topoid
+             INTEGER                          , INTENT(IN)  :: lda,npart
+             INTEGER                          , INTENT(OUT) :: info
+             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: xp,up
+             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: dup
+             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
+             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
+             REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
+             INTEGER                                     :: rhsfunc
+           END FUNCTION rhsfunc
+
+           ! double precision
+
+           ! scalar
+           FUNCTION rhsfunc_ds(topoid,xp,up,dup,lda,npart,ipack,&
+                &lpack,rpack,info)
+             INTEGER                          , INTENT(IN)  :: topoid
+             INTEGER                          , INTENT(IN)  :: lda,npart
+             INTEGER                          , INTENT(OUT) :: info
+             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: xp
+             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER     :: up
+             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER     :: dup
+             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
+             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
+             REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
+             INTEGER                                     :: rhsfunc
+           END FUNCTION rhsfunc
+
+           ! vector
+           FUNCTION rhsfunc_dv(topoid,xp,up,dup,lda,npart,ipack,&
+                &lpack,rpack,info)
+             INTEGER                          , INTENT(IN)  :: topoid
+             INTEGER                          , INTENT(IN)  :: lda,npart
+             INTEGER                          , INTENT(OUT) :: info
+             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: xp,up
+             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: dup
+             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
+             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
+             REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
+             INTEGER                                     :: rhsfunc
+           END FUNCTION rhsfunc
+
+        END INTERFACE
+
+#endif
+
       CONTAINS
 #define __MODE __SCA
 #define __KIND __SINGLE_PRECISION

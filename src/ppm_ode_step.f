@@ -166,6 +166,21 @@
 #else
         INTEGER, PARAMETER :: mk = ppm_kind_double
 #endif
+#ifdef __F2003
+#if     __KIND == __SINGLE_PRECISION
+#if     __MODE == __SCA
+        PROCEDURE(rhsfunc_ss)                               :: rhsfunc
+#elif   __MODE == __VEC
+        PROCEDURE(rhsfunc_sv)                               :: rhsfunc
+#endif
+#else
+#if     __MODE == __SCA
+        PROCEDURE(rhsfunc_ds)                               :: rhsfunc
+#elif   __MODE == __VEC
+        PROCEDURE(rhsfunc_dv)                               :: rhsfunc
+#endif
+#endif
+#else
 #if     __KIND == __SINGLE_PRECISION
         INTERFACE
            FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,&
@@ -208,6 +223,7 @@
              INTEGER                                     :: rhsfunc
            END FUNCTION rhsfunc
         END INTERFACE
+#endif
 #endif
         !-----------------------------------------------------------------------
         !  Arguments
