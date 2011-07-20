@@ -162,8 +162,8 @@
         ppmpoisson%nmxy (2) =  mesh%nm(2)*2
         ppmpoisson%nmxy (3) =  mesh%nm(3)*2
         !ppmpoisson%nmxyc(1) = (mesh%nm(1)-1)/2+1
-        !ppmpoisson%nmxyc(1) =  mesh%nm(1)*2
-        ppmpoisson%nmxyc(1) = (mesh%nm(1)*2-1)/2+1
+        !ppmpoisson%nmxyc(1) = (mesh%nm(1)*2-1)/2+1
+        ppmpoisson%nmxyc(1) =  mesh%nm(1)*2
         ppmpoisson%nmxyc(2) =  mesh%nm(2)*2
         ppmpoisson%nmxyc(3) =  mesh%nm(3)*2
         ppmpoisson%nmz  (1) = (ppmpoisson%nmxyc(1))
