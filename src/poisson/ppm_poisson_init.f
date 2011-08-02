@@ -104,6 +104,8 @@
       INTEGER                                 :: decomposition
       INTEGER,SAVE                            :: ttopoid
       INTEGER                                 :: tmeshid
+      INTEGER , DIMENSION(:  ), POINTER       :: isublist => NULL()
+      INTEGER                                 :: nsublist
       REAL(__PREC)                            :: dx,dy,dz
       REAL(__PREC)                            :: Lx2,Ly2,Lz2
 
@@ -245,8 +247,12 @@
       & decomposition,assigning,&
       !& topology%min_physd,topology%max_physd,bcdef,&
       & tmpmin,tmpmax,bcdef,&
-      & __ZEROSI,ppmpoisson%costxy,ppmpoisson%istartxy,ppmpoisson%ndataxy,&
+      & __ZEROSI,ppmpoisson%costxy,&
       & ppmpoisson%nmxy,info)
+      CALL ppm_meshinfo(ttopoid,tmeshid,ppmpoisson%nmxy,ppmpoisson%istartxy,&
+      &                 ppmpoisson%ndataxy,ppmpoisson%maxndataxy,&
+      &                 isublist,nsublist,info)
+
       IF (info .NE. 0) THEN
         CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to create xy-topology.',isub)
         GOTO 9999
@@ -284,8 +290,11 @@
       CALL ppm_mktopo(ttopoid,tmeshid,xp,0,&
       & decomposition,assigning,&
       & tmpmin,tmpmax,bcdef,&
-      & __ZEROSI,ppmpoisson%costz,ppmpoisson%istartz,ppmpoisson%ndataz,&
+      & __ZEROSI,ppmpoisson%costz,&
       & ppmpoisson%nmz,info)
+      CALL ppm_meshinfo(ttopoid,tmeshid,ppmpoisson%nmz,ppmpoisson%istartz,&
+      &                 ppmpoisson%ndataz,ppmpoisson%maxndataz,&
+      &                 isublist,nsublist,info)
       IF (info .NE. 0) THEN
         CALL ppm_write(ppm_rank,'ppm_poisson_init','Failed to create z-topology.',isub)
         GOTO 9999

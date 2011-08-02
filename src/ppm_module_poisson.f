@@ -68,6 +68,7 @@
          !!!global number of grid points for xy topology
          INTEGER , DIMENSION(:,:),POINTER                     :: ndataxy=>NULL()
          !!!sub no. grid cells for xy topology
+         INTEGER , DIMENSION(2)                               :: maxndataxy
          INTEGER,DIMENSION(:),POINTER                         :: isublistxy
          !!!list of sub domains on current CPU on the xy topology
          INTEGER                                              :: nsublistxy
@@ -114,6 +115,7 @@
          !!!global number of grid points for z topology
          INTEGER , DIMENSION(:,:),POINTER                     :: ndataz=>NULL()
          !!!sub no. grid cells for z topology
+         INTEGER , DIMENSION(3)                               :: maxndataz
          INTEGER,DIMENSION(:),POINTER                         :: isublistz
          !!!list of sub domains on current CPU on the z topology
          INTEGER                                              :: nsublistz

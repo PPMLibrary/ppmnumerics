@@ -240,6 +240,11 @@ if test "x${debug_compile}" = xyes; then
     fi
 fi
 
+# set src as the default srcdir
+if test "$srcdir" = "."; then
+    srcdir=src
+fi
+
 # Generate Makefiles
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

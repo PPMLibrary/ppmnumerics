@@ -348,6 +348,11 @@
       INTEGER , DIMENSION(:,:), POINTER       :: ndata, ndata_xpen_complex
       INTEGER , DIMENSION(:,:), POINTER       :: ndata_ypen, ndata_trans
       INTEGER , DIMENSION(:,:), POINTER       :: ndata_zpen
+      INTEGER , DIMENSION(ppm_dim)            :: maxndata
+      INTEGER , DIMENSION(ppm_dim)            :: maxndata_ypen
+      INTEGER , DIMENSION(ppm_dim)            :: maxndata_zpen
+      INTEGER , DIMENSION(:  ), POINTER       :: isublist => NULL()
+      INTEGER                                 :: nsublist
       INTEGER                                 :: dim,n,idom
       INTEGER                                 :: iopt
       INTEGER                                 :: topo_id_xpen, topo_id_ypen
@@ -522,8 +527,10 @@
          assign = ppm_param_assign_internal
          decomp = ppm_param_decomp_xy_slab
          CALL ppm_mktopo(topo_id_xpen,mesh_id_xpen,xp,Npart,decomp,assign,&
-     &                   min_phys,max_phys,bcdef,ghostsize,cost,istart,   &
-     &                   ndata,Nm,info,nsubs)
+     &                   min_phys,max_phys,bcdef,ghostsize,cost,Nm,   &
+     &                   info,nsubs)
+         CALL ppm_meshinfo(topo_id_xpen,mesh_id_xpen,Nm,istart,ndata,&
+     &                     maxndata,isublist,nsublist,info)
          topo_ids_tmp(1) = field_topoid
          topo_ids_tmp(2) = topo_id_xpen
          mesh_ids_tmp(1) = mesh_id_data
@@ -584,8 +591,10 @@
          assign = ppm_param_assign_internal
          decomp = ppm_param_decomp_xpencil
          CALL ppm_mktopo(topo_id_xpen,mesh_id_xpen,xp,Npart,decomp,assign,&
-     &                   min_phys,max_phys,bcdef,ghostsize,cost,istart,   &
-     &                   ndata,Nm,info,nsubs)
+     &                   min_phys,max_phys,bcdef,ghostsize,cost,Nm,   &
+     &                   info,nsubs)
+         CALL ppm_meshinfo(topo_id_xpen,mesh_id_xpen,Nm,istart,ndata,&
+     &                     maxndata,isublist,nsublist,info)
          topo_ids_tmp(1) = field_topoid
          topo_ids_tmp(2) = topo_id_xpen
          mesh_ids_tmp(1) = mesh_id_data
@@ -738,16 +747,20 @@
       !-------------------------------------------------------------------------
       decomp = ppm_param_decomp_ypencil
       CALL ppm_mktopo(topo_id_ypen,mesh_id_ypen,xp,Npart,decomp,assign,  &
-     &                min_phys,max_phys,bcdef,ghostsize,cost,istart_ypen,&
-     &                ndata_ypen,Nm,info,nsubs)
+     &                min_phys,max_phys,bcdef,ghostsize,cost,Nm,&
+     &                info,nsubs)
+     CALL ppm_meshinfo(topo_id_ypen,mesh_id_ypen,Nm,istart_ypen,ndata_ypen,&
+     &                 maxndata_ypen,isublist,nsublist,info)
       idom = f_topo%isublist(1)
       !-------------------------------------------------------------------------
       !  Decompose domain in zpencils
       !-------------------------------------------------------------------------
       decomp = ppm_param_decomp_zpencil
       CALL ppm_mktopo(topo_id_zpen,mesh_id_zpen,xp,Npart,decomp,assign,  &
-     &                min_phys,max_phys,bcdef,ghostsize,cost,istart_zpen,&
-     &                ndata_zpen,Nm,info,nsubs)
+     &                min_phys,max_phys,bcdef,ghostsize,cost,Nm,&
+     &                info,nsubs)
+     CALL ppm_meshinfo(topo_id_zpen,mesh_id_zpen,Nm,istart_zpen,ndata_zpen,&
+     &                 maxndata_zpen,isublist,nsublist,info)
       idom = f_topo%isublist(1)
 #if __CASE == __SLAB
       GOTO 1000

@@ -98,8 +98,8 @@
       !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
+      USE ppm_module_typedef
       USE ppm_module_check_id
-      USE ppm_module_data_neighlist
       USE ppm_module_substart
       USE ppm_module_substop
       USE ppm_module_error
@@ -183,7 +183,7 @@
 #endif
       LOGICAL                    , INTENT(IN   ) :: lsymm
       !!! Do symmetric PP interactions?
-      TYPE(ppm_type_ptr_to_clist), DIMENSION(:), INTENT(IN) :: clist
+      TYPE(ppm_t_clist), DIMENSION(:), INTENT(IN) :: clist
       !!! Cell list as a list of ptr_to_clist.
       !!!
       !!! particle index list of isub: `clist(isub)%lpdx(:)`                   +

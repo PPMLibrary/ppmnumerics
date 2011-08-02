@@ -210,6 +210,7 @@
       USE ppm_module_error
       USE ppm_module_alloc
       USE ppm_module_mktopo
+      USE ppm_module_topo_get
       USE ppm_module_mesh_define
       USE ppm_module_fdsolver_map
       USE ppm_module_util_fft_forward
@@ -288,6 +289,11 @@
       INTEGER , DIMENSION(:,:), POINTER       :: istart_ypen,istart_trans
       INTEGER , DIMENSION(:,:), POINTER       :: ndata,ndata_xpen_complex
       INTEGER , DIMENSION(:,:), POINTER       :: ndata_ypen,ndata_trans
+      INTEGER , DIMENSION(ppm_dim)            :: maxndata
+      INTEGER , DIMENSION(ppm_dim)            :: maxndata_ypen
+      INTEGER , DIMENSION(ppm_dim)            :: maxndata_zpen
+      INTEGER , DIMENSION(:  ), POINTER       :: isublist => NULL()
+      INTEGER                                 :: nsublist
       INTEGER                                 :: dim, yhmax,iopt,idom
       INTEGER                                 :: topo_id_xpen,topo_id_ypen
       INTEGER, DIMENSION(2)                   :: topo_ids_tmp
@@ -436,8 +442,10 @@
          ! xpencils decomposition
          decomp = ppm_param_decomp_xpencil
          CALL ppm_mktopo(topo_id_xpen,mesh_id_xpen,xp,Npart,decomp,assign,&
-     &                   min_phys,max_phys,bcdef,ghostsize,cost,istart,   &
-     &                   ndata,Nm,info,nsubs)
+     &                   min_phys,max_phys,bcdef,ghostsize,cost,Nm,   &
+     &                   info,nsubs)
+         CALL ppm_meshinfo(topo_id_xpen,mesh_id_xpen,Nm,istart,ndata,&
+     &                     maxndata,isublist,nsublist,info)
 
          topo_ids_tmp(1) = field_topoid
          topo_ids_tmp(2) = topo_id_xpen
@@ -545,8 +553,10 @@
       !-------------------------------------------------------------------------
       decomp = ppm_param_decomp_ypencil
       CALL ppm_mktopo(topo_id_ypen,mesh_id_ypen,xp,Npart,decomp,assign,  &
-     &                min_phys,max_phys,bcdef,ghostsize,cost,istart_ypen,&
-     &                ndata,Nm,info,nsubs)
+     &                min_phys,max_phys,bcdef,ghostsize,cost,Nm,&
+     &                info,nsubs)
+     CALL ppm_meshinfo(topo_id_ypen,mesh_id_ypen,Nm,istart_ypen,ndata,&
+     &                 maxndata,isublist,nsublist,info)
 
 
       !-------------------------------------------------------------------------
