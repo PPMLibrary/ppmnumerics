@@ -424,7 +424,7 @@ m4trace:configure.ac:59: -1- m4_pattern_allow([^STDC_HEADERS$])
 m4trace:configure.ac:59: -1- m4_pattern_allow([^SIZEOF_LONG_DOUBLE$])
 m4trace:configure.ac:61: -1- AX_F90_MODULE_FLAG
 m4trace:configure.ac:62: -1- m4_pattern_allow([^ax_cv_f90_modflag$])
-m4trace:configure.ac:68: -1- _m4_warn([cross], [AC_RUN_IFELSE called without default to allow cross compiling], [../../lib/autoconf/general.m4:2749: AC_RUN_IFELSE is expanded from...
+m4trace:configure.ac:68: -1- _m4_warn([cross], [AC_RUN_IFELSE called without default to allow cross compiling], [../../lib/autoconf/general.m4:2736: AC_RUN_IFELSE is expanded from...
 configure.ac:68: the top level])
 m4trace:configure.ac:105: -1- m4_pattern_allow([^CPPFLAGS$])
 m4trace:configure.ac:154: -1- m4_pattern_allow([^HAVE_LIBM$])
@@ -481,5 +481,5 @@ m4trace:configure.ac:225: -1- m4_pattern_allow([^DEBUG$])
 m4trace:configure.ac:235: -1- m4_pattern_allow([^DEBUG$])
 m4trace:configure.ac:237: -1- m4_pattern_allow([^DEBUG$])
 m4trace:configure.ac:239: -1- m4_pattern_allow([^DEBUG$])
-m4trace:configure.ac:245: -1- m4_pattern_allow([^LIB@&t@OBJS$])
-m4trace:configure.ac:245: -1- m4_pattern_allow([^LTLIBOBJS$])
+m4trace:configure.ac:250: -1- m4_pattern_allow([^LIB@&t@OBJS$])
+m4trace:configure.ac:250: -1- m4_pattern_allow([^LTLIBOBJS$])

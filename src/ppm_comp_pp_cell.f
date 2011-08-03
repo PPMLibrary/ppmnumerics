@@ -30,44 +30,44 @@
 #if   __KERNEL == __INTERNAL
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_comp_pp_cell_si(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_comp_pp_cell_di(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
       SUBROUTINE ppm_comp_pp_cell_sci(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
       SUBROUTINE ppm_comp_pp_cell_dci(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #endif
 #elif __KERNEL == __USER_FUNCTION
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_comp_pp_cell_su(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_comp_pp_cell_du(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
       SUBROUTINE ppm_comp_pp_cell_scu(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
       SUBROUTINE ppm_comp_pp_cell_dcu(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #endif
 #elif __KERNEL == __LOOKUP_TABLE
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_comp_pp_cell_st(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_comp_pp_cell_dt(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar, &
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
       SUBROUTINE ppm_comp_pp_cell_sct(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
       SUBROUTINE ppm_comp_pp_cell_dct(topoid,xp,Np,pdata,lda,lsymm,kernel,kpar,&
-     &    Nm,clist,cutoff2,dpd,info)
+     &    clist,cutoff2,dpd,info)
 #endif
 #endif
       !!! This routine computes kernel interactions by direct
@@ -83,8 +83,7 @@
       !!! used for this. The reason is that this allows the
       !!! user to have multiple cell lists and call this
       !!! routine for the appropriate one. Do not forget to
-      !!! call ppm_neighlist_clist_destroy and to DELLOCATE
-      !!! Nm after the cell lists are no longer needed.
+      !!! call ppm_neighlist_clist_destroy.
       !!!
       !!! [NOTE]
       !!! dpd needs to be allocated to proper size before
@@ -188,11 +187,6 @@
       !!!
       !!! particle index list of isub: `clist(isub)%lpdx(:)`                   +
       !!! pointer to first particle in ibox of isub: ` clist(isub)%lhbx(ibox)`
-      INTEGER    , DIMENSION(:,:), INTENT(IN   ) :: Nm
-      !!! number of cells in x,y,(z) directions (including the ghosts cells)
-      !!! in each subdomain.
-      !!!
-      !!! 1st index: direction. second index: subid.
       REAL(MK)                   , INTENT(IN   ) :: cutoff2
       !!! Squared PP interaction cutoff. Should be .LE. cell size.
       INTEGER                    , INTENT(  OUT) :: info
@@ -328,17 +322,17 @@
       !-------------------------------------------------------------------------
       IF (lsymm) THEN
           DO idom=1,nsublist
-              n1  = Nm(1,idom)
-              n2  = Nm(1,idom)*Nm(2,idom)
-              nz  = Nm(3,idom)
+              n1  = clist(idom)%Nm(1)
+              n2  = clist(idom)%Nm(1)*clist(idom)%Nm(2)
+              nz  = clist(idom)%Nm(3)
               IF (ppm_dim .EQ. 2) THEN
                   n2 = 0
                   nz = 2
               ENDIF
               ! loop over all REAL cells (the -2 in the end does this)
               DO k=0,nz-2
-                  DO j=0,Nm(2,idom)-2
-                      DO i=0,Nm(1,idom)-2
+                  DO j=0,clist(idom)%Nm(2)-2
+                      DO i=0,clist(idom)%Nm(1)-2
                           ! index of the center box
                           cbox = i + 1 + n1*j + n2*k
                           ! loop over all box-box interactions
@@ -575,17 +569,17 @@
       !-------------------------------------------------------------------------
       ELSE
           DO idom=1,nsublist
-              n1  = Nm(1,idom)
-              n2  = Nm(1,idom)*Nm(2,idom)
-              nz  = Nm(3,idom)
+              n1  = clist(idom)%Nm(1)
+              n2  = clist(idom)%Nm(1)*clist(idom)%Nm(2)
+              nz  = clist(idom)%Nm(3)
               IF (ppm_dim .EQ. 2) THEN
                   n2 = 0
                   nz = 2
               ENDIF
               ! loop over all REAL cells (the -2 in the end does this)
               DO k=1,nz-2
-                  DO j=1,Nm(2,idom)-2
-                      DO i=1,Nm(1,idom)-2
+                  DO j=1,clist(idom)%Nm(2)-2
+                      DO i=1,clist(idom)%Nm(1)-2
                           ! index of the center box
                           cbox = i + 1 + n1*j + n2*k
                           ! loop over all box-box interactions
