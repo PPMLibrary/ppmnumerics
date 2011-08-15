@@ -112,7 +112,6 @@
       !in 3D array(idist=NxNy)
       ppmplan%idist = 1
       ppmplan%odist = 1
-
       !-------------------------------------------------------------------------
       ! Allocate plan array
       !-------------------------------------------------------------------------
@@ -128,6 +127,7 @@
       DO isub=1,nsubs
          isubl=isublist(isub)
          !@ maybe the -1 needs to be removed when doing cell data
+         !the number of points in each direction of the piece to be transformed
          !we subtract the -1 to avoid the periodic vertex point
          IF (topology%bcdef(1) .EQ. ppm_param_bcdef_periodic) THEN !vertex
             ppmplan%nx(1,isub) = mesh%nm(1)-1

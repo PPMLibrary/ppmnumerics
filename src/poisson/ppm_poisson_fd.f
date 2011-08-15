@@ -118,7 +118,7 @@
           ENDDO
         ENDDO
       !-----------------------------------------------------------------------
-      ! Curl, 4th order FD - untested
+      ! Curl, 4th order FD
       !-----------------------------------------------------------------------
       ELSE IF (dtype .EQ. ppm_poisson_drv_curl_fd4) THEN
         facx = 1.0_MK/(12.0_MK*dx)

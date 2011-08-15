@@ -22,6 +22,9 @@
       ! as necessary.
       !
       ! Add finalize routine
+      ! Allow custom kernels/greens functions
+      ! Add switch to allocate and deallocate all arrays to save memory
+      !
       ! This routine needs to be modified to allow cell centred data
       ! These routines should all be renamed - potentially not just Poisson 
       ! equations can be solved.
@@ -32,6 +35,24 @@
 #define __DIM 3
 
       MODULE ppm_module_poisson
+      !!! This module provides routines for solving the Poisson equation via
+      !!! a Greens function. The Greens function is convolved with the RHS
+      !!! spectrally using the FFTW library. The routines also do Helmholtz
+      !!! reprojection to make fields solenoidal.
+      !!!
+      !!! Usage:
+      !!! First a ppm_poisson_plan must initialised by calling ppm_poisson_init.
+      !!! This is mainly done to initialise the FFTW library. An optional 'derive'
+      !!! argument toggles various curl operations on the solution to the Poisson
+      !!! equation.
+      !!!
+      !!! Then ppm_poisson_solve does the actual execution of the initialised FFTW
+      !!! plans, convolutions, derivations, etc. The initialised Fourier 
+      !!! transformations and arrays may be used for some other operations;
+      !!! presently just Helmholtz reprojection.
+      !!!
+      !!! So far no routine exists to remove any initialised ppm_poisson_plan
+
 
       USE ppm_module_fft
       USE ppm_module_substart
@@ -55,6 +76,8 @@
          REAL(ppm_kind_double)                                :: normky
          REAL(ppm_kind_double)                                :: normkz
 
+         INTEGER, DIMENSION(__DIM)                            :: nmfft
+         !!!Size of the FFT
 
          INTEGER                                              :: topoidxy
          !!!Topology id of xy topology
@@ -68,8 +91,7 @@
          !!!global number of grid points for xy topology
          INTEGER , DIMENSION(:,:),POINTER                     :: ndataxy=>NULL()
          !!!sub no. grid cells for xy topology
-         INTEGER , DIMENSION(2)                               :: maxndataxy
-         INTEGER,DIMENSION(:),POINTER                         :: isublistxy
+         INTEGER,DIMENSION(:),POINTER                         :: isublistxy=>NULL()
          !!!list of sub domains on current CPU on the xy topology
          INTEGER                                              :: nsublistxy
          !!!number of sub domains for current CPU on the xy topology
@@ -77,6 +99,8 @@
          !!!real slab field (xy topology)
          COMPLEX(ppm_kind_double),DIMENSION(:,:,:,:,:),POINTER:: fldxyc=>NULL()
          !!!complex slab field (xy topology)
+
+         !COMPLEX(ppm_kind_double),DIMENSION(:,:,:,:,:),POINTER:: fldxyc2=>NULL() !@tmp3
 
          INTEGER                                              :: topoidxyc
          !!!Topology id of complex xy topology
@@ -90,7 +114,7 @@
          !!!global number of grid points for complex xy topology
          INTEGER , DIMENSION(:,:),POINTER                     :: ndataxyc=>NULL()
          !!!sub no. grid cells for complex xy topology
-         INTEGER,DIMENSION(:),POINTER                         :: isublistxyc
+         INTEGER,DIMENSION(:),POINTER                         :: isublistxyc=>NULL()
          !!!list of sub domains on current CPU on the complex xy topology
          INTEGER                                              :: nsublistxyc
          !!!number of sub domains for current CPU on the complex xy topology
@@ -115,8 +139,7 @@
          !!!global number of grid points for z topology
          INTEGER , DIMENSION(:,:),POINTER                     :: ndataz=>NULL()
          !!!sub no. grid cells for z topology
-         INTEGER , DIMENSION(3)                               :: maxndataz
-         INTEGER,DIMENSION(:),POINTER                         :: isublistz
+         INTEGER,DIMENSION(:),POINTER                         :: isublistz=>NULL()
          !!!list of sub domains on current CPU on the z topology
          INTEGER                                              :: nsublistz
          !!!number of sub domains for current CPU on the z topology
@@ -137,7 +160,7 @@
          !!!global number of grid points
          INTEGER , DIMENSION(:,:),POINTER                     :: ndatafr=>NULL()
          !!!sub no. grid cells
-         INTEGER,DIMENSION(:),POINTER                         :: isublistfr
+         INTEGER,DIMENSION(:),POINTER                         :: isublistfr=>NULL()
          !!!list of sub domains on current CPU on the freespace topology
          INTEGER                                              :: nsublistfr
          !!!number of sub domains for current CPU on the freespace topology
@@ -151,6 +174,7 @@
          !!!real Greens field, z-pencils, scalar
          COMPLEX(ppm_kind_double),DIMENSION(:,:,:,:),POINTER  :: fldgrnc=>NULL()
          !!!complex Greens field, z-pencils, scalar
+         !REAL(ppm_kind_double),DIMENSION(:,:,:,:,:),POINTER   :: drv_vr2=>NULL()
          REAL(ppm_kind_double),DIMENSION(:,:,:,:,:),POINTER   :: drv_vr=>NULL()
          !!!dummy array for the right hand side, for free space, vector fields
 

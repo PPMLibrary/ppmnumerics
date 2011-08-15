@@ -5,27 +5,28 @@
       !                    Center for Fluid Dynamics (DTU)
       !
       !-------------------------------------------------------------------------
-      !@mapping calls can be cleaned up
-      !-------------------------------------------------------------------------
       SUBROUTINE __ROUTINE(topoid,meshid,ppmpoisson,fieldin,fieldout,gstw,info,&
                          & tmpcase)
       !!! Routine to perform the Greens function solution of the Poisson
       !!! equation. All settings are defined in ppm_poisson_initdef and stored 
-      !!! in the ppmpoisson plan. The tmpcase argument allows the use of a
+      !!! in the ppmpoisson plan. 
+      !!!
+      !!! The tmpcase argument allows the use of a
       !!! different Greens function or operation than initialised. This is 
-      !!! particularly useful for vorticity reprojection 
+      !!! particularly useful for Helmholtz reprojection 
       !!! (ppm_poisson_grn_reprojec).
-      !!! 
-      !!! The code will eventually get a needed cleanup overhaul.
+      !!!
+      !!! [NOTE]
+      !!! fieldin and fieldout must NOT be the same fields. In-place FFTs have
+      !!! not been implemented.
 
       USE ppm_module_map_field
       USE ppm_module_map_field_global
       USE ppm_module_map
 
       IMPLICIT NONE
-#ifdef __MPI
       include 'mpif.h'
-#endif
+
       !-------------------------------------------------------------------------
       ! Arguments
       !-------------------------------------------------------------------------
@@ -55,7 +56,7 @@
       INTEGER                           :: i,j,k
       INTEGER                           :: info2
       INTEGER                           :: presentcase
-      COMPLEX(__PREC)                   :: helmholtzpic
+      COMPLEX(__PREC)                   :: divomega
       INTEGER                           :: gi,gj,gk
       COMPLEX(__PREC)                   :: kx,ky,kz
       COMPLEX(__PREC)                   :: phix,phiy,phiz
@@ -92,6 +93,7 @@
       IF (presentcase .EQ. ppm_poisson_grn_pois_fre) THEN
         ppmpoisson%fldxyr = 0.0_MK
       ENDIF
+
       !-----------------------------------------------------------------------
       ! Map data globally to the slabs (XY)
       ! This is where the vorticity is extended and padded with 0 for free-space
@@ -134,7 +136,7 @@
       ENDIF
 
       !-----------------------------------------------------------------------
-      ! Do slab FFT (XY) - use the non-reduced topology !@what does this mean
+      ! Do slab FFT (XY) - use the xy topology as its extent has not been halved
       !-----------------------------------------------------------------------
       CALL ppm_fft_execute_2d(ppmpoisson%topoidxy,&
       & ppmpoisson%meshidxy, ppmpoisson%planfxy, &
@@ -149,8 +151,7 @@
       CALL ppm_map_field_global(&
       & ppmpoisson%topoidxy, &
       & ppmpoisson%topoidz, &
-      & ppmpoisson%meshidxyc, & !@to be used when meshid>1 works
-      !& ppmpoisson%meshidxy, &
+      & ppmpoisson%meshidxyc, &
       & ppmpoisson%meshidz,info)
       IF (info .NE. 0) THEN
         CALL ppm_write(ppm_rank, 'ppm_poisson_solve','Failed to initialise field mapping.',info2)
@@ -161,7 +162,6 @@
       CALL ppm_map_field_push(&
       & ppmpoisson%topoidxy, &
       & ppmpoisson%meshidxyc,ppmpoisson%fldxyc,__NCOM,info)
-      !& ppmpoisson%meshidxyc,ppmpoisson%fldxyc,__NCOM,info)!@to be used when meshid>1 works
       IF (info .NE. 0) THEN
         CALL ppm_write(ppm_rank, 'ppm_poisson_solve','Failed to push vector field.',info2)
         GOTO 9999
@@ -183,6 +183,7 @@
         CALL ppm_write(ppm_rank, 'ppm_poisson_solve','Failed to pop vector field.',info2)
         GOTO 9999
       ENDIF
+
 
       !-----------------------------------------------------------------------
       ! Do pencil FFT (Z)
@@ -212,6 +213,8 @@
             ENDDO
           ENDDO
         ENDDO
+
+
       !-----------------------------------------------------------------------
       ! Apply the free-space Greens function
       !-----------------------------------------------------------------------
@@ -231,113 +234,108 @@
             ENDDO
           ENDDO
         ENDDO
+
       !-----------------------------------------------------------------------
       ! Vorticity re-projection
       !-----------------------------------------------------------------------
       ELSE IF (presentcase .EQ. ppm_poisson_grn_reprojec) THEN
-        !remembering to normalize the FFT
-        IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
-          normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1))* & !vertex
-                               & (ppmpoisson%nmz(2))* &
-                               & (ppmpoisson%nmz(3)),MK)
-        ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
-          normfac = 1.0_MK/ REAL((ppmpoisson%nmz(1)-1)* & !vertex
-                               & (ppmpoisson%nmz(2)-1)* &
-                               & (ppmpoisson%nmz(3)-1),MK)
-        ENDIF
+        !remembering to normalize the FFT:
+        !!IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
+          !!normfac = 1.0_MK/ REAL((ppmpoisson%nmfft(1))* & !vertex
+                               !!& (ppmpoisson%nmfft(2))* &
+                               !!& (ppmpoisson%nmfft(3)),MK)
+        !!ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
+          normfac = 1.0_MK/ REAL((ppmpoisson%nmfft(1))* & !vertex
+                               & (ppmpoisson%nmfft(2))* &
+                               & (ppmpoisson%nmfft(3)),MK)
+        !!ENDIF
+
         DO isub=1,ppmpoisson%nsublistz
           isubl=ppmpoisson%isublistz(isub)
           DO k=1,ppmpoisson%ndataz(3,isubl)
             gk = k - 1 + (ppmpoisson%istartz(3,isubl)-1)
-            IF (gk .GT. (ppmpoisson%nmz(3)-1)/2) gk = gk-(ppmpoisson%nmz(3)-1)
-            kz = REAL(gk,MK)*ppmpoisson%normkz
+            IF (gk .GT. (ppmpoisson%nmfft(3))/2) gk = gk-(ppmpoisson%nmfft(3))
+            kz = CMPLX(0.0_MK,REAL(gk,MK),MK)*ppmpoisson%normkz
             DO j=1,ppmpoisson%ndataz(2,isubl)
               gj = j - 1 + (ppmpoisson%istartz(2,isubl)-1)
-              IF (gj .GT. (ppmpoisson%nmz(2)-1)/2) gj = gj-(ppmpoisson%nmz(2)-1)
-              ky = REAL(gj,MK)*ppmpoisson%normky
+              IF (gj .GT. (ppmpoisson%nmfft(2))/2) gj = gj-(ppmpoisson%nmfft(2))
+              ky = CMPLX(0.0_MK,REAL(gj,MK),MK)*ppmpoisson%normky
               DO i=1,ppmpoisson%ndataz(1,isubl)
                 gi = i - 1 + (ppmpoisson%istartz(1,isubl)-1)
-                IF (gi .GT. (ppmpoisson%nmz(1)-1)/2) gi = gi-(ppmpoisson%nmz(1)-1)
-                kx = REAL(gi,MK)*ppmpoisson%normkx
+                IF (gi .GT. (ppmpoisson%nmfft(1))/2) gi = gi-(ppmpoisson%nmfft(1))
+                kx = CMPLX(0.0_MK,REAL(gi,MK),MK)*ppmpoisson%normkx
 
-                !IF (gi .EQ. 0 .AND. gj .EQ. 0 .AND. gk .EQ. 0) THEN
-                  !wdotk = 0.0_mk
-                !ELSE
-                  !wdotk = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
-                        !&  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
-                        !&  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) / &
-                        !&  (kx*kx+ky*ky+kz*kz)
-                !ENDIF
 
-                !ppmpoisson%fldzc2(1,i,j,k,isub) = &
-                  !& (ppmpoisson%fldzc2(1,i,j,k,isub) - wdotk*kx)*normfac
-                !ppmpoisson%fldzc2(2,i,j,k,isub) = &
-                  !& (ppmpoisson%fldzc2(2,i,j,k,isub) - wdotk*ky)*normfac
-                !ppmpoisson%fldzc2(3,i,j,k,isub) = &
-                  !& (ppmpoisson%fldzc2(3,i,j,k,isub) - wdotk*kz)*normfac
-
+                !compute spectral divergence....
                 IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
-                  helmholtzpic = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
+                  divomega     = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
                                &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
                                &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
                                &  ppmpoisson%fldgrnc( i,j,k,isub)
-                      ppmpoisson%fldzc2(1,i,j,k,isub) = & !@formatting
-                   & (ppmpoisson%fldzc2(1,i,j,k,isub)*normfac - helmholtzpic*kx)
-                      ppmpoisson%fldzc2(2,i,j,k,isub) = &
-                   & (ppmpoisson%fldzc2(2,i,j,k,isub)*normfac - helmholtzpic*ky)
-                      ppmpoisson%fldzc2(3,i,j,k,isub) = &
-                   & (ppmpoisson%fldzc2(3,i,j,k,isub)*normfac - helmholtzpic*kz)
                 ELSE IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_per) THEN
-                  helmholtzpic = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
+                  !compute spectral divergence....
+                  divomega     = (ppmpoisson%fldzc2(1,i,j,k,isub) * kx +  &
                                &  ppmpoisson%fldzc2(2,i,j,k,isub) * ky +  &
                                &  ppmpoisson%fldzc2(3,i,j,k,isub) * kz) * &
                                &  ppmpoisson%fldgrnr( i,j,k,isub)
-                      ppmpoisson%fldzc2(1,i,j,k,isub) = & !@formatting
-                   & (ppmpoisson%fldzc2(1,i,j,k,isub)*normfac - helmholtzpic*kx)
-                      ppmpoisson%fldzc2(2,i,j,k,isub) = &
-                   & (ppmpoisson%fldzc2(2,i,j,k,isub)*normfac - helmholtzpic*ky)
-                      ppmpoisson%fldzc2(3,i,j,k,isub) = &
-                   & (ppmpoisson%fldzc2(3,i,j,k,isub)*normfac - helmholtzpic*kz)
                 ENDIF
-
+                !...and subtract its gradient
+                ppmpoisson%fldzc2(1,i,j,k,isub) = &
+                  & (ppmpoisson%fldzc2(1,i,j,k,isub)*normfac + divomega    *kx)
+                ppmpoisson%fldzc2(2,i,j,k,isub) = &
+                  & (ppmpoisson%fldzc2(2,i,j,k,isub)*normfac + divomega    *ky)
+                ppmpoisson%fldzc2(3,i,j,k,isub) = &
+                  & (ppmpoisson%fldzc2(3,i,j,k,isub)*normfac + divomega    *kz)
               ENDDO
             ENDDO
           ENDDO
         ENDDO
       ENDIF
+
+
       !-----------------------------------------------------------------------
       ! Spectral derivatives
       ! normkx, etc contains 2pi/Lx
       !-----------------------------------------------------------------------
-      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_sp .AND.&
-         & (presentcase .EQ. ppm_poisson_grn_pois_per .OR. &
-            presentcase .EQ. ppm_poisson_grn_pois_fre)) THEN
-        DO isub=1,ppmpoisson%nsublistz
-          isubl=ppmpoisson%isublistz(isub)
-          DO k=1,ppmpoisson%ndataz(3,isubl)
-            gk = k - 1 + (ppmpoisson%istartz(3,isubl)-1)
-            IF (gk .GT. (ppmpoisson%nmz(3)-1)/2) gk = gk-(ppmpoisson%nmz(3)-1)
-            kz = CMPLX(0.0_MK,gk*ppmpoisson%normkz,MK)
-            DO j=1,ppmpoisson%ndataz(2,isubl)
-              gj = j - 1 + (ppmpoisson%istartz(2,isubl)-1)
-              IF (gj .GT. (ppmpoisson%nmz(2)-1)/2) gj = gj-(ppmpoisson%nmz(2)-1)
-              ky = CMPLX(0.0_MK,gj*ppmpoisson%normky,MK)
-              DO i=1,ppmpoisson%ndataz(1,isubl)
-                gi = i - 1 + (ppmpoisson%istartz(1,isubl)-1)
-                IF (gi .GT. (ppmpoisson%nmz(1)-1)/2) gi = gi-(ppmpoisson%nmz(1)-1)
-                kx = CMPLX(0.0_MK,gi*ppmpoisson%normkx,MK)
+      IF (ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_sp) THEN
+          normfac = 1.0_MK/ REAL((ppmpoisson%nmfft(1))* & !vertex
+                               & (ppmpoisson%nmfft(2))* &
+                               & (ppmpoisson%nmfft(3)),MK)
+        IF (presentcase .EQ. ppm_poisson_grn_pois_per .OR. &
+          & presentcase .EQ. ppm_poisson_grn_pois_fre) THEN
+          DO isub=1,ppmpoisson%nsublistz
+            isubl=ppmpoisson%isublistz(isub)
+            DO k=1,ppmpoisson%ndataz(3,isubl)
+              gk = k - 1 + (ppmpoisson%istartz(3,isubl)-1)
+              IF (gk .GT. (ppmpoisson%nmfft(3)/2)) gk = gk-(ppmpoisson%nmfft(3))
+              kz = CMPLX(0.0_MK,REAL(gk,MK),MK)*ppmpoisson%normkz
+              DO j=1,ppmpoisson%ndataz(2,isubl)
+                gj = j - 1 + (ppmpoisson%istartz(2,isubl)-1)
+                IF (gj .GT. (ppmpoisson%nmfft(2)/2)) gj = gj-(ppmpoisson%nmfft(2))
+                ky = CMPLX(0.0_MK,REAL(gj,MK),MK)*ppmpoisson%normky
+                DO i=1,ppmpoisson%ndataz(1,isubl)
+                  gi = i - 1 + (ppmpoisson%istartz(1,isubl)-1)
+                  IF (gi .GT. (ppmpoisson%nmfft(1)/2)) gi = gi-(ppmpoisson%nmfft(1))
+                  kx = CMPLX(0.0_MK,REAL(gi,MK),MK)*ppmpoisson%normkx
 
-                phix = ppmpoisson%fldzc2(1,i,j,k,isub)
-                phiy = ppmpoisson%fldzc2(2,i,j,k,isub)
-                phiz = ppmpoisson%fldzc2(3,i,j,k,isub)
+                  phix = ppmpoisson%fldzc2(1,i,j,k,isub)
+                  phiy = ppmpoisson%fldzc2(2,i,j,k,isub)
+                  phiz = ppmpoisson%fldzc2(3,i,j,k,isub)
 
-                ppmpoisson%fldzc2(1,i,j,k,isub) = (ky*phiz-kz*phiy)
-                ppmpoisson%fldzc2(2,i,j,k,isub) = (kz*phix-kx*phiz)
-                ppmpoisson%fldzc2(3,i,j,k,isub) = (kx*phiy-ky*phix)
+                  ppmpoisson%fldzc2(1,i,j,k,isub) = (ky*phiz-kz*phiy)
+                  ppmpoisson%fldzc2(2,i,j,k,isub) = (kz*phix-kx*phiz)
+                  ppmpoisson%fldzc2(3,i,j,k,isub) = (kx*phiy-ky*phix)
+                  !ppmpoisson%fldzc2(1,i,j,k,isub) = normfac*kx*phix !@
+                  !ppmpoisson%fldzc2(2,i,j,k,isub) = normfac*ky*phiy !@
+                  !ppmpoisson%fldzc2(3,i,j,k,isub) = normfac*kz*phiz !@
+                  !ppmpoisson%fldzc2(1,i,j,k,isub) = normfac*phix !@
+                  !ppmpoisson%fldzc2(2,i,j,k,isub) = normfac*phiy !@
+                  !ppmpoisson%fldzc2(3,i,j,k,isub) = normfac*phiz !@
+                ENDDO
               ENDDO
             ENDDO
           ENDDO
-        ENDDO
+        ENDIF
       ENDIF
 
 
@@ -390,6 +388,7 @@
         GOTO 9999
       ENDIF
 
+
       !-----------------------------------------------------------------------
       ! IFFT (XY) use the non-reduced topology
       !-----------------------------------------------------------------------
@@ -413,7 +412,6 @@
         GOTO 9999
       ENDIF
 
-
       !Push the data
       CALL ppm_map_field_push(&
       & ppmpoisson%topoidxy, &
@@ -435,9 +433,9 @@
       ! i.e. the receiver varies
       !-------------------------------------------------------------------------
       IF ((ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd2 .OR. &
-           ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd4) .AND. &
-         & (presentcase .EQ. ppm_poisson_grn_pois_per .OR. &  !@these may be unnecessary - perhaps just the derive value. Or maybe not: in case of vorticity reprojection we could get lost
-            presentcase .EQ. ppm_poisson_grn_pois_fre)) THEN
+        &  ppmpoisson%derivatives .EQ. ppm_poisson_drv_curl_fd4) .AND. &
+        & (presentcase .EQ. ppm_poisson_grn_pois_per .OR. &
+        &  presentcase .EQ. ppm_poisson_grn_pois_fre     )) THEN
         CALL ppm_map_field_pop(&
         & topoid, &
         & meshid,ppmpoisson%drv_vr, &
@@ -528,7 +526,6 @@
       !-------------------------------------------------------------------------
       ! Perhaps allocate (and deallocate) arrays !@
       !-------------------------------------------------------------------------
-
       !-------------------------------------------------------------------------
       ! Return
       !-------------------------------------------------------------------------
