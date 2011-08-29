@@ -108,6 +108,8 @@
       INTEGER                                 :: tmeshid
       REAL(__PREC)                            :: dx,dy,dz
       REAL(__PREC)                            :: Lx2,Ly2,Lz2
+      REAL(__PREC)                            :: rad !@
+      REAL(__PREC)                            :: gzero
 
       REAL(__PREC),DIMENSION(__DIM)           :: tmpmin,tmpmax
       INTEGER, DIMENSION(__DIM)               :: maxndataxy,maxndataz
@@ -150,7 +152,10 @@
       NULLIFY(ppmpoisson%planbxy%plan)
       NULLIFY(ppmpoisson%planfz%plan)
       NULLIFY(ppmpoisson%planbz%plan)
-
+      NULLIFY(maxndataxy)
+      NULLIFY(maxndataz)
+      NULLIFY(dummynmxy)
+      NULLIFY(dummynmz)
 
       !-------------------------------------------------------------------------
       ! Get topology and mesh values of input/output
@@ -216,6 +221,7 @@
       !-------------------------------------------------------------------------
       ! Create temporary derivation arrays if necessary
       !-------------------------------------------------------------------------
+      !!write(*,*) 'fieldout',ppm_rank, LBOUND(fieldout),UBOUND(fieldout)
       IF (PRESENT(derive)) THEN
         IF ((      derive .EQ. ppm_poisson_drv_curl_fd2  &
           &  .OR.  derive .EQ. ppm_poisson_drv_curl_fd4)) THEN
@@ -227,10 +233,10 @@
                                    & LBOUND(fieldout,5):UBOUND(fieldout,5)))
         ELSE IF (derive .EQ. ppm_poisson_drv_curl_sp) THEN
           ppmpoisson%derivatives = ppm_poisson_drv_curl_sp
-          IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
-            CALL ppm_write(ppm_rank,'ppm_poisson_init', &
-            & 'WARNING: Spectral curl is not fully implemented in Freespace.',isub)
-          ENDIF
+          !IF (ppmpoisson%case .EQ. ppm_poisson_grn_pois_fre) THEN
+            !CALL ppm_write(ppm_rank,'ppm_poisson_init', &
+            !& 'WARNING: Spectral curl is not fully implemented in Freespace.',isub)
+          !ENDIF
         ELSE IF (derive .EQ. ppm_poisson_drv_none) THEN
           ppmpoisson%derivatives = ppm_poisson_drv_none
         ELSE
@@ -401,12 +407,18 @@
       ! The complex Greens function is always kept on the z-pencil topology
       !-------------------------------------------------------------------------
       IF (green .EQ. ppm_poisson_grn_pois_per) THEN
+        !!ALLOCATE(ppmpoisson%fldgrnr(&
+        !!& indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
+        !!& 1:ppmpoisson%nsublistz),stat=info)
         ALLOCATE(ppmpoisson%fldgrnr(&
-        & indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
+        & indl(1):maxndataz(1),indl(2):maxndataz(2),indl(3):maxndataz(3),&
         & 1:ppmpoisson%nsublistz),stat=info)
       ELSE IF (green .EQ. ppm_poisson_grn_pois_fre) THEN
+        !!ALLOCATE(ppmpoisson%fldgrnc(&
+        !!& indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
+        !!& 1:ppmpoisson%nsublistz),stat=info)
         ALLOCATE(ppmpoisson%fldgrnc(&
-        & indl(1):indu(1),indl(2):indu(2),indl(3):indu(3),&
+        & indl(1):maxndataz(1),indl(2):maxndataz(2),indl(3):maxndataz(3),&
         & 1:ppmpoisson%nsublistz),stat=info)
       ENDIF
 
@@ -492,6 +504,10 @@
       ! minus of the RHS
       !-------------------------------------------------------------------------
       ELSE IF (green .EQ. ppm_poisson_grn_pois_fre) THEN
+#define __GFREESPACE
+!#define __GBLOB4
+
+!#define __GSPEC
         !-----------------------------------------------------------------------
         ! First initialise the real Greens function
         !@alternatively this could come from as input
@@ -516,47 +532,101 @@
                 IF (kx .GT. (ppmpoisson%nmfft(1))/2) kx = kx-(ppmpoisson%nmfft(1))
                 IF (ky .GT. (ppmpoisson%nmfft(2))/2) ky = ky-(ppmpoisson%nmfft(2))
                 IF (kz .GT. (ppmpoisson%nmfft(3))/2) kz = kz-(ppmpoisson%nmfft(3))
+                rad = SQRT( REAL(kx*kx,__PREC)*dx*dx+ &
+                          & REAL(ky*ky,__PREC)*dy*dy+ &
+                          & REAL(kz*kz,__PREC)*dz*dz)
+                !----FREESPACE GREENS FUNCTION----
+#ifdef __GFREESPACE
                 ppmpoisson%fldxyr(1,i,j,k,isub) = &
                         & normfac/(SQRT( REAL(kx*kx,__PREC)*dx*dx+ &
                         &                REAL(ky*ky,__PREC)*dy*dy+ &
                         &                REAL(kz*kz,__PREC)*dz*dz))
+#endif
+                !----BLOB----2nd ORDER---:
+#ifdef __GBLOB2
+                ppmpoisson%fldxyr(1,i,j,k,isub) = &
+                        & normfac/(rad)*ERF(rad/(SQRT(2.0E0_MK)*dx))
+                        !& normfac/(rad)*ERF(rad/(1.0_MK*dx))
+                        !& normfac/(rad)*ERF(rad/1.0E-2_MK)
+#endif
+                !----BLOB----4th ORDER---cell-normalised:
+#ifdef __GBLOB4
+                ppmpoisson%fldxyr(1,i,j,k,isub) = &
+                        & normfac/(rad)* &
+                        & (ERF(rad/(dx*1.0_MK*SQRT(2.0_MK)))+ &
+                        & 1.0_MK/SQRT(PI)*rad/(dx*1.0_MK*SQRT(2.0_MK))* &
+                        & EXP(-rad**2/(dx*1.0_MK*SQRT(2.0_MK))**2))
+
+                        !---4th ORDER---unnormalised:
+                        !& (ERF(rad/SQRT(2.0_MK))+1.0_MK/SQRT(2.0_MK*PI)*rad* &
+                        !& EXP(-rad**2/2))
+#endif
                 ppmpoisson%fldxyr(2,i,j,k,isub) = 0.0_MK
                 ppmpoisson%fldxyr(3,i,j,k,isub) = 0.0_MK
-                !Take care of singularity
-                !This is nasty as well
+                !Take care of singularity (This is nasty as well)
+                !Simply zero
+                !gzero = 0.0_MK
+                !Simply one (H&E style)
+                !gzero = 1.0_MK*normfac
+                !Equal to the neighbour point (first order)
+                !gzero = normfac/(dx)
+                !Linear extrapolation into zero (2nd order)
+                !gzero =   2.0_MK*normfac/(       dx) &
+                        !& - 1.0_MK*normfac/(2.0_MK*dx)
+                !extrapolation 3rd order
+                !gzero =   3.0_MK*normfac/(       dx) &
+                        !& - 3.0_MK*normfac/(2.0_MK*dx) &
+                        !& + 1.0_MK*normfac/(3.0_MK*dx)
+                !extrapolation 4th order
+                !gzero =   4.0_MK*normfac/(       dx) &
+                        !& - 6.0_MK*normfac/(2.0_MK*dx) &
+                        !& + 4.0_MK*normfac/(3.0_MK*dx) &
+                        !& - 1.0_MK*normfac/(4.0_MK*dx)
+                !extrapolation 6th order
+                !gzero =   6.0_MK*normfac/(       dx) &
+                        !& -15.0_MK*normfac/(2.0_MK*dx) &
+                        !& +20.0_MK*normfac/(3.0_MK*dx) &
+                        !& -15.0_MK*normfac/(4.0_MK*dx) &
+                        !& + 6.0_MK*normfac/(5.0_MK*dx) &
+                        !& - 1.0_MK*normfac/(6.0_MK*dx)
+                !one thousand!!!
+                !gzero = normfac*1000.0_MK
+                !Chatelain:2010
+                gzero = &
+                      & 0.5_MK*( 3.0_MK*dx*dy*dz/(4.0_MK*PI) ) ** (2.0_MK/3.0_MK) * &
+                      & normfac *4.0_MK*PI
+                !bi-section galore!!!!
+                !gzero = normfac * &
+                !Chatelain for dx=2/64:
+                  !& 0.00236131633889131295_MK
+                  !& 0.001_MK
+                  !& 0.01_MK
+                  !& 0.1_MK
+                  !& 1.0_MK
+                  !& 10.0_MK
+                  !& 100.0_MK
+                  !& 1.0E-4_MK
+                  !& 1.0E-5_MK
+                  !& 0.0_MK
+                  !& -0.001_MK
+                  !& -0.1_MK
+                  !& -10.0_MK
+                  !& -1000.0_MK
+                  !& -100.0_MK
+                  !& -20.0_MK
+                  !& -30.0_MK
+                !Matching the blob (both 2nd and 4th order)
+#if defined __GBLOB2 || defined __GBLOB4
+                gzero = 4.0_MK*PI*normfac/ &
+                        & (2.0_MK*PI**(3.0_MK/2.0_MK)* &
+                        !& SQRT(2.0_MK))
+                        & 1.0_MK*SQRT(2.0_MK)*dx)
+                        !& 0.01_MK)
+                !!write(*,*) ERF(1.0_MK)
+#endif
                 IF ((kx*kx+ky*ky+kz*kz) .EQ. 0) THEN
                   !Professor Nutbutter is out.
-                  !Simply zero
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) = 0.0_MK
-                  !Simply one (H&E style)
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) = 1.0_MK*normfac
-                  !Equal to the neighbour point (first order)
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) = normfac/(dx)
-                  !Linear extrapolation into zero (2nd order)
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) =   2.0_MK*normfac/(       dx) &
-                                                  !& - 1.0_MK*normfac/(2.0_MK*dx)
-                  !extrapolation 3rd order
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) =   3.0_MK*normfac/(       dx) &
-                                                  !& - 3.0_MK*normfac/(2.0_MK*dx) &
-                                                  !& + 1.0_MK*normfac/(3.0_MK*dx)
-                  !extrapolation 4th order
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) =   4.0_MK*normfac/(       dx) &
-                                                  !& - 6.0_MK*normfac/(2.0_MK*dx) &
-                                                  !& + 4.0_MK*normfac/(3.0_MK*dx) &
-                                                  !& - 1.0_MK*normfac/(4.0_MK*dx)
-                  !extrapolation 6th order
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) =   6.0_MK*normfac/(       dx) &
-                                                  !& -15.0_MK*normfac/(2.0_MK*dx) &
-                                                  !& +20.0_MK*normfac/(3.0_MK*dx) &
-                                                  !& -15.0_MK*normfac/(4.0_MK*dx) &
-                                                  !& + 6.0_MK*normfac/(5.0_MK*dx) &
-                                                  !& - 1.0_MK*normfac/(6.0_MK*dx)
-                  !one thousand!!!
-                  !ppmpoisson%fldxyr(1,i,j,k,isub) = normfac*1000.0_MK
-                  !Chatelain:2010
-                  ppmpoisson%fldxyr(1,i,j,k,isub) = &
-                      & ( 3.0_MK*dx*dy*dz/(4.0_MK*PI) ) ** (2.0_MK/3.0_MK) * &
-                      & normfac *0.5_MK * 4.0_MK*PI
+                  ppmpoisson%fldxyr(1,i,j,k,isub) = gzero
                 ENDIF
               ENDDO
             ENDDO
@@ -631,7 +701,12 @@
           DO k=1,ppmpoisson%ndataz(3,isubl)
             DO j=1,ppmpoisson%ndataz(2,isubl)
               DO i=1,ppmpoisson%ndataz(1,isubl)
+#ifdef __GSPEC
+                ppmpoisson%fldgrnc(i,j,k,isub) = ppmpoisson%fldzc2(1,i,j,k,isub) &
+                & + (1.0_MK * normfac*4.0_MK*PI - gzero) !dirac minus actual value
+#else
                 ppmpoisson%fldgrnc(i,j,k,isub) = ppmpoisson%fldzc2(1,i,j,k,isub)
+#endif
               ENDDO
             ENDDO
           ENDDO
