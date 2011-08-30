@@ -152,8 +152,6 @@
       NULLIFY(ppmpoisson%planbxy%plan)
       NULLIFY(ppmpoisson%planfz%plan)
       NULLIFY(ppmpoisson%planbz%plan)
-      NULLIFY(maxndataxy)
-      NULLIFY(maxndataz)
       NULLIFY(dummynmxy)
       NULLIFY(dummynmz)
 
@@ -589,12 +587,14 @@
                         !& -15.0_MK*normfac/(4.0_MK*dx) &
                         !& + 6.0_MK*normfac/(5.0_MK*dx) &
                         !& - 1.0_MK*normfac/(6.0_MK*dx)
+                !Finite difference fit 4th order (minimum max error adj. points)
+                gzero = normfac*77.0_MK/(36.0_MK*dx) !4*pi is included in normfac
                 !one thousand!!!
                 !gzero = normfac*1000.0_MK
                 !Chatelain:2010
-                gzero = &
-                      & 0.5_MK*( 3.0_MK*dx*dy*dz/(4.0_MK*PI) ) ** (2.0_MK/3.0_MK) * &
-                      & normfac *4.0_MK*PI
+                !gzero = &
+                      !& 0.5_MK*( 3.0_MK*dx*dy*dz/(4.0_MK*PI) ) ** (2.0_MK/3.0_MK) * &
+                      !& normfac *4.0_MK*PI
                 !bi-section galore!!!!
                 !gzero = normfac * &
                 !Chatelain for dx=2/64:
