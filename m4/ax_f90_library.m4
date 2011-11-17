@@ -58,7 +58,7 @@ ax_save_LDFLAGS="$LDFLAGS"
 ax_save_LIBS="$LIBS"
 for ax_base in `echo $ax_search | tr ':' '\012'` ; do
  if test "AS_VAR_GET(ax_libs)" = "not found" ; then
-   for ax_lib in "" `find $ax_base -follow -name '$2' -print` ; do
+   for ax_lib in "" `find $ax_base -follow -path '*.git*' -prune -o -name '$2' -print` ; do
      if test "x$ax_lib" != x ; then
        changequote(,)dnl
        ax_dir=`echo $ax_lib | sed 's,/[^/]*$,,'`
