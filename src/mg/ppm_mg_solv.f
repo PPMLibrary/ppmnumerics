@@ -1,120 +1,81 @@
-       !------------------------------------------------------------------------
-       !  Subroutine   :                  ppm_mg_solv 
-       !------------------------------------------------------------------------
-       !
-       !  Input        :    itera      (I)  :  initial smoothing sweeps 
-       !                                       in the finest level.
-       !              
-       !                    iterf      (I)  :  final smoothing sweeps
-       !                                       in the finest level
-       !
-       !                    iter1      (I)  :  AFTER EACH RESTRICTION   
-       !                                       SMOOTHING SWEEPS TAKE PLACE
-       !                                       IMPORTANT PARAMETER
-       !
-       !                    iter2      (I)  :  AFTER EACH PROLONGATION
-       !                                       SMOOTHING SWEEPS TAKE PLACE
-       !                                        
-       !
-       !  Input/Output :     u         (F)  :  THE FIELD OF THE SOLUTION
-       !                                       WITH GHOST VALUES!!
-       !                     f         (F)  :  THE FIELD OF THE RHS (NO GHOST
-       !                                         VALUES)
-       !  Output       :    info       (I)
-       !
-       !  Purpose      : 
-       !
-       !
-       !  References   :
-       !
-       !  Revisions    :
-       !------------------------------------------------------------------------
-       !  $Log: ppm_mg_solv.f,v $
-       !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
-       !  CBL version of the PPM library
-       !
-       !  Revision 1.17  2006/09/26 16:01:24  ivos
-       !  Fixed wrongly indented CPP directives. Remember: they have to start in
-       !  Col 1, otherwise it does not compile on certain systems. In fact, this
-       !  code did NOT compile as it was!!
-       !
-       !  Revision 1.16  2006/07/21 11:30:54  kotsalie
-       !  FRIDAY
-       !
-       !  Revision 1.14  2005/12/08 12:44:46  kotsalie
-       !  commiting dirichlet
-       !
-       !  Revision 1.13  2005/05/30 13:03:22  kotsalie
-       !  UPDATED FOR SERIAL VERSION WITHOUT MPI
-       !
-       !  Revision 1.12  2005/03/14 13:24:03  kotsalie
-       !  COMMITED THE VECTOR CASE. IT IS FOR LDA=3
-       !
-       !  Revision 1.11  2005/01/04 09:48:21  kotsalie
-       !  ghostsize=2 scalar case
-       !
-       !  Revision 1.10  2004/11/05 15:18:35  kotsalie
-       !  Made independent the initial and final smoothing steps
-       !
-       !  Revision 1.9  2004/10/13 16:02:03  kotsalie
-       !  Maximum residual between processors is communicated
-       !
-       !  Revision 1.8  2004/09/30 14:26:24  kotsalie
-       !  *** empty log message ***
-       !
-       !  Revision 1.7  2004/09/29 10:47:36  kotsalie
-       !  The user can now print the residual. THis should serve for him
-       !  as a istopping criterium
-       !
-       !  Revision 1.6  2004/09/23 13:50:54  kotsalie
-       !  Changed IF (w_cycle) to IF(.FALSE.) Now the recusrion goes up to level 2.
-       !
-       !  Revision 1.5  2004/09/23 12:41:16  kotsalie
-       !  MG new version
-       !
-       !------------------------------------------------------------------------
-       !  Parallel Particle Mesh Library (PPM)
-       !  Institute of Computational Science
-       !  ETH Zentrum, Hirschengraben 84
-       !  CH-8092 Zurich, Switzerland
-       !------------------------------------------------------------------------
+      !------------------------------------------------------------------------
+      !  Subroutine   :                  ppm_mg_solv 
+      !------------------------------------------------------------------------
+      ! Copyright (c) 2011 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      !                    Center for Fluid Dynamics (DTU)
+      !
+      !
+      ! This file is part of the Parallel Particle Mesh Library (PPM).
+      !
+      ! PPM is free software: you can redistribute it and/or modify
+      ! it under the terms of the GNU Lesser General Public License 
+      ! as published by the Free Software Foundation, either 
+      ! version 3 of the License, or (at your option) any later 
+      ! version.
+      !
+      ! PPM is distributed in the hope that it will be useful,
+      ! but WITHOUT ANY WARRANTY; without even the implied warranty of
+      ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      ! GNU General Public License for more details.
+      !
+      ! You should have received a copy of the GNU General Public License
+      ! and the GNU Lesser General Public License along with PPM. If not,
+      ! see <http://www.gnu.org/licenses/>.
+      !
+      ! Parallel Particle Mesh Library (PPM)
+      ! ETH Zurich
+      ! CH-8092 Zurich, Switzerland
+      !-------------------------------------------------------------------------
+
+       
 #if   __DIM   == __SFIELD
 #if   __MESH_DIM   == __2D
 #if    __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_mg_solv_2d_sca_s(topo_id,u,f,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_2d_sca_s(topo_id,u,f,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #elif  __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_mg_solv_2d_sca_d(topo_id,u,f,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_2d_sca_d(topo_id,u,f,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #endif 
 #elif __MESH_DIM   == __3D
 #if    __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_mg_solv_3d_sca_s(topo_id,u,f,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_3d_sca_s(topo_id,u,f,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #elif  __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_mg_solv_3d_sca_d(topo_id,u,f,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_3d_sca_d(topo_id,u,f,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #endif 
 #endif 
 #elif __DIM == __VFIELD
 #if   __MESH_DIM   == __2D
 #if    __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_mg_solv_2d_vec_s(topo_id,u,f,lda,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_2d_vec_s(topo_id,u,f,lda,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #elif  __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_mg_solv_2d_vec_d(topo_id,u,f,lda,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_2d_vec_d(topo_id,u,f,lda,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #endif
 #elif __MESH_DIM   == __3D
 #if    __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_mg_solv_3d_vec_s(topo_id,u,f,lda,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_3d_vec_s(topo_id,u,f,lda,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #elif  __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_mg_solv_3d_vec_d(topo_id,u,f,lda,itera,iterf,iter1,iter2,&
-     &                                Eu,info)
+      SUBROUTINE ppm_mg_solv_3d_vec_d(topo_id,u,f,lda,&
+      &                               initsweep,finsweep,restrsweep,prolsweep,&
+      &                               Eu,info)
 #endif
 #endif
 #endif
+    !!! Solves the given equation using the multigrid method
+
+
 #include "ppm_define.h"
          !---------------------------------------------------------------------
          !  Modules 
@@ -147,24 +108,41 @@
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
          REAL(MK),DIMENSION(:,:,:),POINTER     ::  u
+         !!! the field of the solution (including the ghost layer)
          REAL(MK),DIMENSION(:,:,:),POINTER     ::  f
+         !!! the field of the right hand side (without the ghost layer)
 #elif __MESH_DIM == __3D
          REAL(MK),DIMENSION(:,:,:,:),POINTER   ::  u
+         !!! the field of the solution (including the ghost layer)
          REAL(MK),DIMENSION(:,:,:,:),POINTER   ::  f
+         !!! the field of the right hand side (without the ghost layer)
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
          REAL(MK),DIMENSION(:,:,:,:),POINTER     ::  u
+         !!! the field of the solution (including the ghost layer)
          REAL(MK),DIMENSION(:,:,:,:),POINTER     ::  f
+         !!! the field of the right hand side (without the ghost layer)
 #elif __MESH_DIM == __3D
          REAL(MK),DIMENSION(:,:,:,:,:),POINTER   ::  u
+         !!! the field of the solution (including the ghost layer)
          REAL(MK),DIMENSION(:,:,:,:,:),POINTER   ::  f
+         !!! the field of the right hand side (without the ghost layer)
 #endif
 #endif
 #if __DIM == __VFIELD
-         INTEGER,INTENT(IN)                      :: lda           
+         INTEGER,INTENT(IN)                      :: lda
+         !!! leading dimension
 #endif
-         INTEGER,                   INTENT(IN)   ::  itera,iterf,iter1,iter2
+         INTEGER,                   INTENT(IN)   ::  initsweep
+         !!! initial smoothing sweeps in the finest level
+         INTEGER,                   INTENT(IN)   ::  finsweep
+         !!! final smoothing sweeps in the finest level
+         INTEGER,                   INTENT(IN)   ::  restrsweep
+         !!! Number of smoothing sweeps after each restriction step
+         !!! IMPORTANT: This parameter is considere important
+         INTEGER,                   INTENT(IN)   ::  prolsweep
+         !!! Number of smoothing sweeps after each prolongation step
          REAL(MK),                  INTENT(OUT)  ::  Eu  
          INTEGER,                   INTENT(INOUT)   ::  info
          INTEGER,                   INTENT(IN   )   ::  topo_id
@@ -183,8 +161,8 @@
          REAL(MK)                             :: x,y
          REAL(MK)                             :: gEu 
          INTEGER                              :: MPI_PREC
-         TYPE(ppm_t_topo),      POINTER       :: topo
-         TYPE(ppm_t_equi_mesh), POINTER       :: mesh
+         TYPE(ppm_t_topo),      POINTER       :: topo => NULL()
+         TYPE(ppm_t_equi_mesh), POINTER       :: mesh => NULL()
 #if __MESH_DIM == __3D
          REAL(MK)                             :: c5,dz,rdz2
          INTEGER,DIMENSION(4)                 :: ldl4,ldu4
@@ -268,232 +246,17 @@
            MPI_PREC = MPI_DOUBLE_PRECISION
         ENDIF
 #endif
-		topo => ppm_topo(topo_id)%t
-		mesh => topo%mesh(meshid_g(1))
+        topoid=topo_id
+        topo => ppm_topo(topo_id)%t
+        mesh => topo%mesh(mg_meshid(1))
         !----------------------------------------------------------------------
         !  Check arguments
         !----------------------------------------------------------------------
         IF (ppm_debug .GT. 0) THEN
-#if __DIM == __SFIELD        
-#if __MESH_DIM == __2D        
-           IF (SIZE(u,3) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains',__LINE__,info)        
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(u(:,:,i),1).LT.mesh%nnodes(1,idom)+ &
-     &                                              2*ghostsize(1)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 9999    
-              ENDIF
-              IF (SIZE(u(:,:,i),2).LT.mesh%nnodes(2,idom) &
-     &                                             +2*ghostsize(2)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-           ENDDO
-           IF (SIZE(f,3) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(f(:,:,i),1).LT. mesh%nnodes(1,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs mess with mesh points in x-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(f(:,:,i),2).LT. mesh%nnodes(2,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-           ENDDO
-#elif __MESH_DIM == __3D
-           IF (SIZE(u,4) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains!',__LINE__,info)        
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(u(:,:,:,i),1).LT.mesh%nnodes(1,idom)+ &
-     &                                              2*ghostsize(1)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 9999    
-              ENDIF
-              IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(2,idom)+ &
-     &                                              2*ghostsize(1)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(u(:,:,:,i),3).LT.mesh%nnodes(3,idom)+ &
-     &                                              2*ghostsize(1)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in z-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-          ENDDO
-           IF (SIZE(f,4) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(f(:,:,:,i),1).LT.mesh%nnodes(1,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &                   'rhs mess with mesh points in x-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(f(:,:,:,i),2).LT.mesh%nnodes(2,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &            'rhs mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(f(:,:,:,i),3).LT.mesh%nnodes(3,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs mess with mesh points in z-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-           ENDDO
-#endif
-#elif __DIM == __VFIELD
-#if __MESH_DIM == __2D        
-           IF (SIZE(u,4) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains',__LINE__,info)        
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(1,idom)+2) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 9999    
-              ENDIF
-              IF (SIZE(u(:,:,:,i),3).LT.mesh%nnodes(2,idom)+2) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-           ENDDO
-           IF (SIZE(f,4) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(f(:,:,:,i),2).LT.mesh%nnodes(1,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs mess with mesh points in x-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(f(:,:,:,i),3).LT.mesh%nnodes(2,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-           ENDDO
-#elif __MESH_DIM == __3D
-           IF (SIZE(u,5) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains!',__LINE__,info)        
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(u(:,:,:,:,i),2).LT.mesh%nnodes(1,idom)+ &
-     &                                              2*ghostsize(1)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 9999    
-              ENDIF
-              IF (SIZE(u(:,:,:,:,i),3).LT.mesh%nnodes(2,idom)+ &
-     &                                              2*ghostsize(1)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(u(:,:,:,:,i),4).LT.mesh%nnodes(3,idom)+ &
-     &                                              2*ghostsize(1)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in z-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-          ENDDO
-           IF (SIZE(f,5) .LT. nsubs) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
-              GOTO 9999
-           ENDIF
-           topoid=topo_id
-           DO i=1,nsubs
-              idom=topo%isublist(i)
-              IF (SIZE(f(:,:,:,:,i),2).LT.mesh%nnodes(1,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &                   'rhs mess with mesh points in x-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(f(:,:,:,:,i),3).LT.mesh%nnodes(2,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &            'rhs mess with mesh points in y-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-              IF (SIZE(f(:,:,:,:,i),4).LT.mesh%nnodes(3,idom)) THEN
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs mess with mesh points in z-dir!',__LINE__,info)
-                 GOTO 9999
-              ENDIF
-           ENDDO
-#endif
-#endif
+            CALL check()
         ENDIF
         !----------------------------------------------------------------------
-        !Definition of necessary variables and allocation of arrays
+        ! Definition of necessary variables and allocation of arrays
         !----------------------------------------------------------------------
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
@@ -560,7 +323,7 @@
              CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
      &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -578,7 +341,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
       &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -595,7 +358,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
      &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -612,7 +375,7 @@
              CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
       &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -631,7 +394,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
      &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -651,7 +414,7 @@
              CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
       &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -668,7 +431,7 @@
              CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
      &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -685,7 +448,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'MGsolv',    &
+               CALL ppm_error(ppm_err_alloc,'ppm_mg_solv',    &
       &                       'uc_dummy',__LINE__,info)
                GOTO 9999
               ENDIF
@@ -695,8 +458,8 @@
         ncalls=ncalls+1
       ENDIF
         !----------------------------------------------------------------------
-        !DO n1 initial sweeps in the finest mesh  with a GS-solver to get the 
-        !initial solution 
+        ! DO initial sweeps in the finest mesh with the smoother to get the 
+        ! initial solution 
         !----------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
@@ -705,7 +468,7 @@
         c3 = rdy2     
         c4 = 2.0_MK*c2+2.0_MK*c3
         count = 0
-        CALL ppm_mg_smooth_sca(topo_id,u,f,itera,1,c1,c2,c3,info)
+        CALL ppm_mg_smooth_sca(topo_id,u,f,initsweep,1,c1,c2,c3,info)
         !----------------------------------------------------------------------
         ! Compute residual
         !----------------------------------------------------------------------
@@ -717,9 +480,9 @@
       IF (info .NE. 0) THEN 
          GOTO 9999
       ENDIF 
-      IF (l_print) THEN 
+      IF (ppm_debug.GT.0) THEN 
         WRITE(cbuf,*) 'Eu:',E
-        CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
+        CALL PPM_Write(ppm_rank,'mg_solv',cbuf,info)
       ENDIF
         !---------------------------------------------------------------------
         !Initiation of the function correction. (We start on purpose with lev=2)
@@ -735,12 +498,13 @@
            ENDDO
         ENDDO
         !----------------------------------------------------------------------
-        !CALL THE MULTIGRID TO DO NICE STUFF TO OUR FUNCTION
+        ! Run Multigrid core routine (execute smoothing, restriction,
+        ! prologongation cycles)
         !----------------------------------------------------------------------
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_core_2d_sca_s(2,iter1,iter2,info)  
+        CALL ppm_mg_core_2d_sca_s(topo_id,2,restrsweep,prolsweep,info)  
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_2d_sca_d(2,iter1,iter2,info)  
+        CALL ppm_mg_core_2d_sca_d(topo_id,2,restrsweep,prolsweep,info)  
 #endif   
         !----------------------------------------------------------------------
         !PROLONG the solution to the finest grid
@@ -754,7 +518,8 @@
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-           tuc=>mgfield(isub,mlev)%uc
+           !tuc=>mgfield(isub,mlev)%uc
+           tuc=>mgfield(isub,1)%uc
            DO j=start(2,isub,1),istop(2,isub,1)   
               DO i=start(1,isub,1),istop(1,isub,1)
                     u(i,j,isub)=tuc(i,j) 
@@ -764,7 +529,7 @@
         !----------------------------------------------------------------------
         !DO the final sweeps
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_sca(topo_id,u,f,iterf,1,c1,c2,c3,info)
+        CALL ppm_mg_smooth_sca(topo_id,u,f,finsweep,1,c1,c2,c3,info)
         CALL ppm_mg_res_sca(topo_id,u,f,c1,c2,c3,c4,E,info)
 #ifdef __MPI
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
@@ -778,7 +543,7 @@
         c3 = rdy2
         c4 = rdz2 
         c5 = 2.0_MK*c2+2.0_MK*c3+2.0_MK*c4
-        CALL ppm_mg_smooth_sca(topo_id,u,f,itera,1,c1,c2,c3,c4,info)
+        CALL ppm_mg_smooth_sca(topo_id,u,f,initsweep,1,c1,c2,c3,c4,info)
         !----------------------------------------------------------------------
         ! Compute residual
         !----------------------------------------------------------------------
@@ -787,7 +552,7 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-      IF (l_print) THEN 
+      IF (ppm_debug.GT.0) THEN 
         WRITE(cbuf,*) 'Eu:',E
         CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
       ENDIF
@@ -810,9 +575,9 @@
         !CALL THE MULTIGRID TO DO NICE STUFF TO OUR FUNCTION
         !----------------------------------------------------------------------
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_core_3d_sca_s(2,iter1,iter2,info)
+        CALL ppm_mg_core_3d_sca_s(topo_id,2,restrsweep,prolsweep,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_3d_sca_d(2,iter1,iter2,info)
+        CALL ppm_mg_core_3d_sca_d(topo_id,2,restrsweep,prolsweep,info)
 #endif
         !----------------------------------------------------------------------
         !PROLONG the solution to the finest grid
@@ -826,7 +591,8 @@
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-              tuc=>mgfield(isub,mlev)%uc
+              !tuc=>mgfield(isub,mlev)%uc
+              tuc=>mgfield(isub,1)%uc
            DO k=start(3,isub,1),istop(3,isub,1)
               DO j=start(2,isub,1),istop(2,isub,1)
                  DO i=start(1,isub,1),istop(1,isub,1)
@@ -838,7 +604,7 @@
         !----------------------------------------------------------------------
         !DO the final sweeps
           !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_sca(topo_id,u,f,iterf,1,c1,c2,c3,c4,info)
+        CALL ppm_mg_smooth_sca(topo_id,u,f,finsweep,1,c1,c2,c3,c4,info)
         CALL ppm_mg_res_sca(topo_id,u,f,c1,c2,c3,c4,c5,E,info)
 #ifdef __MPI
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
@@ -854,7 +620,7 @@
         c3 = rdy2     
         c4 = 2.0_MK*c2+2.0_MK*c3
         count = 0
-        CALL ppm_mg_smooth_vec(topo_id,u,f,itera,1,c1,c2,c3,info) 
+        CALL ppm_mg_smooth_vec(topo_id,u,f,initsweep,1,c1,c2,c3,info) 
         !----------------------------------------------------------------------
         ! Compute residual
         !----------------------------------------------------------------------
@@ -863,7 +629,7 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-        IF (l_print) THEN 
+        IF (ppm_debug.GT.0) THEN 
          WRITE(cbuf,*) 'Eu:',E
          CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
         ENDIF
@@ -887,9 +653,9 @@
         !CALL THE MULTIGRID TO DO NICE STUFF TO OUR FUNCTION
         !----------------------------------------------------------------------
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_core_2d_vec_s(2,iter1,iter2,info)  
+        CALL ppm_mg_core_2d_vec_s(topo_id,2,restrsweep,prolsweep,info)  
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_2d_vec_d(2,iter1,iter2,info)  
+        CALL ppm_mg_core_2d_vec_d(topo_id,2,restrsweep,prolsweep,info)  
 #endif   
         !----------------------------------------------------------------------
         !PROLONG the solution to the finest grid
@@ -903,7 +669,8 @@
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-           tuc=>mgfield(isub,mlev)%uc
+           !tuc=>mgfield(isub,mlev)%uc
+           tuc=>mgfield(isub,1)%uc
            DO j=start(2,isub,1),istop(2,isub,1)   
               DO i=start(1,isub,1),istop(1,isub,1)
                DO ilda=1,vecdim
@@ -915,7 +682,7 @@
         !----------------------------------------------------------------------
         !DO the final sweeps
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_vec(topo_id,u,f,iterf,1,c1,c2,c3,info)
+        CALL ppm_mg_smooth_vec(topo_id,u,f,finsweep,1,c1,c2,c3,info)
         CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,E,info)   
 
 #ifdef __MPI
@@ -930,7 +697,7 @@
         c3 = rdy2
         c4 = rdz2 
         c5 = 2.0_MK*c2+2.0_MK*c3+2.0_MK*c4
-        CALL ppm_mg_smooth_vec(topo_id,u,f,itera,1,c1,c2,c3,c4,info)
+        CALL ppm_mg_smooth_vec(topo_id,u,f,initsweep,1,c1,c2,c3,c4,info)
         !-----------------------------------------------------------------
         ! Compute residual
         !-----------------------------------------------------------------
@@ -940,7 +707,7 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu        
 #endif
-        IF (l_print) THEN 
+        IF (ppm_debug.GT.0) THEN 
          WRITE(cbuf,*) 'Eu:',E
          CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
         ENDIF
@@ -971,9 +738,9 @@
         !CALL THE MULTIGRID TO DO NICE STUFF TO OUR FUNCTION
         !----------------------------------------------------------------------
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_core_3d_vec_s(2,iter1,iter2,info)
+        CALL ppm_mg_core_3d_vec_s(topo_id,2,restrsweep,prolsweep,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_3d_vec_d(2,iter1,iter2,info)
+        CALL ppm_mg_core_3d_vec_d(topo_id,2,restrsweep,prolsweep,info)
 #endif
         !----------------------------------------------------------------------
         !PROLONG the solution to the finest grid
@@ -987,7 +754,8 @@
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-           tuc=>mgfield(isub,mlev)%uc
+           !tuc=>mgfield(isub,mlev)%uc
+           tuc=>mgfield(isub,1)%uc
            DO k=start(3,isub,1),istop(3,isub,1)
               DO j=start(2,isub,1),istop(2,isub,1)
                  DO i=start(1,isub,1),istop(1,isub,1)
@@ -1007,7 +775,7 @@
         !----------------------------------------------------------------------
         !DO the final sweeps
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_vec(topo_id,u,f,iterf,1,c1,c2,c3,c4,info)
+        CALL ppm_mg_smooth_vec(topo_id,u,f,finsweep,1,c1,c2,c3,c4,info)
         CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,c5,E,info)   
 #ifdef __MPI
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
@@ -1023,6 +791,224 @@
 9999    CONTINUE
         CALL substop('ppm_mg_solv',t0,info)
         RETURN
+        CONTAINS
+
+        SUBROUTINE check
+        
+#if __DIM == __SFIELD        
+#if __MESH_DIM == __2D        
+           IF (SIZE(u,3) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution exist on nsubs subdomains',__LINE__,info)        
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(u(:,:,i),1).LT.mesh%nnodes(1,idom)+ &
+     &                                              2*ghostsize(1)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
+                 GOTO 8888    
+              ENDIF
+              IF (SIZE(u(:,:,i),2).LT.mesh%nnodes(2,idom) &
+     &                                             +2*ghostsize(2)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+           ENDDO
+           IF (SIZE(f,3) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(f(:,:,i),1).LT. mesh%nnodes(1,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(f(:,:,i),2).LT. mesh%nnodes(2,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+           ENDDO
+#elif __MESH_DIM == __3D
+           IF (SIZE(u,4) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution exist on nsubs subdomains!',__LINE__,info)        
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(u(:,:,:,i),1).LT.mesh%nnodes(1,idom)+ &
+     &                                              2*ghostsize(1)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
+                 GOTO 8888    
+              ENDIF
+              IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(2,idom)+ &
+     &                                              2*ghostsize(1)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(u(:,:,:,i),3).LT.mesh%nnodes(3,idom)+ &
+     &                                              2*ghostsize(1)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in z-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+          ENDDO
+           IF (SIZE(f,4) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(f(:,:,:,i),1).LT.mesh%nnodes(1,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &                   'rhs mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(f(:,:,:,i),2).LT.mesh%nnodes(2,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &            'rhs mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(f(:,:,:,i),3).LT.mesh%nnodes(3,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs mess with mesh points in z-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+           ENDDO
+#endif
+#elif __DIM == __VFIELD
+#if __MESH_DIM == __2D        
+           IF (SIZE(u,4) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution exist on nsubs subdomains',__LINE__,info)        
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(1,idom)+2) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
+                 GOTO 8888    
+              ENDIF
+              IF (SIZE(u(:,:,:,i),3).LT.mesh%nnodes(2,idom)+2) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+           ENDDO
+           IF (SIZE(f,4) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(f(:,:,:,i),2).LT.mesh%nnodes(1,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(f(:,:,:,i),3).LT.mesh%nnodes(2,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+           ENDDO
+#elif __MESH_DIM == __3D
+           IF (SIZE(u,5) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution exist on nsubs subdomains!',__LINE__,info)        
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(u(:,:,:,:,i),2).LT.mesh%nnodes(1,idom)+ &
+     &                                              2*ghostsize(1)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
+                 GOTO 8888    
+              ENDIF
+              IF (SIZE(u(:,:,:,:,i),3).LT.mesh%nnodes(2,idom)+ &
+     &                                              2*ghostsize(1)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(u(:,:,:,:,i),4).LT.mesh%nnodes(3,idom)+ &
+     &                                              2*ghostsize(1)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'solution mess with mesh points in z-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+          ENDDO
+           IF (SIZE(f,5) .LT. nsubs) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+              GOTO 8888
+           ENDIF
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              IF (SIZE(f(:,:,:,:,i),2).LT.mesh%nnodes(1,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &                   'rhs mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(f(:,:,:,:,i),3).LT.mesh%nnodes(2,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &            'rhs mess with mesh points in y-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+              IF (SIZE(f(:,:,:,:,i),4).LT.mesh%nnodes(3,idom)) THEN
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
+     &             'rhs mess with mesh points in z-dir!',__LINE__,info)
+                 GOTO 8888
+              ENDIF
+           ENDDO
+#endif
+#endif
+
+8888    CONTINUE
+        RETURN
+
+        END SUBROUTINE check
 
 #if    __DIM == __SFIELD
 #if    __MESH_DIM == __2D

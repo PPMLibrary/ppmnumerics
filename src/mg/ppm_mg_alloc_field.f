@@ -1,6 +1,27 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                ppm_mg_alloc_field
       !-------------------------------------------------------------------------
+      ! This file is part of the Parallel Particle Mesh Library (PPM).
+      !
+      ! PPM is free software: you can redistribute it and/or modify
+      ! it under the terms of the GNU Lesser General Public License 
+      ! as published by the Free Software Foundation, either 
+      ! version 3 of the License, or (at your option) any later 
+      ! version.
+      !
+      ! PPM is distributed in the hope that it will be useful,
+      ! but WITHOUT ANY WARRANTY; without even the implied warranty of
+      ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      ! GNU General Public License for more details.
+      !
+      ! You should have received a copy of the GNU General Public License
+      ! and the GNU Lesser General Public License along with PPM. If not,
+      ! see <http://www.gnu.org/licenses/>.
+      !
+      ! Parallel Particle Mesh Library (PPM)
+      ! ETH Zurich
+      ! CH-8092 Zurich, Switzerland
+      !-------------------------------------------------------------------------
       !
       !  Purpose      : Does the (re)allocation of arrays of type
       !                 mg_field. It offers the same allocation
@@ -25,61 +46,8 @@
       !  References   :
       !
       !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_mg_alloc_field.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.8  2006/07/21 11:30:57  kotsalie
-      !  FRIDAY
-      !
-      !  Revision 1.7  2004/10/01 16:33:39  ivos
-      !  cosmetics.
-      !
-      !  Revision 1.6  2004/10/01 16:09:10  ivos
-      !  Replaced REAL(ppm_kind_double) :: t0 with REAL(MK) t0.
-      !
-      !  Revision 1.5  2004/09/22 18:24:06  kotsalie
-      !  MG new version
-      !
-      !  Revision 1.4  2004/07/26 13:49:18  ivos
-      !  Removed Routines sections from the header comment.
-      !
-      !  Revision 1.3  2004/07/26 11:59:39  ivos
-      !  Fixes to make it compile.
-      !
-      !  Revision 1.2  2004/07/26 07:46:37  ivos
-      !  Changed to use single-interface modules. Updated all USE statements.
-      !
-      !  Revision 1.1  2004/06/29 14:42:16  kotsalie
-      !  Needed for my type allocation
-      !
-      !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
-      !                    Center for Fluid Dynamics (DTU)
       !
       !
-      ! This file is part of the Parallel Particle Mesh Library (PPM).
-      !
-      ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
-      ! version.
-      !
-      ! PPM is distributed in the hope that it will be useful,
-      ! but WITHOUT ANY WARRANTY; without even the implied warranty of
-      ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-      ! GNU General Public License for more details.
-      !
-      ! You should have received a copy of the GNU General Public License
-      ! and the GNU Lesser General Public License along with PPM. If not,
-      ! see <http://www.gnu.org/licenses/>.
-      !
-      ! Parallel Particle Mesh Library (PPM)
-      ! ETH Zurich
-      ! CH-8092 Zurich, Switzerland
-
       !-------------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM  == __2D

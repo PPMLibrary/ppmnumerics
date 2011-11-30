@@ -235,9 +235,7 @@
       istat=istat+info  
       CALL ppm_alloc(factor,lda1,iopt,info)
       istat=istat+info  
-      CALL ppm_alloc(mesh_id_g,lda1,iopt,info)
-      istat=istat+info  
-      CALL ppm_alloc(meshid_g,lda1,iopt,info)
+      CALL ppm_alloc(mg_meshid,lda1,iopt,info)
       istat=istat+info  
       CALL ppm_mg_alloc(mgfield,lda2,iopt,info)
       istat = istat +info

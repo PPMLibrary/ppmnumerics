@@ -1,146 +1,80 @@
-       !------------------------------------------------------------------------
-       !  Subroutine   :                    ppm_mg_init
-       !------------------------------------------------------------------------
-       !
-       !  Purpose      : This routine initializes the solver for 
-       !                 2D and 3D problems
-       !
-       !  Input        :  equation   (I)  :  KIND OF EQUATION TO BE SOLVED 
-       !                                     FOR THE MOMENT ONLY POISSON
-       !                  ighostsize (I)  :  GHOSTSIZE  
-       !                                   
-       !                  smoother   (I)  :  NOW GAUSS-SEIDEL
-       !
-       !                  [lda]     (I)   : LEADING DIMENSION, ONLY TO BE
-       !                                    GIVEN FOR VECTOR CASES
-       !                
-       !                  ibcdef     (I)  : ARRAY OF BOUNDARY CONDITION 
-       !
-       !
-       !                  bcvalue   (F)   : ARRAY WHERE THE VALUES OF THE BC
-       !                                    ARE STORED.IN CASE OF PERIODIC 
-       !                                    JUST GIVE ANY KIND OF VALUE
-       !
-       !                  limlev    (I)    :Number of levels that the user 
-       !                                    wants to coarse.
-       !                
-       !                  wcycle    (L)    : TRUE if the user wants W-cycle.
-       !                                    OTHERWISE FALSE
-       !                  lprint    (L)    : TRUE IF YOU WANT TO DUMP OUT
-       !                                     INFORMATION
-       !                  
-       !                   omega     (F)    : relaxation parameter for SOR
-       !
-       !  
-       !  Input/output :     
-       !
-       !  Output       : info       (I) return status. 0 upon success.
-       !
-       !  Remarks      :  PLEASE PAY ATTENTION THAT IN ORDER TO DIVIDE 
-       !                  FURTHER A MESH IT SHOULD BE DIVISIBLE WITH 2.
-       !                  IF YOU WANT TO SOLVE DIFFERENT EQUATIONS 
-       !                  THE WHOLE MACHINERY SHOULD BE CALLED TWICE.
-       !                  ALSO THE SOLVER IS NOW PROGRAMMED FOR THE POISSON
-       !                  PROBLEM. A FUTURE IMPROVEMENT WOULD BE
-       !                  TO USE A GENERAL STENCIL.      
-       !
-       !  References   :
-       !
-       !  Revisions    :
-       !------------------------------------------------------------------------
-       !  $Log: ppm_mg_init.f,v $
-       !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
-       !  CBL version of the PPM library
-       !
-       !  Revision 1.17  2006/09/26 16:01:22  ivos
-       !  Fixed wrongly indented CPP directives. Remember: they have to start in
-       !  Col 1, otherwise it does not compile on certain systems. In fact, this
-       !  code did NOT compile as it was!!
-       !
-       !  Revision 1.16  2006/09/05 08:01:27  pchatela
-       !  Proper scaling for REAL comparisons
-       !  Added module_alloc to ppm_decomp_boxsplit
-       !
-       !  Revision 1.15  2006/07/21 11:30:54  kotsalie
-       !  FRIDAY
-       !
-       !  Revision 1.13  2006/06/08 08:38:18  kotsalie
-       !  Cosmetics
-       !
-       !  Revision 1.12  2006/06/08 08:27:37  kotsalie
-       !  changed bcvalue to support different BCs on the same face but different sub
-       !
-       !  Revision 1.8  2006/05/15 14:44:26  kotsalie
-       !  cosmetics
-       !
-       !  Revision 1.7  2006/02/03 09:34:03  ivos
-       !  Fixed bug 00015: ppm_subs_bc was only allocated and stored for the
-       !  local subs in topo_store. Several mapping routines however need the
-       !  info about all (global) subs.
-       !  Changed subs_bc to hold now the GLOBAL subid and adjusted all
-       !  occurrences.
-       !
-       !  Revision 1.6  2005/12/08 12:43:16  kotsalie
-       !  commiting dirichlet
-       !
-       !  Revision 1.5  2005/01/04 09:47:45  kotsalie
-       !  ghostsize=2 for scalar case
-       !
-       !  Revision 1.4  2004/10/29 15:59:14  kotsalie
-       !  RED BLACK SOR FOR 3d vec case. 2d will soon follow.
-       !
-       !  Revision 1.3  2004/09/28 14:04:49  kotsalie
-       !  Changes concerning 4th order finite differences
-       !
-       !  Revision 1.2  2004/09/23 09:38:30  kotsalie
-       !  added details in the header
-       !
-       !  Revision 1.1  2004/09/22 18:27:09  kotsalie
-       !  MG new version
-       !
-       !------------------------------------------------------------------------
-       !  Parallel Particle Mesh Library (PPM)
-       !  Institute of Computational Science
-       !  ETH Zentrum, Hirschengraben 84
-       !  CH-8092 Zurich, Switzerland
-       !------------------------------------------------------------------------
+      !-------------------------------------------------------------------------
+      !  Subroutine   :                    ppm_mg_init
+      !-------------------------------------------------------------------------
+      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      !                    Center for Fluid Dynamics (DTU)
+      !
+      !
+      ! This file is part of the Parallel Particle Mesh Library (PPM).
+      !
+      ! PPM is free software: you can redistribute it and/or modify
+      ! it under the terms of the GNU Lesser General Public License 
+      ! as published by the Free Software Foundation, either 
+      ! version 3 of the License, or (at your option) any later 
+      ! version.
+      !
+      ! PPM is distributed in the hope that it will be useful,
+      ! but WITHOUT ANY WARRANTY; without even the implied warranty of
+      ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      ! GNU General Public License for more details.
+      !
+      ! You should have received a copy of the GNU General Public License
+      ! and the GNU Lesser General Public License along with PPM. If not,
+      ! see <http://www.gnu.org/licenses/>.
+      !
+      ! Parallel Particle Mesh Library (PPM)
+      ! ETH Zurich
+      ! CH-8092 Zurich, Switzerland
+      !-------------------------------------------------------------------------
+
+
 #if __DIM == __SFIELD
 #if __MESH_DIM  == __2D
 #if __KIND == __SINGLE_PRECISION
-       SUBROUTINE ppm_mg_init_2d_sca_s(topo_id,equation,ighostsize,smoother,ibcdef,&
-      &          bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_2d_sca_s(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #elif  __KIND == __DOUBLE_PRECISION
-       SUBROUTINE ppm_mg_init_2d_sca_d(topo_id,equation,ighostsize,smoother,ibcdef,&
-      &                          bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_2d_sca_d(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #endif
 #elif  __MESH_DIM  == __3D
 #if    __KIND == __SINGLE_PRECISION
-       SUBROUTINE ppm_mg_init_3d_sca_s(topo_id,equation,ighostsize,smoother,ibcdef,&
-      &                         bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_3d_sca_s(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #elif  __KIND == __DOUBLE_PRECISION
-       SUBROUTINE ppm_mg_init_3d_sca_d(topo_id,equation,ighostsize,smoother,ibcdef,&
-      &                         bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_3d_sca_d(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #endif
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM  == __2D
 #if __KIND == __SINGLE_PRECISION
-       SUBROUTINE ppm_mg_init_2d_vec_s(topo_id,equation,ighostsize,smoother,lda,ibcdef,&
-      &    bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_2d_vec_s(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,lda,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #elif  __KIND == __DOUBLE_PRECISION
-       SUBROUTINE ppm_mg_init_2d_vec_d(topo_id,equation,ighostsize,smoother,lda,ibcdef,&
-      &   bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_2d_vec_d(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,lda,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #endif
 #elif  __MESH_DIM  == __3D
 #if    __KIND == __SINGLE_PRECISION
-       SUBROUTINE ppm_mg_init_3d_vec_s(topo_id,equation,ighostsize,smoother,lda,ibcdef,&
-      &              bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_3d_vec_s(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,lda,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #elif  __KIND == __DOUBLE_PRECISION
-       SUBROUTINE ppm_mg_init_3d_vec_d(topo_id,equation,ighostsize,smoother,lda,ibcdef,&
-      &                    bcvalue,mesh_id,limlev,wcycle,lprint,omega,info)
+       SUBROUTINE ppm_mg_init_3d_vec_d(topo_id,mesh_id,equation,ighostsize,&
+       &          smoother,lda,ibcdef,bcvalue,limlev,wcycle,omega,info)
 #endif
 #endif
 #endif
+         !!!  This routine initializes the multigrid solver for 2D and 3D 
+         !!!  problems
+         !!!
+         !!! [NOTE]
+         !!! Please pay attention that in order to be able to coarsen the mesh
+         !!! it should be divisible with 2.
+         !!! If you want to solve different equations the whole machinery should
+         !!! be called twice. Also the solver is currently programmed for the
+         !!! Poisson problem. A future improvement woudl be to use a general
+         !!! stencil.      
          !----------------------------------------------------------------------
          !  Includes
          !----------------------------------------------------------------------
@@ -155,6 +89,7 @@
          USE ppm_module_error
          USE ppm_module_write
          USE ppm_module_mesh
+         USE ppm_module_mesh_derive
          USE ppm_module_substart
          USE ppm_module_substop
          USE ppm_module_typedef
@@ -167,53 +102,70 @@
          !----------------------------------------------------------------------
          !  Arguments     
          !----------------------------------------------------------------------
+         INTEGER,  INTENT(IN)                               :: topo_id
+         !!! ID of current topology
+         INTEGER,  INTENT(IN)                               :: mesh_id
+         !!! ID of mesh of data fields
          INTEGER, INTENT(IN)                                :: equation
+         !!! Kind of equation to be solved.
+         !!!
+         !!! Currently only ppm_param_eq_poisson supported
          INTEGER,DIMENSION(:),INTENT(IN)                    :: ighostsize
+         !!! Ghostlayer size
          INTEGER, INTENT(IN)                                :: smoother
+         !!! Smoother to be used.
+         !!!
+         !!! Currently only ppm_param_smooth_rbsor supported
 #if __DIM == __VFIELD
          INTEGER,              INTENT(IN)                   ::  lda  
+         !!! Leading dimension
 #endif
 #if __DIM == __SFIELD
-#if __MESH_DIM == __2D
          INTEGER,DIMENSION(:)                               ::  ibcdef
+         !!! Boundary conditions
+#if __MESH_DIM == __2D
          REAL(MK),DIMENSION(:,:,:)                          ::  bcvalue
 #elif __MESH_DIM == __3D
-         INTEGER,DIMENSION(:)                               ::  ibcdef
          REAL(MK),DIMENSION(:,:,:,:)                        ::  bcvalue
 #endif  
 #elif __DIM == __VFIELD
-#if __MESH_DIM == __2D
          INTEGER,DIMENSION(:,:)                               ::  ibcdef
+         !!! Boundary conditions
+#if __MESH_DIM == __2D
          REAL(MK),DIMENSION(:,:,:,:)                          ::  bcvalue
 #elif __MESH_DIM == __3D
-         INTEGER,DIMENSION(:,:)                               ::  ibcdef
          REAL(MK),DIMENSION(:,:,:,:,:)                        ::  bcvalue
 #endif
 #endif
-         INTEGER,  INTENT(IN)                               :: mesh_id,topo_id
+         !!! Boundary condition values to be used.
+         !!!
+         !!! In the case of periodic BC, the content of bcvalue is ignored
          INTEGER,INTENT(IN)                                 :: limlev
+         !!! Number of levels to coarsen.
          LOGICAL,INTENT(IN)                                 :: wcycle
-         LOGICAL,INTENT(IN)                                 :: lprint
+         !!! TRUE if the user wants W-cycle otherwise FALSE
          REAL(MK),INTENT(IN)                                :: omega
+         !!! relaxation parameter for SOR
          INTEGER, INTENT(OUT)                               :: info
+         !!! return status. 0 upon success.
          !----------------------------------------------------------------------
          !  Local variables 
          !----------------------------------------------------------------------
          REAL(MK)                             :: t0
          REAL(MK)                             :: lmyeps
-         INTEGER                              :: meshid,mlev,isub 
+         INTEGER                              :: mlev,isub 
          INTEGER                              :: idom
-         INTEGER                              ::  count,ilda,iface
+         INTEGER                              :: count,ilda,iface
          INTEGER                              :: i,j,k
          INTEGER                              :: kk
-         TYPE(ppm_t_topo),      POINTER       :: topo
-         TYPE(ppm_t_equi_mesh), POINTER       :: mesh
+         TYPE(ppm_t_topo),      POINTER       :: topo => NULL()
+         TYPE(ppm_t_equi_mesh), POINTER       :: mesh => NULL()
 #if __MESH_DIM == __2D
          INTEGER                              :: dir
 #endif
          INTEGER                              :: iter1,iter2,ix,iy
          INTEGER                              :: ipoint,jpoint 
-         INTEGER                              :: newmeshid,lmesh_id
+         INTEGER                              :: meshid,newmeshid
          INTEGER , DIMENSION(1)               :: ldu1
          INTEGER , DIMENSION(2)               :: ldu2,ldl2 ,direc
          INTEGER , DIMENSION(3)               :: ldu3,ldl3 
@@ -223,8 +175,8 @@
 #endif
          INTEGER , DIMENSION(ppm_dim)         :: Nml 
          REAL(MK), DIMENSION(ppm_dim)         :: min_phys,max_phys
-         REAL(MK), DIMENSION(ppm_dim,ppm_topo(topo_id)%t%nsubs) &
-              &                               :: min_sub,max_sub
+         REAL(MK), DIMENSION(:,:), POINTER    :: min_sub => NULL()
+         REAL(MK), DIMENSION(:,:), POINTER    :: max_sub => NULL()
          INTEGER                              :: iopt,topoid
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
@@ -302,35 +254,33 @@
          vecdim = lda
 #endif
          w_cycle=wcycle
-         l_print=lprint
 
          topoid = topo_id
+         meshid = mesh_id
          topo => ppm_topo(topo_id)%t
          mesh => topo%mesh(mesh_id)
          nsubs  = topo%nsublist 
-         meshid = mesh%ID
-         lmesh_id = mesh_id
 #if    __KIND == __SINGLE_PRECISION
-      min_phys(:)=topo%min_physs(:)
-      max_phys(:)=topo%max_physs(:)
-      min_sub(:,:)=topo%min_subs(:,:)
-      max_sub(:,:)=topo%max_subs(:,:)
+         min_phys(:)=topo%min_physs(:)
+         max_phys(:)=topo%max_physs(:)
+         min_sub => topo%min_subs(:,:)
+         max_sub => topo%max_subs(:,:)
          omega_s=omega
          lmyeps=ppm_myepss 
 #elif  __KIND == __DOUBLE_PRECISION
-      min_phys(:)=topo%min_physd(:)
-      max_phys(:)=topo%max_physd(:)
-      min_sub(:,:)=topo%min_subd(:,:)
-      max_sub(:,:)=topo%max_subd(:,:)
+         min_phys(:)=topo%min_physd(:)
+         max_phys(:)=topo%max_physd(:)
+         min_sub => topo%min_subd(:,:)
+         max_sub => topo%max_subd(:,:)
          omega_d=omega
          lmyeps=ppm_myepsd 
 #endif
 #if __MESH_DIM == __2D
          Nml(1) = mesh%Nm(1)
-        Nml(2) = mesh%Nm(2) 
+         Nml(2) = mesh%Nm(2) 
          maxlev = INT(log10(Nml(1)*Nml(2)*REAL(ppm_nproc,MK))/log10(2.0_MK))
          IF (maxlev.GT.limlev) THEN
-          maxlev=limlev
+            maxlev=limlev
          ENDIF 
 #if __KIND == __SINGLE_PRECISION
          dx_s = (max_phys(1)-min_phys(1))/REAL((Nml(1)-1),MK) 
@@ -347,8 +297,8 @@
 #endif
 #elif __MESH_DIM == __3D
          Nml(1) = mesh%Nm(1)
-        Nml(2) = mesh%Nm(2)
-        Nml(3) = mesh%Nm(3) 
+         Nml(2) = mesh%Nm(2)
+         Nml(3) = mesh%Nm(3) 
          maxlev = INT(log10(Nml(1)*Nml(2)*Nml(3)* &
       &           REAL(ppm_nproc,MK))/log10(2.0_MK))
 
@@ -513,9 +463,9 @@
            ENDDO
          ENDDO
 #endif
-      !------------------------------------------------------------------------------
-      !Allocation of the ghostsize
-      !------------------------------------------------------------------------------
+        !-----------------------------------------------------------------------
+        ! Allocation of the ghostsize
+        !-----------------------------------------------------------------------
          iopt = ppm_param_alloc_fit    
          ldu1(1) = ppm_dim
          CALL ppm_alloc(ghostsize,ldu1,iopt,info)
@@ -526,9 +476,9 @@
             GOTO 9999
          ENDIF
          ghostsize=ighostsize
-      !----------------------------------------------------------------------------
-      !ALLOCATIION OF THE FACTOR FOR COARSENING (LATER SET TO 2))
-      !----------------------------------------------------------------------------
+         !----------------------------------------------------------------------
+         ! Allocation of the factor for coarsening (later set to 2)
+         !----------------------------------------------------------------------
          iopt = ppm_param_alloc_fit    
          ldu1(1) = ppm_dim
          CALL ppm_alloc(factor,ldu1,iopt,info)
@@ -538,30 +488,23 @@
       &                   'factor',__LINE__,info)
             GOTO 9999
          ENDIF
-      !----------------------------------------------------------------------------
-      !INTERNAL IDS FOR MESHES
-      !----------------------------------------------------------------------------
+         factor(:) = 2
+         !----------------------------------------------------------------------
+         ! IDs for the meshes on the different levels
+         !----------------------------------------------------------------------
          iopt = ppm_param_alloc_fit    
          ldu1(1) = maxlev
-         CALL ppm_alloc(meshid_g,ldu1,iopt,info)
+         CALL ppm_alloc(mg_meshid,ldu1,iopt,info)
          IF (info .NE. 0) THEN 
             info = ppm_error_fatal
             CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',  &
-       &                  'meshid_g',__LINE__,info)
+       &                  'mg_meshid',__LINE__,info)
             GOTO 9999
          ENDIF
-      !----------------------------------------------------------------------------
-      !USER IDS FOR MESHES
-      !----------------------------------------------------------------------------
-         iopt = ppm_param_alloc_fit    
-         ldu1(1) = maxlev
-         CALL ppm_alloc(mesh_id_g,ldu1,iopt,info)
-         IF (info .NE. 0) THEN 
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',  &
-       &                  'mesh_id_g',__LINE__,info)
-            GOTO 9999
-         ENDIF
+         
+         !----------------------------------------------------------------------
+         ! Allocating the start index for the iteration through the mesh points. 
+         !----------------------------------------------------------------------
          iopt = ppm_param_alloc_fit
          ldu3(1) = ppm_dim
          ldu3(2) = nsubs
@@ -573,6 +516,9 @@
       &             'starting indices when updating the field',__LINE__,info)
             GOTO 9999
          ENDIF
+         !----------------------------------------------------------------------
+         ! Allocating the stop index for the iteration through the mesh points. 
+         !----------------------------------------------------------------------
          iopt = ppm_param_alloc_fit
          ldu3(1) = ppm_dim
          ldu3(2) = nsubs
@@ -584,6 +530,10 @@
       &        'istopping indices when updating the field',__LINE__,info)
             GOTO 9999
          ENDIF
+
+         !----------------------------------------------------------------------
+         ! Allocating the multigrid fields used on the different levels
+         !----------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
@@ -674,7 +624,7 @@
          IF (info .NE. 0) THEN
             info = ppm_error_fatal
             CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',   &
-                 &        'Multigrid fields used on the different levels',__LINE__,info)
+         &      'Multigrid fields used on the different levels',__LINE__,info)
             GOTO 9999
          ENDIF
          mgfield => mgfield_3d_vec_s
@@ -714,21 +664,21 @@
       &        'Problem with a maximum number alloc.',__LINE__,info)
             GOTO 9999
          ENDIF
-         max_node(:,:)=0
+         max_node(:,:) = 0
 
-         lboundary(:,:)=.FALSE.
-         start(:,:,:)=1
+         lboundary(:,:) = .FALSE.
+         start(:,:,:) = 1
          !----------------------------------------------------------------------
          ! Derive coarser meshes 
          !----------------------------------------------------------------------
         DO mlev=1,maxlev
 #if __MESH_DIM == __2D
-            !-------------------------------------------------------------------
-            ! Go through the subs, define the istopping indices on each mesh,
-            ! check and store if it is on the boundary, allocate the 
-            ! multigrid fields, pass the boundary values.
-            !-------------------------------------------------------------------
-            DO i=1,nsubs
+           !-------------------------------------------------------------------
+           ! Go through the subs, define the istopping indices on each mesh,
+           ! check and store if it is on the boundary, allocate the 
+           ! multigrid fields and pass the boundary values.
+           !-------------------------------------------------------------------
+           DO i=1,nsubs
               idom=topo%isublist(i)
               istop(:,i,mlev)= mesh%nnodes(:,idom)
               DO j=1,ppm_dim
@@ -736,405 +686,406 @@
                     max_node(j,mlev)=istop(j,i,mlev)  
                  ENDIF
               ENDDO
-               !----------------------------------------------------------------
-               ! Allocate the function correction, the restricted errors,
-               ! the residuals and the values on the boundary on each level.
-               !----------------------------------------------------------------
+              !----------------------------------------------------------------
+              ! Allocate the function correction, the restricted errors,
+              ! the residuals and the values on the boundary on each level.
+              !----------------------------------------------------------------
 #if __DIM == __SFIELD
-               iopt = ppm_param_alloc_fit
-               ldl2(1) = 1-ghostsize(1)
-               ldl2(2) = 1-ghostsize(2)
-               ldu2(1) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu2(2) = mesh%nnodes(2,idom)+ghostsize(2)
-               CALL ppm_alloc(mgfield(i,mlev)%uc,ldl2,ldu2,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the function corr. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF            
-               tuc=>mgfield(i,mlev)%uc
-               tuc=0.0_MK 
-               iopt = ppm_param_alloc_fit
-               ldu2(1) = mesh%nnodes(1,idom)
-               ldu2(2) = mesh%nnodes(2,idom)
-               CALL ppm_alloc(mgfield(i,mlev)%fc,ldu2,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-          &        'Problem with the restricted err. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               mgfield(i,mlev)%fc(:,:)=0.0_MK
-               iopt = ppm_param_alloc_fit
-               ldl2(1) = 1-ghostsize(1)
-               ldl2(2) = 1-ghostsize(2)
-               ldu2(1) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu2(2) = mesh%nnodes(2,idom)+ghostsize(2)
-               CALL ppm_alloc(mgfield(i,mlev)%err,ldl2,ldu2,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the residual alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               terr=>mgfield(i,mlev)%err  
-               terr(:,:)=0.0_MK
-              !ALLOCATE THE BCVALUE(IT IS A TYPE!!)
-              !PRINT *,'LPERIODIC:',lperiodic
-              IF (.NOT.lperiodic) THEN
-               iopt = ppm_param_alloc_fit
-               ldu1(1) = 2*ppm_dim
-               CALL ppm_mg_alloc(mgfield(i,mlev)%bcvalue,ldu1,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the BOUNDARY alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-              !ALLOCATE THE PBCVALUE 
-              DO iface=1,2*ppm_dim 
-               iopt = ppm_param_alloc_fit
-               IF (iface.EQ.1.OR.iface.EQ.2) THEN
-                ldu1(1) = max_node(2,mlev)
-               ELSE
-                ldu1(1) = max_node(1,mlev)
-               ENDIF
-               CALL ppm_alloc(mgfield(i,mlev)%bcvalue(iface)%pbcvalue,ldu1,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the BOUNDARY alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF 
-              ENDDO
-              DO iface=1,2*ppm_dim
-                IF (iface.EQ.1.OR.iface.EQ.2) THEN 
-                     direc(1)=2
-                ELSEIF (iface.EQ.3.OR.iface.EQ.4) then
-                         direc(1)=1
-                ENDIF
-                  DO ipoint=1,max_node(direc(1),mlev)
-                   IF (mlev.EQ.1) THEN                         
-                      mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint)=bcvalue(i,iface,ipoint)
-                           ELSE
-                    IF(bcdef_sca(i,iface).EQ.ppm_param_bcdef_neumann) THEN 
-                     mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint)=&
-                &            mgfield(i,mlev-1)%bcvalue(iface)%pbcvalue(2*ipoint-1) 
-                    ELSE
-                      !NO CORRECTIONS FOR THE DIRICHLET  
-                                  mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint)=0.0_MK
-                    ENDIF  
-                   ENDIF
-                  ENDDO
-              ENDDO!faces 
-          ENDIF!lperiodic
-#elif __DIM == __VFIELD
-               iopt = ppm_param_alloc_fit
-               ldl3(1) = 1
-               ldl3(2) = 1-ghostsize(1)
-               ldl3(3) = 1-ghostsize(2)
-               ldu3(1) = vecdim
-               ldu3(2) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu3(3) = mesh%nnodes(2,idom)+ghostsize(2)
-               CALL ppm_alloc(mgfield(i,mlev)%uc,ldl3,ldu3,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the function corr. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               tuc=>mgfield(i,mlev)%uc
-               tuc=0.0_MK
-               iopt = ppm_param_alloc_fit
-               ldu3(1) = vecdim  
-               ldu3(2) = mesh%nnodes(1,idom)
-               ldu3(3) = mesh%nnodes(2,idom)
-               CALL ppm_alloc(mgfield(i,mlev)%fc,ldu3,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the restricted err. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               mgfield(i,mlev)%fc(:,:,:)=0.0_MK
-               iopt = ppm_param_alloc_fit
-               ldl3(1) = 1
-               ldl3(2) = 1-ghostsize(1)
-               ldl3(3) = 1-ghostsize(2)
-               ldu3(1) = vecdim
-               ldu3(2) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu3(3) = mesh%nnodes(2,idom)+ghostsize(2)
-               CALL ppm_alloc(mgfield(i,mlev)%err,ldl3,ldu3,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the residual alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               terr=>mgfield(i,mlev)%err  
-               terr(:,:,:)=0.0_MK
-#endif
-            ENDDO!DO 1,nsubs
-#elif __MESH_DIM == __3D 
-            DO i=1,nsubs
-               idom=topo%isublist(i)
-               istop(:,i,mlev) = mesh%nnodes(:,idom)
-               DO j=1,ppm_dim
-                  IF (max_node(j,mlev).LT.istop(j,i,mlev)) THEN
-                     max_node(j,mlev)=istop(j,i,mlev)  
-                  ENDIF
-               ENDDO
-               IF (topo%subs_bc(1,idom).EQ.1) THEN
-                  lboundary(1,i)=.TRUE.          
-               ELSEIF (topo%subs_bc(3,idom).EQ.1) THEN
-                  lboundary(3,i)=.TRUE.
-               ELSEIF (topo%subs_bc(2,idom).EQ.1) THEN
-                  lboundary(2,i)=.TRUE.  
-               ELSEIF (topo%subs_bc(4,idom).EQ.1) THEN
-                  lboundary(4,i)=.TRUE.
-               ELSEIF (topo%subs_bc(5,idom).EQ.1) THEN
-                  lboundary(5,i)=.TRUE. 
-               ELSEIF (topo%subs_bc(6,idom).EQ.1) THEN
-                  lboundary(6,i)=.TRUE.
-               ENDIF
-               !----------------------------------------------------------------
-               ! Allocate the function correction, the restricted errors and the 
-               !residuals on each level.
-               !----------------------------------------------------------------
-#if __DIM == __SFIELD
-               iopt = ppm_param_alloc_fit
-               ldl3(1) = 1-ghostsize(1)
-               ldl3(2) = 1-ghostsize(2)
-               ldl3(3) = 1-ghostsize(3)
-               ldu3(1) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu3(2) = mesh%nnodes(2,idom)+ghostsize(2)
-               ldu3(3) = mesh%nnodes(3,idom)+ghostsize(3)
-               CALL ppm_alloc(mgfield(i,mlev)%uc,ldl3,ldu3,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the function corr. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               tuc=>mgfield(i,mlev)%uc
-               tuc=0.0_MK              
-               iopt = ppm_param_alloc_fit
-               ldu3(1) = mesh%nnodes(1,idom)
-               ldu3(2) = mesh%nnodes(2,idom)
-               ldu3(3) = mesh%nnodes(3,idom)
-               CALL ppm_alloc(mgfield(i,mlev)%fc,ldu3,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the restricted err. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               mgfield(i,mlev)%fc=0.0_MK
-               iopt = ppm_param_alloc_fit
-               ldl3(1) = 1-ghostsize(1)
-               ldl3(2) = 1-ghostsize(2)
-               ldl3(3) = 1-ghostsize(3)
-               ldu3(1) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu3(2) = mesh%nnodes(2,idom)+ghostsize(2)
-               ldu3(3) = mesh%nnodes(3,idom)+ghostsize(3)
-               CALL ppm_alloc(mgfield(i,mlev)%err,ldl3,ldu3,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the residual alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               terr=>mgfield(i,mlev)%err  
-               terr=0.0_MK 
-              !ALLOCATE THE BCVALUE(IT IS A TYPE!!)
-              IF (.NOT.lperiodic) THEN
-               iopt = ppm_param_alloc_fit
-               ldu1(1) = 2*ppm_dim
-               CALL ppm_mg_alloc(mgfield(i,mlev)%bcvalue,ldu1,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the BOUNDARY alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-                !ALLOCATE THE PBCVALUE 
-              DO iface=1,2*ppm_dim 
-               iopt = ppm_param_alloc_fit
-               IF (iface.EQ.1.OR.iface.EQ.2) THEN
-                ldu2(1) = max_node(2,mlev)
-                    ldu2(2)= max_node(3,mlev)
-               ELSEif (iface.EQ.3.OR. iface.EQ.4) then         
-                ldu2(1) = max_node(1,mlev)
-                    ldu2(2)=max_node(3,mlev)
-                    else
-                     ldu2(1)=max_node(1,mlev)
-                     ldu2(2)=max_node(2,mlev)
-               ENDIF
-               CALL ppm_alloc(mgfield(i,mlev)%bcvalue(iface)%pbcvalue,ldu2,iopt,info)
-               !Print *,size(mgfield(i,mlev)%bcvalue(iface)%pbcvalue,1)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the BOUNDARY alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF 
-              ENDDO
-               DO iface=1,2*ppm_dim
-                IF (iface.EQ.1.OR.iface.EQ.2) THEN  
-                         direc(1)=2
-                             direc(2)=3
-                       elseif (iface.EQ.3.OR.iface.EQ.4) THEN
-                         direc(1)=1
-                         direc(2)=3
-                       else
-                         direc(1)=1
-                         direc(2)=2
-                       endif
-                  DO ipoint=1,max_node(direc(1),mlev)
-                   DO jpoint=1,max_node(direc(2),mlev)
-                    IF (mlev.EQ.1) THEN                         
-                       mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint,jpoint)=bcvalue(i,iface,ipoint,jpoint)
-                             ELSE
-                     IF(bcdef_sca(i,iface).EQ.ppm_param_bcdef_neumann) THEN 
-                            mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint,jpoint)=&
-                &           mgfield(i,mlev-1)%bcvalue(iface)%pbcvalue(2*ipoint-1,2*jpoint-1) 
-                     ELSE
-                    !NO CORRECTIONS FOR THE DIRICHLET  
-                                 mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint,jpoint)=0.0_MK
-                    ENDIF  
-                   ENDIF
-                  ENDDO
-                ENDDO                              
-              ENDDO!faces 
-          endif !lperiodic
-#elif __DIM == __VFIELD
-               iopt = ppm_param_alloc_fit
-               ldl4(1) = 1
-               ldl4(2) = 1-ghostsize(1)
-               ldl4(3) = 1-ghostsize(2)
-               ldl4(4) = 1-ghostsize(3)
-               ldu4(1) = vecdim
-               ldu4(2) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu4(3) = mesh%nnodes(2,idom)+ghostsize(2)
-               ldu4(4) = mesh%nnodes(3,idom)+ghostsize(3)
-               CALL ppm_alloc(mgfield(i,mlev)%uc,ldl4,ldu4,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the function corr. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               tuc=>mgfield(i,mlev)%uc
-               tuc=0.0_MK              
-               iopt = ppm_param_alloc_fit
-               ldu4(1) = vecdim
-               ldu4(2) = mesh%nnodes(1,idom)
-               ldu4(3) = mesh%nnodes(2,idom)
-               ldu4(4) = mesh%nnodes(3,idom)
-               CALL ppm_alloc(mgfield(i,mlev)%fc,ldu4,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the restricted err. alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               mgfield(i,mlev)%fc=0.0_MK
-               iopt = ppm_param_alloc_fit
-               ldl4(1) = 1
-               ldl4(2) = 1-ghostsize(1)
-               ldl4(3) = 1-ghostsize(2)
-               ldl4(4) = 1-ghostsize(3)
-               ldu4(1) = vecdim
-               ldu4(2) = mesh%nnodes(1,idom)+ghostsize(1)
-               ldu4(3) = mesh%nnodes(2,idom)+ghostsize(2)
-               ldu4(4) = mesh%nnodes(3,idom)+ghostsize(3)
-               CALL ppm_alloc(mgfield(i,mlev)%err,ldl4,ldu4,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the residual alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-               terr=>mgfield(i,mlev)%err  
-               terr=0.0_MK
-                !ALLOCATE THE BCVALUE(IT IS A TYPE!!)
-              IF (.NOT.lperiodic) THEN
-               iopt = ppm_param_alloc_fit
-                   ldu1=2*ppm_dim
-               CALL ppm_mg_alloc(mgfield(i,mlev)%bcvalue,ldu1,iopt,info)
-               IF (info .NE. 0) THEN
-                  info = ppm_error_fatal
-                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the BOUNDARY alloc.',__LINE__,info)
-                  GOTO 9999
-               ENDIF
-                !ALLOCATE THE PBCVALUE 
-              DO iface=1,2*ppm_dim 
-               iopt = ppm_param_alloc_fit
-                   ldu3(1)=vecdim
-               IF (iface.EQ.1.OR.iface.EQ.2) THEN
-                 ldu3(2) = max_node(2,mlev)
-                  ldu3(3)= max_node(3,mlev)
-               ELSEIF (iface.EQ.3.OR. iface.EQ.4) then         
-                 ldu3(2) = max_node(1,mlev)
-                 ldu3(3)=max_node(3,mlev)
-               ELSE
-                    ldu3(2)=max_node(1,mlev)
-                    ldu3(3)=max_node(2,mlev)
-               ENDIF
-               CALL ppm_alloc(mgfield(i,mlev)%bcvalue(iface)%pbcvalue,ldu3,iopt,info)
-               IF (info .NE. 0) THEN
+              iopt = ppm_param_alloc_fit
+              ldl2(1) = 1-ghostsize(1)
+              ldl2(2) = 1-ghostsize(2)
+              ldu2(1) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu2(2) = mesh%nnodes(2,idom)+ghostsize(2)
+              CALL ppm_alloc(mgfield(i,mlev)%uc,ldl2,ldu2,iopt,info)
+              IF (info .NE. 0) THEN
                  info = ppm_error_fatal
                  CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
-      &        'Problem with the BOUNDARY alloc.',__LINE__,info)
+     &        'Problem with the function corr. alloc.',__LINE__,info)
                  GOTO 9999
-                ENDIF 
-              ENDDO
-              DO iface=1,2*ppm_dim
-                  IF (iface.EQ.1.OR.iface.EQ.2) THEN  
-                         direc(1)=2
-                         direc(2)=3
-                  elseif (iface.EQ.3.OR.iface.EQ.4) THEN
-                         direc(1)=1
-                         direc(2)=3
-                  else
-                         direc(1)=1
-                         direc(2)=2
-                  endif
-               DO ipoint=1,max_node(direc(1),mlev)
-                   DO jpoint=1,max_node(direc(2),mlev)
-                        DO ilda=1,vecdim
-                            IF (mlev.EQ.1) THEN                         
-                                 mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ilda,ipoint,jpoint) &
-     &                           =bcvalue(ilda,i,iface,ipoint,jpoint)
-                            ELSE     
-                                IF(bcdef_vec(ilda,i,iface).EQ.ppm_param_bcdef_neumann) THEN 
-                                    mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ilda,ipoint,jpoint)=&
-     &           mgfield(i,mlev-1)%bcvalue(iface)%pbcvalue(ilda,2*ipoint-1,2*jpoint-1) 
-                            ELSE
-                           !NO CORRECTIONS FOR THE DIRICHLET  
-                                   mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ilda,ipoint,jpoint)=0.0_MK
-                         ENDIF  
+              ENDIF            
+              tuc => mgfield(i,mlev)%uc
+              tuc = 0.0_MK 
+              iopt = ppm_param_alloc_fit
+              ldu2(1) = mesh%nnodes(1,idom)
+              ldu2(2) = mesh%nnodes(2,idom)
+              CALL ppm_alloc(mgfield(i,mlev)%fc,ldu2,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+         &        'Problem with the restricted err. alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              mgfield(i,mlev)%fc(:,:)=0.0_MK
+              iopt = ppm_param_alloc_fit
+              ldl2(1) = 1-ghostsize(1)
+              ldl2(2) = 1-ghostsize(2)
+              ldu2(1) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu2(2) = mesh%nnodes(2,idom)+ghostsize(2)
+              CALL ppm_alloc(mgfield(i,mlev)%err,ldl2,ldu2,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+     &           'Problem with the residual alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              terr => mgfield(i,mlev)%err  
+              terr(:,:)=0.0_MK
+              ! ALLOCATE THE BCVALUE(IT IS A TYPE!!)
+              IF (.NOT.lperiodic) THEN
+                 iopt = ppm_param_alloc_fit
+                 ldu1(1) = 2*ppm_dim
+                 CALL ppm_mg_alloc(mgfield(i,mlev)%bcvalue,ldu1,iopt,info)
+                 IF (info .NE. 0) THEN
+                    info = ppm_error_fatal
+                    CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+     &              'Problem with the BOUNDARY alloc.',__LINE__,info)
+                    GOTO 9999
+                 ENDIF
+                 !ALLOCATE THE PBCVALUE 
+                 DO iface = 1,2*ppm_dim 
+                    iopt = ppm_param_alloc_fit
+                    IF (iface.EQ.1.OR.iface.EQ.2) THEN
+                       ldu1(1) = max_node(2,mlev)
+                    ELSE
+                       ldu1(1) = max_node(1,mlev)
+                    ENDIF
+                    CALL ppm_alloc(mgfield(i,mlev)%bcvalue(iface)%pbcvalue,&
+                    &              ldu1,iopt,info)
+                    IF (info .NE. 0) THEN
+                       info = ppm_error_fatal
+                       CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+      &                'Problem with the BOUNDARY alloc.',__LINE__,info)
+                       GOTO 9999
+                    ENDIF 
+                 ENDDO !iface
+                 DO iface=1,2*ppm_dim
+                 IF (iface.EQ.1.OR.iface.EQ.2) THEN 
+                     direc(1)=2
+                 ELSEIF (iface.EQ.3.OR.iface.EQ.4) then
+                     direc(1)=1
+                 ENDIF
+                 DO ipoint=1,max_node(direc(1),mlev)
+                    IF (mlev.EQ.1) THEN                         
+                       mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint) = &
+                    &                  bcvalue(i,iface,ipoint)
+                    ELSE
+                       IF(bcdef_sca(i,iface).EQ.ppm_param_bcdef_neumann) THEN 
+                           mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint) = &
+                       &   mgfield(i,mlev-1)%bcvalue(iface)%pbcvalue(2*ipoint-1)
+                       ELSE
+                       ! NO CORRECTIONS FOR THE DIRICHLET  
+                          mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint)=0.0_MK
                        ENDIF
-                     ENDDO
-                  ENDDO
-                ENDDO                             
-              ENDDO 
-           ENDIF !lperiodic
+                    ENDIF
+                 ENDDO !ipoint
+                 ENDDO !faces 
+              ENDIF!lperiodic
+#elif __DIM == __VFIELD
+              iopt = ppm_param_alloc_fit
+              ldl3(1) = 1
+              ldl3(2) = 1-ghostsize(1)
+              ldl3(3) = 1-ghostsize(2)
+              ldu3(1) = vecdim
+              ldu3(2) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu3(3) = mesh%nnodes(2,idom)+ghostsize(2)
+              CALL ppm_alloc(mgfield(i,mlev)%uc,ldl3,ldu3,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+              &       'Problem with the function corr. alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              tuc => mgfield(i,mlev)%uc
+              tuc = 0.0_MK
+              iopt = ppm_param_alloc_fit
+              ldu3(1) = vecdim  
+              ldu3(2) = mesh%nnodes(1,idom)
+              ldu3(3) = mesh%nnodes(2,idom)
+              CALL ppm_alloc(mgfield(i,mlev)%fc,ldu3,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+              &       'Problem with the restricted err. alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              mgfield(i,mlev)%fc(:,:,:)=0.0_MK
+              iopt = ppm_param_alloc_fit
+              ldl3(1) = 1
+              ldl3(2) = 1-ghostsize(1)
+              ldl3(3) = 1-ghostsize(2)
+              ldu3(1) = vecdim
+              ldu3(2) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu3(3) = mesh%nnodes(2,idom)+ghostsize(2)
+              CALL ppm_alloc(mgfield(i,mlev)%err,ldl3,ldu3,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+              & 'Problem with the residual alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              terr=>mgfield(i,mlev)%err  
+              terr(:,:,:)=0.0_MK
+#endif
+           ENDDO!DO 1,nsubs
+#elif __MESH_DIM == __3D 
+           DO i=1,nsubs
+              idom=topo%isublist(i)
+              istop(:,i,mlev) = mesh%nnodes(:,idom)
+              DO j=1,ppm_dim
+                 IF (max_node(j,mlev).LT.istop(j,i,mlev)) THEN
+                    max_node(j,mlev)=istop(j,i,mlev)  
+                 ENDIF
+              ENDDO
+              IF (topo%subs_bc(1,idom).EQ.1) THEN
+                 lboundary(1,i)=.TRUE.          
+              ELSEIF (topo%subs_bc(3,idom).EQ.1) THEN
+                 lboundary(3,i)=.TRUE.
+              ELSEIF (topo%subs_bc(2,idom).EQ.1) THEN
+                 lboundary(2,i)=.TRUE.  
+              ELSEIF (topo%subs_bc(4,idom).EQ.1) THEN
+                 lboundary(4,i)=.TRUE.
+              ELSEIF (topo%subs_bc(5,idom).EQ.1) THEN
+                 lboundary(5,i)=.TRUE. 
+              ELSEIF (topo%subs_bc(6,idom).EQ.1) THEN
+                 lboundary(6,i)=.TRUE.
+              ENDIF
+              !----------------------------------------------------------------
+              ! Allocate the function correction, the restricted errors and the 
+              !residuals on each level.
+              !----------------------------------------------------------------
+#if __DIM == __SFIELD
+              iopt = ppm_param_alloc_fit
+              ldl3(1) = 1-ghostsize(1)
+              ldl3(2) = 1-ghostsize(2)
+              ldl3(3) = 1-ghostsize(3)
+              ldu3(1) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu3(2) = mesh%nnodes(2,idom)+ghostsize(2)
+              ldu3(3) = mesh%nnodes(3,idom)+ghostsize(3)
+              CALL ppm_alloc(mgfield(i,mlev)%uc,ldl3,ldu3,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+      &          'Problem with the function corr. alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              tuc=>mgfield(i,mlev)%uc
+              tuc=0.0_MK              
+              iopt = ppm_param_alloc_fit
+              ldu3(1) = mesh%nnodes(1,idom)
+              ldu3(2) = mesh%nnodes(2,idom)
+              ldu3(3) = mesh%nnodes(3,idom)
+              CALL ppm_alloc(mgfield(i,mlev)%fc,ldu3,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+      &          'Problem with the restricted err. alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              mgfield(i,mlev)%fc=0.0_MK
+              iopt = ppm_param_alloc_fit
+              ldl3(1) = 1-ghostsize(1)
+              ldl3(2) = 1-ghostsize(2)
+              ldl3(3) = 1-ghostsize(3)
+              ldu3(1) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu3(2) = mesh%nnodes(2,idom)+ghostsize(2)
+              ldu3(3) = mesh%nnodes(3,idom)+ghostsize(3)
+              CALL ppm_alloc(mgfield(i,mlev)%err,ldl3,ldu3,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+      &          'Problem with the residual alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              terr=>mgfield(i,mlev)%err  
+              terr=0.0_MK 
+              !ALLOCATE THE BCVALUE(IT IS A TYPE!!)
+              IF (.NOT.lperiodic) THEN
+                 iopt = ppm_param_alloc_fit
+                 ldu1(1) = 2*ppm_dim
+                 CALL ppm_mg_alloc(mgfield(i,mlev)%bcvalue,ldu1,iopt,info)
+                 IF (info .NE. 0) THEN
+                    info = ppm_error_fatal
+                    CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+      &        'Problem with the BOUNDARY alloc.',__LINE__,info)
+                    GOTO 9999
+                 ENDIF
+                 !ALLOCATE THE PBCVALUE 
+                 DO iface=1,2*ppm_dim 
+                    iopt = ppm_param_alloc_fit
+                    IF (iface.EQ.1.OR.iface.EQ.2) THEN
+                       ldu2(1) = max_node(2,mlev)
+                       ldu2(2)= max_node(3,mlev)
+                    ELSEIF (iface.EQ.3.OR. iface.EQ.4) then         
+                       ldu2(1) = max_node(1,mlev)
+                       ldu2(2)=max_node(3,mlev)
+                    ELSE
+                       ldu2(1)=max_node(1,mlev)
+                       ldu2(2)=max_node(2,mlev)
+                    ENDIF
+                    CALL ppm_alloc(mgfield(i,mlev)%bcvalue(iface)%pbcvalue,&
+                 &                 ldu2,iopt,info)
+                    IF (info .NE. 0) THEN
+                       info = ppm_error_fatal
+                       CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+      &                 'Problem with the BOUNDARY alloc.',__LINE__,info)
+                       GOTO 9999
+                    ENDIF 
+                 ENDDO
+                 DO iface=1,2*ppm_dim
+                    IF (iface.EQ.1.OR.iface.EQ.2) THEN  
+                       direc(1)=2
+                       direc(2)=3
+                    ELSEIF (iface.EQ.3.OR.iface.EQ.4) THEN
+                       direc(1)=1
+                       direc(2)=3
+                    ELSE
+                       direc(1)=1
+                       direc(2)=2
+                    ENDIF
+                    DO ipoint=1,max_node(direc(1),mlev)
+                    DO jpoint=1,max_node(direc(2),mlev)
+                       IF (mlev.EQ.1) THEN                         
+                          mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint,jpoint) =&
+                          &               bcvalue(i,iface,ipoint,jpoint)
+                       ELSE
+                          IF(bcdef_sca(i,iface).EQ.ppm_param_bcdef_neumann) THEN 
+                             mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint,jpoint)=&
+                   &         mgfield(i,mlev-1)%bcvalue(iface)%pbcvalue(2*ipoint-1,2*jpoint-1) 
+                          ELSE
+                       !NO CORRECTIONS FOR THE DIRICHLET  
+                             mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ipoint,jpoint)=&
+                             &            0.0_MK
+                          ENDIF  
+                       ENDIF
+                    ENDDO
+                    ENDDO                              
+                 ENDDO!faces 
+              ENDIF !lperiodic
+#elif __DIM == __VFIELD
+              iopt = ppm_param_alloc_fit
+              ldl4(1) = 1
+              ldl4(2) = 1-ghostsize(1)
+              ldl4(3) = 1-ghostsize(2)
+              ldl4(4) = 1-ghostsize(3)
+              ldu4(1) = vecdim
+              ldu4(2) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu4(3) = mesh%nnodes(2,idom)+ghostsize(2)
+              ldu4(4) = mesh%nnodes(3,idom)+ghostsize(3)
+              CALL ppm_alloc(mgfield(i,mlev)%uc,ldl4,ldu4,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+         &            'Problem with the function corr. alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              tuc=>mgfield(i,mlev)%uc
+              tuc=0.0_MK              
+              iopt = ppm_param_alloc_fit
+              ldu4(1) = vecdim
+              ldu4(2) = mesh%nnodes(1,idom)
+              ldu4(3) = mesh%nnodes(2,idom)
+              ldu4(4) = mesh%nnodes(3,idom)
+              CALL ppm_alloc(mgfield(i,mlev)%fc,ldu4,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+                 &        'Problem with the restricted err. alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              mgfield(i,mlev)%fc=0.0_MK
+              iopt = ppm_param_alloc_fit
+              ldl4(1) = 1
+              ldl4(2) = 1-ghostsize(1)
+              ldl4(3) = 1-ghostsize(2)
+              ldl4(4) = 1-ghostsize(3)
+              ldu4(1) = vecdim
+              ldu4(2) = mesh%nnodes(1,idom)+ghostsize(1)
+              ldu4(3) = mesh%nnodes(2,idom)+ghostsize(2)
+              ldu4(4) = mesh%nnodes(3,idom)+ghostsize(3)
+              CALL ppm_alloc(mgfield(i,mlev)%err,ldl4,ldu4,iopt,info)
+              IF (info .NE. 0) THEN
+                 info = ppm_error_fatal
+                 CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+                 &        'Problem with the residual alloc.',__LINE__,info)
+                 GOTO 9999
+              ENDIF
+              terr=>mgfield(i,mlev)%err  
+              terr=0.0_MK
+              !ALLOCATE THE BCVALUE(IT IS A TYPE!!)
+              IF (.NOT.lperiodic) THEN
+                 iopt = ppm_param_alloc_fit
+                 ldu1=2*ppm_dim
+                 CALL ppm_mg_alloc(mgfield(i,mlev)%bcvalue,ldu1,iopt,info)
+                 IF (info .NE. 0) THEN
+                    info = ppm_error_fatal
+                     CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+                     &        'Problem with the BOUNDARY alloc.',__LINE__,info)
+                     GOTO 9999
+                 ENDIF
+                 !ALLOCATE THE PBCVALUE 
+                 DO iface=1,2*ppm_dim 
+                    iopt = ppm_param_alloc_fit
+                    ldu3(1)=vecdim
+                    IF (iface.EQ.1.OR.iface.EQ.2) THEN
+                       ldu3(2) = max_node(2,mlev)
+                       ldu3(3)= max_node(3,mlev)
+                    ELSEIF (iface.EQ.3.OR. iface.EQ.4) then         
+                       ldu3(2) = max_node(1,mlev)
+                       ldu3(3)=max_node(3,mlev)
+                    ELSE
+                       ldu3(2)=max_node(1,mlev)
+                       ldu3(3)=max_node(2,mlev)
+                    ENDIF
+                    CALL ppm_alloc(mgfield(i,mlev)%bcvalue(iface)%pbcvalue,ldu3,iopt,info)
+                    IF (info .NE. 0) THEN
+                       info = ppm_error_fatal
+                       CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+                       &        'Problem with the BOUNDARY alloc.',__LINE__,info)
+                       GOTO 9999
+                    ENDIF 
+                 ENDDO
+                 DO iface=1,2*ppm_dim
+                    IF (iface.EQ.1.OR.iface.EQ.2) THEN  
+                       direc(1)=2
+                       direc(2)=3
+                    ELSEIF (iface.EQ.3.OR.iface.EQ.4) THEN
+                       direc(1)=1
+                       direc(2)=3
+                    ELSE
+                       direc(1)=1
+                       direc(2)=2
+                    ENDIF
+                    DO ipoint=1,max_node(direc(1),mlev)
+                    DO jpoint=1,max_node(direc(2),mlev)
+                    DO ilda=1,vecdim
+                       IF (mlev.EQ.1) THEN                         
+                          mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ilda,ipoint,jpoint) &
+        &                                =bcvalue(ilda,i,iface,ipoint,jpoint)
+                       ELSE     
+                       IF(bcdef_vec(ilda,i,iface).EQ.ppm_param_bcdef_neumann) THEN 
+                          mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ilda,ipoint,jpoint)=&
+        &                 mgfield(i,mlev-1)%bcvalue(iface)%pbcvalue(ilda,2*ipoint-1,2*jpoint-1) 
+                       ELSE
+                              !NO CORRECTIONS FOR THE DIRICHLET  
+                          mgfield(i,mlev)%bcvalue(iface)%pbcvalue(ilda,ipoint,jpoint)=0.0_MK
+                       ENDIF  
+                       ENDIF
+                    ENDDO
+                    ENDDO
+                    ENDDO                             
+                 ENDDO 
+              ENDIF !lperiodic
 #endif
            ENDDO!DO i=1,nsubs
 #endif
-            factor(:)=2
-            mesh_id_g(mlev)=lmesh_id
-            meshid_g(mlev)=meshid
-            newmeshid=-1
-            IF (mlev.LT.maxlev) THEN 
-              CALL ppm_mesh_derive(topoid,meshid,newmeshid,&
-     &                           ppm_param_mesh_coarsen,factor,info)
-              lmesh_id = newmeshid
-              meshid = topo%mesh(lmesh_id)%ID
-            ENDIF 
+           mg_meshid(mlev)=meshid
+           newmeshid=-1
+           IF (mlev.LT.maxlev) THEN 
+             CALL ppm_mesh_derive(topoid,meshid,newmeshid,&
+     &                          ppm_param_mesh_coarsen,factor,info)
+             meshid = newmeshid
+             mesh => topo%mesh(meshid)
+           ENDIF 
          ENDDO!DO mlev=1,maxlev 
          !----------------------------------------------------------------------
          !  Return 

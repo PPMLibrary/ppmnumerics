@@ -1,9 +1,32 @@
 
- !------------------------------------------------------------------------------
- !  Subroutine   :            ppm_mg_smooth_coarse    
- !------------------------------------------------------------------------------
- !  Purpose      : In this routine we compute the corrections for
- !                 the function based on the Gauss-Seidel iteration
+      !-------------------------------------------------------------------------
+      !  Subroutine   :            ppm_mg_smooth_coarse    
+      !-------------------------------------------------------------------------
+      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      !                    Center for Fluid Dynamics (DTU)
+      !
+      !
+      ! This file is part of the Parallel Particle Mesh Library (PPM).
+      !
+      ! PPM is free software: you can redistribute it and/or modify
+      ! it under the terms of the GNU Lesser General Public License 
+      ! as published by the Free Software Foundation, either 
+      ! version 3 of the License, or (at your option) any later 
+      ! version.
+      !
+      ! PPM is distributed in the hope that it will be useful,
+      ! but WITHOUT ANY WARRANTY; without even the implied warranty of
+      ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      ! GNU General Public License for more details.
+      !
+      ! You should have received a copy of the GNU General Public License
+      ! and the GNU Lesser General Public License along with PPM. If not,
+      ! see <http://www.gnu.org/licenses/>.
+      !
+      ! Parallel Particle Mesh Library (PPM)
+      ! ETH Zurich
+      ! CH-8092 Zurich, Switzerland
+      !------------------------------------------------------------------------ 
  !                  
  !  
  !  Input        : nsweep      (I) number of iterations(sweeps)
@@ -106,11 +129,13 @@
 #endif
 #endif
 #endif
-         !---------------------------------------------------------------------
+         !!! In this routine we compute the corrections for the function 
+         !!! based on the Gauss-Seidel iteration
+         !----------------------------------------------------------------------
          !  Includes
          !----------------------------------------------------------------------
 #include "ppm_define.h"
-         !------------------------------------------------------------------
+         !----------------------------------------------------------------------
          !  Modules 
          !----------------------------------------------------------------------
          USE ppm_module_data
@@ -146,7 +171,12 @@
          !----------------------------------------------------------------------
          CHARACTER(LEN=256) :: cbuf
          INTEGER                                    ::  i,j,isub,color
-         INTEGER,DIMENSION(:),POINTER               ::  a,b,c,d,e,g 
+         INTEGER,DIMENSION(:),POINTER               ::  a => NULL()
+         INTEGER,DIMENSION(:),POINTER               ::  b => NULL()
+         INTEGER,DIMENSION(:),POINTER               ::  c => NULL()
+         INTEGER,DIMENSION(:),POINTER               ::  d => NULL()
+         INTEGER,DIMENSION(:),POINTER               ::  e => NULL()
+         INTEGER,DIMENSION(:),POINTER               ::  g => NULL()
          REAL(MK)                                   ::  c11,c22,c33,c44 
          INTEGER                                    ::  ilda,isweep,count
          INTEGER                                    ::  k,idom
@@ -268,7 +298,7 @@
          !Initialize
          !----------------------------------------------------------------------
          CALL substart('ppm_mg_smooth_coarse',t0,info)
-         IF (l_print) THEN 
+         IF (ppm_debug.GT.0) THEN 
           WRITE (cbuf,*) 'SMOOTHER entering ','mlev:',mlev
           CALL PPM_WRITE(ppm_rank,'mg_smooth',cbuf,info)
          ENDIF
@@ -352,15 +382,45 @@
              ldl1(1) = 1
              ldu1(1) = nsubs
              CALL ppm_alloc(a,ldl1,ldu1,iopt,info)
+             IF (info .NE. 0) THEN
+             info = ppm_error_fatal
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+       &                       'a',__LINE__,info)
+             GOTO 9999
+             ENDIF
              CALL ppm_alloc(b,ldl1,ldu1,iopt,info)
+             IF (info .NE. 0) THEN
+             info = ppm_error_fatal
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+       &                       'b',__LINE__,info)
+             GOTO 9999
+             ENDIF
              CALL ppm_alloc(c,ldl1,ldu1,iopt,info)
+             IF (info .NE. 0) THEN
+             info = ppm_error_fatal
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+       &                       'c',__LINE__,info)
+             GOTO 9999
+             ENDIF
              CALL ppm_alloc(d,ldl1,ldu1,iopt,info)
+             IF (info .NE. 0) THEN
+             info = ppm_error_fatal
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+       &                       'd',__LINE__,info)
+             GOTO 9999
+             ENDIF
              CALL ppm_alloc(e,ldl1,ldu1,iopt,info)
+             IF (info .NE. 0) THEN
+             info = ppm_error_fatal
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+       &                       'e',__LINE__,info)
+             GOTO 9999
+             ENDIF
              CALL ppm_alloc(g,ldl1,ldu1,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
-       &                       'a',__LINE__,info)
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+       &                       'g',__LINE__,info)
              GOTO 9999
              ENDIF
 #if  __DIM == __SFIELD
@@ -378,7 +438,7 @@
              CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -392,12 +452,12 @@
                !Communicate
                !----------------------------------------------------------------
 
-              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          ghostsize,info)
                DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc
@@ -425,12 +485,12 @@
                ENDIF
               ENDDO!DO color   
               IF (isweep.EQ.nsweep) THEN
-               CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+               CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          ghostsize,info)
                DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc
@@ -449,7 +509,7 @@
              CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -469,7 +529,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -488,12 +548,12 @@
                !----------------------------------------------------------------
                !Communicate
                !----------------------------------------------------------------
-              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          ghostsize,info)
                  a=0
                  b=0
@@ -624,13 +684,13 @@
                   ENDIF
            ENDDO!DO color
                IF (isweep.EQ.nsweep) THEN
-                CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+                CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-                CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+                CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         info)
                 CALL ppm_map_field_send(info)
 
-                CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+                CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          ghostsize,info)
                ENDIF
                DO isub=1,nsubs
@@ -656,7 +716,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -678,7 +738,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -691,12 +751,12 @@
                !----------------------------------------------------------------
                !Communicate 
                !----------------------------------------------------------------
-               CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+               CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         vecdim,info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          vecdim,ghostsize,info)
                DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc
@@ -725,17 +785,16 @@
                     ENDIF
             ENDDO!DO color   
               IF (isweep.EQ.nsweep) THEN
-              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         vecdim,info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          vecdim,ghostsize,info)
                DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc
-                  tuc(:,:,:)=uc_dummy(&
-      &                         :,:,:,isub)
+                  tuc(:,:,:)=uc_dummy(:,:,:,isub)
                ENDDO
               ENDIF 
          ENDDO!DO nsweep
@@ -751,7 +810,7 @@
              CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -773,7 +832,7 @@
              CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -782,7 +841,7 @@
             CALL ppm_alloc(moldu,ldu1,iopt,info)
             IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'moldu',__LINE__,info)
              GOTO 9999
             ENDIF
@@ -812,12 +871,12 @@
                !----------------------------------------------------------------
                !Communicate 
                !----------------------------------------------------------------
-               CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+               CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-               CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+               CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         vecdim,info)
                CALL ppm_map_field_send(info)
-               CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          vecdim,ghostsize,info)
                  a=0
                  b=0
@@ -1004,12 +1063,12 @@
                    ENDIF 
            ENDDO!DO color
           IF (isweep.EQ.nsweep) THEN
-              CALL ppm_map_field_ghost_get(topoid,mesh_id_g(mlev),&
+              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
         &                         vecdim,info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mesh_id_g(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          vecdim,ghostsize,info)
                    DO isub=1,nsubs 
                     tuc=>mgfield(isub,mlev)%uc
@@ -1039,7 +1098,7 @@
              CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'uc_dummy',__LINE__,info)
              GOTO 9999
              ENDIF
@@ -1048,12 +1107,58 @@
             CALL ppm_alloc(moldu,ldu1,iopt,info)
             IF (info .NE. 0) THEN
              info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'GSsolv',    &
+             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
        &                       'moldu',__LINE__,info)
              GOTO 9999
             ENDIF
 #endif
 #endif
+        !---------------------------------------------------------------------
+        !  Deallocate local work arrays
+        !----------------------------------------------------------------------
+            iopt = ppm_param_dealloc
+            CALL ppm_alloc(a,ldl1,ldu1,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'a',__LINE__,info)
+            GOTO 9999
+            ENDIF
+            CALL ppm_alloc(b,ldl1,ldu1,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'b',__LINE__,info)
+            GOTO 9999
+            ENDIF
+            CALL ppm_alloc(c,ldl1,ldu1,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'c',__LINE__,info)
+            GOTO 9999
+            ENDIF
+            CALL ppm_alloc(d,ldl1,ldu1,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'd',__LINE__,info)
+            GOTO 9999
+            ENDIF
+            CALL ppm_alloc(e,ldl1,ldu1,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'e',__LINE__,info)
+            GOTO 9999
+            ENDIF
+            CALL ppm_alloc(g,ldl1,ldu1,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'g',__LINE__,info)
+            GOTO 9999
+            ENDIF
          !---------------------------------------------------------------------
          !  Return 
          !----------------------------------------------------------------------

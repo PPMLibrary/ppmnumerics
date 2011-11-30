@@ -1,55 +1,31 @@
-       !------------------------------------------------------------------------
-       !  Subroutine   :            ppm_mg_prolong  
-       !------------------------------------------------------------------------
-       !  Purpose      : In this routine we prolong the corrections from
-       !                 coarser to finer levels 
-       !                  
-       !  
-       !  Input        : mlev       (I) current level in V-cycle
-       ! 
-       !  Input/output :
-       ! 
-       !  Output       : info       (I) return status. 0 upon success
-       !
-       !  Remarks      :
-       !
-       !  References   :
-       !
-       !  Revisions    :
-       !------------------------------------------------------------------------
-       !  $Log: ppm_mg_prolong.f,v $
-       !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
-       !  CBL version of the PPM library
-       !
-       !  Revision 1.7  2006/09/26 16:01:23  ivos
-       !  Fixed wrongly indented CPP directives. Remember: they have to start in
-       !  Col 1, otherwise it does not compile on certain systems. In fact, this
-       !  code did NOT compile as it was!!
-       !
-       !  Revision 1.6  2006/07/21 11:30:56  kotsalie
-       !  FRIDAY
-       !
-       !  Revision 1.5  2005/04/21 04:55:03  ivos
-       !  fix: corrected misplaced cpp endif statements.
-       !
-       !  Revision 1.4  2005/03/14 13:17:18  kotsalie
-       !  COMMITED THE VECTOR CASE. IT IS FOR LDA=3
-       !
-       !  Revision 1.3  2004/09/28 14:08:14  kotsalie
-       !  *** empty log message ***
-       !
-       !  Revision 1.2  2004/09/23 12:16:50  kotsalie
-       !  Added USE statement
-       !
-       !  Revision 1.1  2004/09/22 18:36:05  kotsalie
-       !  MG new version
-       !
-       !------------------------------------------------------------------------
-       !  Parallel Particle Mesh Library (PPM)
-       !  Institute of Computational Science
-       !  ETH Zentrum, Hirschengraben 84
-       !  CH-8092 Zurich, Switzerland
-       !------------------------------------------------------------------------
+      !-----------------------------------------------------------------------
+      !  Subroutine   :            ppm_mg_prolong  
+      !-----------------------------------------------------------------------
+      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      !                    Center for Fluid Dynamics (DTU)
+      !
+      !
+      ! This file is part of the Parallel Particle Mesh Library (PPM).
+      !
+      ! PPM is free software: you can redistribute it and/or modify
+      ! it under the terms of the GNU Lesser General Public License 
+      ! as published by the Free Software Foundation, either 
+      ! version 3 of the License, or (at your option) any later 
+      ! version.
+      !
+      ! PPM is distributed in the hope that it will be useful,
+      ! but WITHOUT ANY WARRANTY; without even the implied warranty of
+      ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      ! GNU General Public License for more details.
+      !
+      ! You should have received a copy of the GNU General Public License
+      ! and the GNU Lesser General Public License along with PPM. If not,
+      ! see <http://www.gnu.org/licenses/>.
+      !
+      ! Parallel Particle Mesh Library (PPM)
+      ! ETH Zurich
+      ! CH-8092 Zurich, Switzerland
+      !------------------------------------------------------------------------ 
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
@@ -79,6 +55,8 @@
 #endif
 #endif
 #endif
+         !!! In this routine we prolong the corrections from coarser to 
+         !!! finer levels 
          !----------------------------------------------------------------------
          !  Includes
          !----------------------------------------------------------------------
@@ -103,8 +81,9 @@
          !  Arguments     
          !----------------------------------------------------------------------
          INTEGER,                   INTENT(IN)      ::  mlev
+         !!! current level in V-cycle
          INTEGER,                   INTENT(INOUT)   ::  info
-         !-----------------------------------------------------------------
+         !----------------------------------------------------------------------
          !  Local variables 
          !----------------------------------------------------------------------
          CHARACTER(LEN=256)                         :: cbuf
@@ -220,7 +199,7 @@
          !Implementation
          !----------------------------------------------------------------------
          mlevp1 = mlev + 1
-         IF (l_print) THEN
+         IF (ppm_debug.GT.0) THEN
           WRITE(cbuf,*) 'WELCOME TO THE PROLONG LEVEL:',mlev
           CALL PPM_WRITE(ppm_rank,'mg_prolong',cbuf,info)
          ENDIF

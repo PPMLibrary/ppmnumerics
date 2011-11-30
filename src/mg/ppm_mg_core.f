@@ -1,29 +1,6 @@
       !-----------------------------------------------------------------------
       !  Subroutine   :            ppm_mg_core    
       !-----------------------------------------------------------------------
-      !
-      !  References   :
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_mg_core.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.4  2006/05/15 14:48:57  kotsalie
-      !  cosmetics
-      !
-      !  Revision 1.3  2004/10/14 08:45:12  kotsalie
-      !
-      !  Changed the criterium for going down to coarser levels
-      !
-      !  Revision 1.2  2004/09/23 12:40:23  kotsalie
-      !  Added logical variable for distinguishing between v and w cycle
-      !
-      !  Revision 1.1  2004/09/22 18:31:37  kotsalie
-      !  MG new version
-      !
-      !-----------------------------------------------------------------------  
       ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
       !
@@ -48,34 +25,33 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-
       !------------------------------------------------------------------------ 
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_2d_sca_s(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_2d_sca_s(topo_id,mlev,iter1,iter2,info)
 #elif __KIND == __DOUBLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_2d_sca_d(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_2d_sca_d(topo_id,mlev,iter1,iter2,info)
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_3d_sca_s(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_3d_sca_s(topo_id,mlev,iter1,iter2,info)
 #elif __KIND == __DOUBLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_3d_sca_d(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_3d_sca_d(topo_id,mlev,iter1,iter2,info)
 #endif
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_2d_vec_s(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_2d_vec_s(topo_id,mlev,iter1,iter2,info)
 #elif __KIND == __DOUBLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_2d_vec_d(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_2d_vec_d(topo_id,mlev,iter1,iter2,info)
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_3d_vec_s(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_3d_vec_s(topo_id,mlev,iter1,iter2,info)
 #elif __KIND == __DOUBLE_PRECISION
-      RECURSIVE SUBROUTINE ppm_mg_core_3d_vec_d(mlev,iter1,iter2,info)
+      RECURSIVE SUBROUTINE ppm_mg_core_3d_vec_d(topo_id,mlev,iter1,iter2,info)
 #endif
 #endif
 #endif
@@ -106,6 +82,7 @@
         !---------------------------------------------------------------------- 
         !  Arguments     
         !----------------------------------------------------------------------
+        INTEGER,                   INTENT(IN   )   ::  topo_id
         INTEGER,                   INTENT(IN   )   ::  mlev
         INTEGER,                   INTENT(IN   )   ::  iter1
         INTEGER,                   INTENT(IN   )   ::  iter2
@@ -236,29 +213,29 @@
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_restrict_2d_sca_s(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_2d_sca_s(topo_id,mlev,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_restrict_2d_sca_d(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_2d_sca_d(topo_id,mlev,info)
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_restrict_3d_sca_s(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_3d_sca_s(topo_id,mlev,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_restrict_3d_sca_d(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_3d_sca_d(topo_id,mlev,info)
 #endif
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_restrict_2d_vec_s(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_2d_vec_s(topo_id,mlev,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_restrict_2d_vec_d(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_2d_vec_d(topo_id,mlev,info)
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_restrict_3d_vec_s(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_3d_vec_s(topo_id,mlev,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_restrict_3d_vec_d(ppm_param_topo_undefined,mlev,info)
+        CALL ppm_mg_restrict_3d_vec_d(topo_id,mlev,info)
 #endif
 #endif
 #endif
@@ -278,39 +255,39 @@
         !--------------------------------------------------------------------
         !Compute correction using gauss-seidel algorithm
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter1,mlev,c1,c2,c3,info)
+        CALL ppm_mg_smooth_sca(topo_id,iter1,mlev,c1,c2,c3,info)
         !-------------------------------------------------------------------
         !Compute residual
         !-------------------------------------------------------------------
-        CALL ppm_mg_res_sca(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,E,info)
+        CALL ppm_mg_res_sca(topo_id,mlev,c1,c2,c3,c4,E,info)
         !--------------------------------------------------------------------
         !Go to the next (coarser) multigrid level if the solution is
         !not converged
         !--------------------------------------------------------------------
-       IF (l_print) THEN
+       IF (ppm_debug.GT.0) THEN
         WRITE(cbuf,*) 'E:',E
         CALL PPM_WRITE(ppm_rank,'mg_core',cbuf,info)
        ENDIF 
        IF (mlev.LT.maxlev) THEN 
 #if __KIND == __SINGLE_PRECISION
-          CALL ppm_mg_core_2d_sca_s(mlev+1,iter1,iter2,info)   
+          CALL ppm_mg_core_2d_sca_s(topo_id,mlev+1,iter1,iter2,info)   
        IF (w_cycle) THEN
           CALL ppm_mg_prolong_2d_sca_s(mlev,info)
-          CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter2,mlev,c1,&
+          CALL ppm_mg_smooth_sca(topo_id,iter2,mlev,c1,&
      &                           c2,c3,info)
-          CALL ppm_mg_res_sca(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+          CALL ppm_mg_res_sca(topo_id,mlev,c1,c2,c3,c4,&
      &                        E,info)
-          CALL ppm_mg_core_2d_sca_s(mlev+1,iter1,iter2,info)   
+          CALL ppm_mg_core_2d_sca_s(topo_id,mlev+1,iter1,iter2,info)   
         ENDIF
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_2d_sca_d(mlev+1,iter1,iter2,info)   
+        CALL ppm_mg_core_2d_sca_d(topo_id,mlev+1,iter1,iter2,info)   
         IF (w_cycle) THEN
            CALL ppm_mg_prolong_2d_sca_d(mlev,info)
-           CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter2,mlev,c1,&
+           CALL ppm_mg_smooth_sca(topo_id,iter2,mlev,c1,&
      &                            c2,c3,info)
-           CALL ppm_mg_res_sca(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+           CALL ppm_mg_res_sca(topo_id,mlev,c1,c2,c3,c4,&
      &                         E,info)
-           CALL ppm_mg_core_2d_sca_d(mlev+1,iter1,iter2,info)   
+           CALL ppm_mg_core_2d_sca_d(topo_id,mlev+1,iter1,iter2,info)   
         ENDIF
 #endif
         ELSE
@@ -335,7 +312,7 @@
         !--------------------------------------------------------------------
         !Solve for the prolongated corrections
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter2,mlev,c1,c2,c3,&
+        CALL ppm_mg_smooth_sca(topo_id,iter2,mlev,c1,c2,c3,&
      &                         info)
         !--------------------------------------------------------------------
         !Return
@@ -355,41 +332,41 @@
       !--------------------------------------------------------------------
       !Compute correction using gauss-seidel algorithm
       !--------------------------------------------------------------------
-      CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter1,mlev,c1,c2,c3,&
+      CALL ppm_mg_smooth_sca(topo_id,iter1,mlev,c1,c2,c3,&
      &                       c4,info)
       !-------------------------------------------------------------------
       !Compute residual
       !-------------------------------------------------------------------
-      CALL ppm_mg_res_sca(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,c5,E,&
+      CALL ppm_mg_res_sca(topo_id,mlev,c1,c2,c3,c4,c5,E,&
      &                    info)
       !--------------------------------------------------------------------
       !Go to the next (coarser) multigrid level if the solution is
       !not converged
       !--------------------------------------------------------------------
-     IF (l_print) THEN
+     IF (ppm_debug.GT.0) THEN
        WRITE(cbuf,*) 'E:',E
        CALL PPM_WRITE(ppm_rank,'mg_core',cbuf,info)
      ENDIF 
      IF (mlev.LT.maxlev) THEN 
 #if __KIND == __SINGLE_PRECISION
-         CALL ppm_mg_core_3d_sca_s(mlev+1,iter1,iter2,info)   
+         CALL ppm_mg_core_3d_sca_s(topo_id,mlev+1,iter1,iter2,info)   
          IF (w_cycle) THEN
            CALL ppm_mg_prolong_3d_sca_s(mlev,info)
-           CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter2,mlev,c1,&
+           CALL ppm_mg_smooth_sca(topo_id,iter2,mlev,c1,&
      &                            c2,c3,c4,info)
-           CALL ppm_mg_res_sca(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+           CALL ppm_mg_res_sca(topo_id,mlev,c1,c2,c3,c4,&
      &                         c5,E,info)
-           CALL ppm_mg_core_3d_sca_s(mlev+1,iter1,iter2,info) 
+           CALL ppm_mg_core_3d_sca_s(topo_id,mlev+1,iter1,iter2,info) 
          ENDIF  
 #elif __KIND == __DOUBLE_PRECISION
-         CALL ppm_mg_core_3d_sca_d(mlev+1,iter1,iter2,info)   
+         CALL ppm_mg_core_3d_sca_d(topo_id,mlev+1,iter1,iter2,info)   
          IF (w_cycle) THEN
            CALL ppm_mg_prolong_3d_sca_d(mlev,info)
-           CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter2,mlev,c1,&
+           CALL ppm_mg_smooth_sca(topo_id,iter2,mlev,c1,&
      &                            c2,c3,c4,info)
-           CALL ppm_mg_res_sca(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+           CALL ppm_mg_res_sca(topo_id,mlev,c1,c2,c3,c4,&
      &                         c5,E,info)
-           CALL ppm_mg_core_3d_sca_d(mlev+1,iter1,iter2,info)   
+           CALL ppm_mg_core_3d_sca_d(topo_id,mlev+1,iter1,iter2,info)   
          ENDIF  
 #endif
         ELSE
@@ -417,7 +394,7 @@
         !--------------------------------------------------------------------
         !Solve for the prolongated corrections
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_sca(ppm_param_topo_undefined,iter2,mlev,c1,c2,c3,&
+        CALL ppm_mg_smooth_sca(topo_id,iter2,mlev,c1,c2,c3,&
      &                         c4,info)
         !--------------------------------------------------------------------
 #endif
@@ -434,40 +411,40 @@
       !--------------------------------------------------------------------
       !Compute correction using gauss-seidel algorithm
       !--------------------------------------------------------------------
-      CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter1,mlev,c1,c2,c3,&
+      CALL ppm_mg_smooth_vec(topo_id,iter1,mlev,c1,c2,c3,&
      &                       info)
       !-------------------------------------------------------------------
       !Compute residual
       !-------------------------------------------------------------------
-      CALL ppm_mg_res_vec(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,E,info)
+      CALL ppm_mg_res_vec(topo_id,mlev,c1,c2,c3,c4,E,info)
       !--------------------------------------------------------------------
       !Go to the next (coarser) multigrid level if the solution is
       !not converged
       !--------------------------------------------------------------------
-      IF (l_print) THEN
+      IF (ppm_debug.GT.0) THEN
         WRITE(cbuf,*) 'E:',E
         CALL PPM_WRITE(ppm_rank,'mg_core',cbuf,info)
       ENDIF 
       IF (mlev.LT.maxlev) THEN 
 #if __KIND == __SINGLE_PRECISION
-          CALL ppm_mg_core_2d_vec_s(mlev+1,iter1,iter2,info)   
+          CALL ppm_mg_core_2d_vec_s(topo_id,mlev+1,iter1,iter2,info)   
         IF (w_cycle) THEN
           CALL ppm_mg_prolong_2d_vec_s(mlev,info)
-          CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter2,mlev,c1,&
+          CALL ppm_mg_smooth_vec(topo_id,iter2,mlev,c1,&
      &                           c2,c3,info)
-          CALL ppm_mg_res_vec(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+          CALL ppm_mg_res_vec(topo_id,mlev,c1,c2,c3,c4,&
      &                        E,info)
-          CALL ppm_mg_core_2d_vec_s(mlev+1,iter1,iter2,info)   
+          CALL ppm_mg_core_2d_vec_s(topo_id,mlev+1,iter1,iter2,info)   
         ENDIF 
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_2d_vec_d(mlev+1,iter1,iter2,info)  
+        CALL ppm_mg_core_2d_vec_d(topo_id,mlev+1,iter1,iter2,info)  
         IF (w_cycle) THEN  
           CALL ppm_mg_prolong_2d_vec_d(mlev,info)
-          CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter2,mlev,c1,&
+          CALL ppm_mg_smooth_vec(topo_id,iter2,mlev,c1,&
      &                           c2,c3,info)
-          CALL ppm_mg_res_vec(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+          CALL ppm_mg_res_vec(topo_id,mlev,c1,c2,c3,c4,&
      &                        E,info)
-          CALL ppm_mg_core_2d_vec_d(mlev+1,iter1,iter2,info)  
+          CALL ppm_mg_core_2d_vec_d(topo_id,mlev+1,iter1,iter2,info)  
         ENDIF 
 #endif
         ELSE
@@ -492,7 +469,7 @@
         !--------------------------------------------------------------------
         !Solve for the prolongated corrections
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter2,mlev,c1,c2,&
+        CALL ppm_mg_smooth_vec(topo_id,iter2,mlev,c1,c2,&
      &                         c3,info)
         !--------------------------------------------------------------------
         !Return
@@ -512,42 +489,42 @@
        !--------------------------------------------------------------------
        !Compute correction using gauss-seidel algorithm
        !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter1,mlev,c1,c2,&
+        CALL ppm_mg_smooth_vec(topo_id,iter1,mlev,c1,c2,&
      &                         c3,c4,info)
        !-------------------------------------------------------------------
        !Compute residual
        !-------------------------------------------------------------------
-       CALL ppm_mg_res_vec(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,c5,E,&
+       CALL ppm_mg_res_vec(topo_id,mlev,c1,c2,c3,c4,c5,E,&
      &                     info)
 
        !--------------------------------------------------------------------
        !Go to the next (coarser) multigrid level if the solution is
        !not converged
        !--------------------------------------------------------------------
-       IF (l_print) THEN
+       IF (ppm_debug.GT.0) THEN
          WRITE(cbuf,*) 'E:',E
          CALL PPM_WRITE(ppm_rank,'mg_core',cbuf,info)
        ENDIF 
        IF (mlev.LT.maxlev) THEN 
 #if __KIND == __SINGLE_PRECISION
-           CALL ppm_mg_core_3d_vec_s(mlev+1,iter1,iter2,info)   
+           CALL ppm_mg_core_3d_vec_s(topo_id,mlev+1,iter1,iter2,info)   
            IF (w_cycle) THEN
              CALL ppm_mg_prolong_3d_vec_s(mlev,info)
-             CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter2,mlev,c1,&
+             CALL ppm_mg_smooth_vec(topo_id,iter2,mlev,c1,&
      &                              c2,c3,c4,info)
-             CALL ppm_mg_res_vec(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+             CALL ppm_mg_res_vec(topo_id,mlev,c1,c2,c3,c4,&
      &                           c5,E,info)
-             CALL ppm_mg_core_3d_vec_s(mlev+1,iter1,iter2,info)
+             CALL ppm_mg_core_3d_vec_s(topo_id,mlev+1,iter1,iter2,info)
           ENDIF   
 #elif __KIND == __DOUBLE_PRECISION
-           CALL ppm_mg_core_3d_vec_d(mlev+1,iter1,iter2,info)   
+           CALL ppm_mg_core_3d_vec_d(topo_id,mlev+1,iter1,iter2,info)   
            IF (w_cycle) THEN
            CALL ppm_mg_prolong_3d_vec_d(mlev,info)
-           CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter2,mlev,c1,c2,&
+           CALL ppm_mg_smooth_vec(topo_id,iter2,mlev,c1,c2,&
      &                            c3,c4,info)
-           CALL ppm_mg_res_vec(ppm_param_topo_undefined,mlev,c1,c2,c3,c4,&
+           CALL ppm_mg_res_vec(topo_id,mlev,c1,c2,c3,c4,&
      &                         c5,E,info)
-           CALL ppm_mg_core_3d_vec_d(mlev+1,iter1,iter2,info) 
+           CALL ppm_mg_core_3d_vec_d(topo_id,mlev+1,iter1,iter2,info) 
            ENDIF  
 #endif
         ELSE
@@ -575,7 +552,7 @@
         !--------------------------------------------------------------------
         !Solve for the prolongated corrections
         !--------------------------------------------------------------------
-        CALL ppm_mg_smooth_vec(ppm_param_topo_undefined,iter2,mlev,c1,c2,c3,&
+        CALL ppm_mg_smooth_vec(topo_id,iter2,mlev,c1,c2,c3,&
      &                         c4,info)
         !--------------------------------------------------------------------
 #endif
