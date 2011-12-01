@@ -231,7 +231,6 @@
       ldu3(1) = max_node(1,mlevm1)+ghostsize(1)
       ldu3(2) = max_node(2,mlevm1)+ghostsize(2)
       ldu3(3) = nsubs
-      print *,'ldl,ldu',ldl3,ldu3
       CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
       IF (info .NE. 0) THEN
           info = ppm_error_fatal
