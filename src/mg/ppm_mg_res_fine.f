@@ -244,8 +244,31 @@
       !----------------------------------------------------------------------
       E =-HUGE(E)
       DO isub=1,nsubs
-          DO j=start(2,isub,1),istop(2,isub,1)
-              DO i=start(1,isub,1),istop(1,isub,1)
+          aa=0
+          bb=0
+          cc=0
+          dd=0
+          IF (.NOT.lperiodic) THEN
+              DO iface=1,4
+                  IF (bcdef_sca(isub,iface).EQ.&
+                  &   ppm_param_bcdef_periodic) THEN
+                      !DO NOTHING
+                      ELSEIF (bcdef_sca(isub,iface).EQ.&
+                      &       ppm_param_bcdef_dirichlet) THEN
+                      IF (iface.EQ.1) THEN
+                          aa=1
+                          ELSEIF (iface.EQ.2) THEN
+                          bb=1
+                          ELSEIF (iface.EQ.3) THEN
+                          cc=1
+                          ELSEIF (iface.EQ.4) THEN
+                          dd=1
+                      ENDIF
+                  ENDIF 
+              ENDDO !iface
+          ENDIF !periodic
+          DO j=start(2,isub,1)+cc,istop(2,isub,1)-dd
+              DO i=start(1,isub,1)+aa,istop(1,isub,1)-bb
                   res  = (u(i-1,j,isub)+u(i+1,j,isub))*c2 + &
                   &      (u(i,j-1,isub)+u(i,j+1,isub))*c3 - &
                   &            u(i,j,isub)*c4-f(i,j,isub)

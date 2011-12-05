@@ -238,8 +238,31 @@
       E=-HUGE(E)
       DO isub=1,nsubs
           tuc=>mgfield(isub,mlev)%uc      
-          DO j=start(2,isub,mlev),istop(2,isub,mlev)
-              DO i=start(1,isub,mlev),istop(1,isub,mlev)
+          aa=0
+          bb=0
+          cc=0
+          dd=0
+          IF (.NOT.lperiodic) THEN
+              DO iface=1,4
+                  IF (bcdef_sca(isub,iface).EQ.&
+                  &   ppm_param_bcdef_periodic) THEN
+                      !DO NOTHING
+                  ELSEIF (bcdef_sca(isub,iface).EQ.&
+                  &       ppm_param_bcdef_dirichlet) THEN
+                      IF (iface.EQ.1) THEN
+                          aa=1
+                          ELSEIF (iface.EQ.2) THEN
+                          bb=1
+                          ELSEIF (iface.EQ.3) THEN
+                          cc=1
+                          ELSEIF (iface.EQ.4) THEN
+                          dd=1
+                      ENDIF
+                  ENDIF 
+              ENDDO !iface
+          endif !periodic
+          DO j=start(2,isub,mlev)+cc,istop(2,isub,mlev)-dd
+              DO i=start(1,isub,mlev)+aa,istop(1,isub,mlev)-bb
                   res =(tuc(i-1,j)+&
                   &             tuc(i+1,j))*c2 + &
                   &              (tuc(i,j-1)+    &
@@ -266,8 +289,8 @@
                   IF (bcdef_sca(isub,iface).EQ.&
                   &   ppm_param_bcdef_periodic) THEN
                       !DO NOTHING
-                      ELSEIF (bcdef_sca(isub,iface).EQ.&
-                      &       ppm_param_bcdef_dirichlet) THEN
+                  ELSEIF (bcdef_sca(isub,iface).EQ.&
+                  &       ppm_param_bcdef_dirichlet) THEN
                       IF (iface.EQ.1) THEN
                           aa=1
                           ELSEIF (iface.EQ.2) THEN

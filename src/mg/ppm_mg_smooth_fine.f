@@ -352,7 +352,61 @@ dz=dz_d
         !---------------------------------------------------------------------
         count = 0
         DO isweep=1,nsweep
-           DO color=0,1
+          DO color=0,1
+            a=0
+            b=0
+            c=0
+            d=0
+            DO isub=1,nsubs
+              !-------------------------------------------------------------
+              !Impose boundaries on even if color=0 or odd if color=1
+              !-------------------------------------------------------------
+              IF (.NOT.lperiodic) THEN
+                DO iface=1,4
+                  IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_periodic) THEN
+                    !DO NOTHING
+                  ELSEIF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
+                      IF (iface.EQ.1) THEN
+                          a(isub)=1
+                          IF (bcdef_sca(isub,2).EQ.0) THEN
+                            b(isub)=-1
+                          ENDIF
+                          i=1
+                          DO j=1,max_node(2,mlev)
+                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j)
+                          ENDDO
+                      ELSEIF (iface.EQ.2) THEN
+                          b(isub)=1
+                          IF (bcdef_sca(isub,1).EQ.0) THEN
+                            a(isub)=-1
+                          ENDIF
+                          i=max_node(1,mlev)
+                          DO j=1,max_node(2,mlev)
+                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j)
+                          enddo
+                      ELSEIF (iface.EQ.3) THEN
+                          c(isub)= 1
+                          IF (bcdef_sca(isub,4).EQ.0) THEN
+                            d(isub)=-1
+                          ENDIF
+                          j=1
+                          DO i=1,max_node(1,mlev)
+                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(i)
+                          ENDDO
+                      ELSEIF (iface.EQ.4) THEN
+                          d(isub)=1
+                          IF (bcdef_sca(isub,3).EQ.0) THEN
+                            c(isub)=-1
+                          ENDIF
+                          j=max_node(2,mlev)
+                          DO i=1,max_node(1,mlev)
+                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(i)
+                          ENDDO
+                      ENDIF !iface
+                    ENDIF !bckind
+                  ENDDO!iface
+                ENDIF !periodic
+              ENDDO!DO isub 
               !----------------------------------------------------------------
               !Communicate
               !----------------------------------------------------------------
@@ -364,12 +418,16 @@ dz=dz_d
 
               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,ghostsize,info)
             DO isub=1,nsubs
-              DO j=start(2,isub,1),istop(2,isub,1)
-                 DO i=start(1,isub,1)+mod(j+color,2),istop(1,isub,1),2
-                       u(i,j,isub)=c1*((u(i-1,j,isub)+&
-     &                                       u(i+1,j,isub))*c2 &
-     &                  +(u(i,j-1,isub)+u(i,j+1,isub))*c3 -  &
-     &                                             f(i,j,isub))
+              DO j=start(2,isub,1)+c(isub),istop(2,isub,1)-d(isub)
+                 DO i=start(1,isub,1)+mod(j+k+color,2)+a(isub), &
+     &                istop(1,isub,1)-b(isub)-mod(j+k+color,2),2
+                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
+     &                   (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
+                       u(i,j,isub)=u(i,j,isub) + omega*(c1*(  &
+                       &   (u(i-1,j,isub)+u(i+1,j,isub))*c2 + &
+                       &   (u(i,j-1,isub)+u(i,j+1,isub))*c3 - &
+                       &        f(i,j,isub)) - u(i,j,isub))
+                     ENDIF
                  ENDDO
               ENDDO
              ENDDO !isub
@@ -413,7 +471,7 @@ dz=dz_d
                       i=1
                        DO j=1,max_node(2,mlev)
                         DO k=1,max_node(3,mlev)
-                                u(i,j,k,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j,k)
+                           u(i,j,k,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j,k)
                         ENDDO
                        ENDDO
                     ELSEIF (iface.EQ.2) THEN
@@ -492,16 +550,13 @@ dz=dz_d
                     DO i=start(1,isub,1)+mod(j+k+color,2)+a(isub), &
      &                istop(1,isub,1)-b(isub)-mod(j+k+color,2),2
                         IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
-     & (j.GE.1.AND.j.LE.max_node(2,mlev)).AND.(k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
-                          moldu=u(i,j,k,isub)
-                          u(i,j,k,isub)=moldu+omega*&
-     &                     (&
-     &                        c1*((u(i-1,j,k,isub)+ &
-     &                                          u(i+1,j,k,isub))*c2 &
-     &                  +(u(i,j-1,k,isub)+u(i,j+1,k,isub))*c3 &
-     &                  +(u(i,j,k-1,isub)+u(i,j,k+1,isub))*c4- &
-     &                                                 f(i,j,k,isub))&
-     &-moldu)
+     &                      (j.GE.1.AND.j.LE.max_node(2,mlev)).AND. &
+     &                      (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
+                          u(i,j,k,isub) = u(i,j,k,isub)+omega*(&
+     &                       c1*((u(i-1,j,k,isub)+u(i+1,j,k,isub))*c2+ &
+     &                           (u(i,j-1,k,isub)+u(i,j+1,k,isub))*c3+ &
+     &                           (u(i,j,k-1,isub)+u(i,j,k+1,isub))*c4- &
+     &                               f(i,j,k,isub))-u(i,j,k,isub))
                       ENDIF
                     ENDDO
                 ENDDO

@@ -459,20 +459,73 @@
               CALL ppm_map_field_send(info)
               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          ghostsize,info)
+               a=0
+               b=0
+               c=0
+               d=0
                DO isub=1,nsubs
-                  tuc=>mgfield(isub,mlev)%uc
-                           tuc(:,:)=uc_dummy(&
-      &                         :,:,isub)
-                DO j=start(2,isub,mlev),istop(2,isub,mlev)
-                   DO i=start(1,isub,mlev)+mod(j+color,2),&
-                         &istop(1,isub,mlev),2
-                           tuc(i,j) = c1*(&
-      &                                   (tuc(i-1,j)+ &
-      &                                tuc(i+1,j))*c2 + &
-      &                                 (tuc(i,j-1)+&
-      &                                  tuc(i,j+1))*c3-&
-      &                                         mgfield(isub,mlev)%fc(i,j))
-                     ENDDO
+                 tuc=>mgfield(isub,mlev)%uc
+                 tuc(:,:)=uc_dummy(:,:,isub)
+                 IF (.NOT.lperiodic) THEN
+                   DO iface=1,4
+                       IF (bcdef_sca(isub,iface).EQ.&
+                       &   ppm_param_bcdef_periodic) THEN
+                       !DO NOTHING 
+                       ELSEIF (bcdef_sca(isub,iface).EQ.&
+                       &       ppm_param_bcdef_dirichlet) THEN
+                       IF (iface.EQ.1) THEN
+                           a(isub)=1
+                           IF (bcdef_sca(isub,2).EQ.0) THEN
+                               b(isub)=-1  
+                           ENDIF 
+                           i=1
+                           DO j=1,max_node(2,mlev)
+                               tuc(i,j)=0.0_MK
+                           ENDDO
+                       ELSEIF (iface.EQ.2) THEN
+                           b(isub)=1
+                           IF (bcdef_sca(isub,1).EQ.0) THEN
+                               a(isub)=-1  
+                           ENDIF 
+                           i=max_node(1,mlev)
+                           DO j=1,max_node(2,mlev)
+                               tuc(i,j)=0.0_MK
+                           enddo
+                       ELSEIF (iface.EQ.3) THEN
+                           c(isub)=1
+                           IF (bcdef_sca(isub,4).EQ.0) THEN
+                               d(isub)=-1  
+                           ENDIF 
+                           j=1
+                           DO i=1,max_node(1,mlev)
+                               tuc(i,j)=0.0_MK
+                           ENDDO
+                       ELSEIF (iface.EQ.4) THEN
+                           d(isub)=1
+                           IF (bcdef_sca(isub,3).EQ.0) THEN
+                             c(isub)=-1  
+                           ENDIF 
+                           j=max_node(2,mlev)
+                           DO i=1,max_node(1,mlev)
+                               tuc(i,j)=0.0_MK
+                           ENDDO
+                       ENDIF
+                     ENDIF
+                   ENDDO!iface 
+                 ENDIF 
+                 DO j=start(2,isub,mlev)+c(isub),istop(2,isub,mlev)-d(isub)
+                   DO i=start(1,isub,mlev)+mod(j+color,2)+a(isub), &
+      &                 istop(1,isub,mlev)-b(isub)-mod(j+color,2),2
+                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
+                         (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
+                          tuc(i,j) = tuc(i,j)+omega*(c1*( &
+      &                      (tuc(i-1,j)+tuc(i+1,j))*c2 + &
+      &                      (tuc(i,j-1)+tuc(i,j+1))*c3 + &
+      &                       mgfield(isub,mlev)%fc(i,j)) &
+      &                       -tuc(i,j)) 
+                     
+                      ENDIF
+                    ENDDO
                   ENDDO
                ENDDO!isub
                IF (isweep.EQ.nsweep) THEN   
@@ -555,21 +608,15 @@
               CALL ppm_map_field_send(info)
               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
         &                          ghostsize,info)
+               DO isub=1,nsubs
                  a=0
                  b=0
                  c=0
                  d=0
                  e=0
                  g=0
-               DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc  
-                    DO k=1-ghostsize(3),max_node(3,mlev)+ghostsize(3)
-                     DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
-                      DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
-                          tuc(i,j,k)=uc_dummy(i,j,k,isub)
-                      ENDDO
-                     ENDDO
-                   ENDDO
+                  tuc(:,:,:)=uc_dummy(:,:,:,isub)
                  IF (.NOT.lperiodic) THEN
                   DO iface=1,6
                    IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_periodic) THEN
@@ -649,19 +696,16 @@
                      DO j=start(2,isub,mlev)+c(isub),istop(2,isub,mlev)-d(isub)
                         DO i=start(1,isub,mlev)+mod(j+k+color,2)+a(isub), &
       &                     istop(1,isub,mlev)-b(isub)-mod(j+k+color,2),2
-                          IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.(j.GE.1.AND.j.LE.max_node(2,mlev)) &
-      &                     .AND.(k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
-                              moldu=tuc(i,j,k)
-                              tuc(i,j,k) = moldu+&
-      &                             omega*(&
-      &                             c1*((tuc(i-1,j,k)+ &
-      &                            tuc(i+1,j,k))*c2 + &
-      &                                 (tuc(i,j-1,k)+&
-      &                            tuc(i,j+1,k))*c3 + &
-      &                           (tuc(i,j,k-1)+&
-      &                            tuc(i,j,k+1))*c4 - &
-      &                                    mgfield(isub,mlev)%fc(i,j,k))&
-      &                            -moldu) 
+                          IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
+                          &   (j.GE.1.AND.j.LE.max_node(2,mlev)).AND.&
+                          &   (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
+                              tuc(i,j,k) = tuc(i,j,k)+&
+      &                             omega*(c1*( &
+      &                            (tuc(i-1,j,k)+tuc(i+1,j,k))*c2 + &
+      &                            (tuc(i,j-1,k)+tuc(i,j+1,k))*c3 + &
+      &                            (tuc(i,j,k-1)+tuc(i,j,k+1))*c4 - &
+      &                             mgfield(isub,mlev)%fc(i,j,k))   &
+      &                            -tuc(i,j,k)) 
                          ENDIF
                         ENDDO
                      ENDDO

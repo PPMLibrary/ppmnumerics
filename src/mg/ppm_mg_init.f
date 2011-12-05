@@ -122,24 +122,46 @@
 #endif
 #if __DIM == __SFIELD
          INTEGER,DIMENSION(:)                               ::  ibcdef
-         !!! Boundary conditions
+         !!! Boundary condition types. Any of
+         !!!
+         !!! * ppm_param_bcdef_periodic
+         !!! * ppm_param_bcdef_dirichlet
 #if __MESH_DIM == __2D
          REAL(MK),DIMENSION(:,:,:)                          ::  bcvalue
 #elif __MESH_DIM == __3D
          REAL(MK),DIMENSION(:,:,:,:)                        ::  bcvalue
 #endif  
+         !!! Boundary condition values to be used.
+         !!!
+         !!! In the case of periodic BC, the content of bcvalue is ignored
+         !!! The indeces (and their sizes) are (4. only in 3D):
+         !!!
+         !!! 1. isub (nsublist)
+         !!! 2. dim (2*ppm_dim) (west,east,south,north,bottom,top)
+         !!! 3. index1 (maximum extent of field in any direction)
+         !!! 4. (index2 (maximum extent of field in any direction))
 #elif __DIM == __VFIELD
          INTEGER,DIMENSION(:,:)                               ::  ibcdef
-         !!! Boundary conditions
+         !!! Boundary condition types. Any of
+         !!!
+         !!! * ppm_param_bcdef_periodic
+         !!! * ppm_param_bcdef_dirichlet
 #if __MESH_DIM == __2D
          REAL(MK),DIMENSION(:,:,:,:)                          ::  bcvalue
 #elif __MESH_DIM == __3D
          REAL(MK),DIMENSION(:,:,:,:,:)                        ::  bcvalue
 #endif
-#endif
          !!! Boundary condition values to be used.
          !!!
          !!! In the case of periodic BC, the content of bcvalue is ignored
+         !!! The indeces (and their sizes) are (5. only in 3D):
+         !!!
+         !!! 1. vector index
+         !!! 2. isub (nsublist)
+         !!! 3. dim (2*ppm_dim) (west,east,south,north,bottom,top)
+         !!! 4. index1 (maximum extent of field in any direction)
+         !!! 5. (index2 (maximum extent of field in any direction))
+#endif
          INTEGER,INTENT(IN)                                 :: limlev
          !!! Number of levels to coarsen.
          LOGICAL,INTENT(IN)                                 :: wcycle
@@ -363,16 +385,16 @@
       &       lmyeps*(max_sub(2,idom)-min_sub(2,idom))) THEN
              bcdef_sca(isub,4)=ibcdef(4)
           ENDIF
-          !-----------------------------------------------------------------
-          !  compare the south boundary
-          !---------------------------------------------------------------------
 #if __MESH_DIM == __3D
+          !-----------------------------------------------------------------
+          !  compare the bottom boundary
+          !---------------------------------------------------------------------
           IF (ABS(min_sub(3,idom)-min_phys(3)) .LT. &
       &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
              bcdef_sca(isub,5)=ibcdef(5)
           ENDIF
           !---------------------------------------------------------------------
-          !  compare the north boundary
+          !  compare the top boundary
           !---------------------------------------------------------------------
           IF (ABS(max_sub(3,idom)-max_phys(3)) .LT. &
       &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
@@ -435,14 +457,14 @@
           ENDIF
 #if __MESH_DIM == __3D
           !-----------------------------------------------------------------
-          !  compare the south boundary
+          !  compare the bottom boundary
           !---------------------------------------------------------------------
           IF (ABS(min_sub(3,idom)-min_phys(3)) .LT. &
       &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
              bcdef_vec(ilda,isub,5)=ibcdef(ilda,5)
           ENDIF
           !---------------------------------------------------------------------
-          !  compare the north boundary
+          !  compare the top boundary
           !---------------------------------------------------------------------
           IF (ABS(max_sub(3,idom)-max_phys(3)) .LT. &
       &       lmyeps*(max_sub(3,idom)-min_sub(3,idom))) THEN
