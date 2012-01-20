@@ -329,6 +329,10 @@ MODULE ppm_module_data_mg
   !-----------------------------------------------------------------------------
   INTEGER,  DIMENSION(:,:,:), POINTER  :: start => NULL()
   !-----------------------------------------------------------------------------
+  ! Global starting index for the iteration through the mesh points. 
+  !-----------------------------------------------------------------------------
+  INTEGER,  DIMENSION(:,:,:), POINTER  :: istart => NULL()
+  !-----------------------------------------------------------------------------
   !Stopping index for the iteration through the mesh points.
   !-----------------------------------------------------------------------------
   INTEGER,  DIMENSION(:,:,:), POINTER  :: istop  => NULL()

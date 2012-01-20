@@ -686,6 +686,16 @@
       &        'Problem with a maximum number alloc.',__LINE__,info)
             GOTO 9999
          ENDIF
+         ldu3(1) = ppm_dim
+         ldu3(2) = nsubs
+         ldu3(3) = maxlev
+         CALL ppm_alloc(istart,ldu3,iopt,info)
+         IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_poiss_mg_init',    &
+      &        'Problem with istart alloc.',__LINE__,info)
+            GOTO 9999
+         ENDIF
          max_node(:,:) = 0
 
          lboundary(:,:) = .FALSE.
@@ -703,6 +713,7 @@
            DO i=1,nsubs
               idom=topo%isublist(i)
               istop(:,i,mlev)= mesh%nnodes(:,idom)
+              istart(:,i,mlev) = mesh%istart(:,isub)
               DO j=1,ppm_dim
                  IF (max_node(j,mlev).LT.istop(j,i,mlev)) THEN
                     max_node(j,mlev)=istop(j,i,mlev)  
@@ -853,6 +864,7 @@
            DO i=1,nsubs
               idom=topo%isublist(i)
               istop(:,i,mlev) = mesh%nnodes(:,idom)
+              istart(:,i,mlev) = mesh%istart(:,isub)
               DO j=1,ppm_dim
                  IF (max_node(j,mlev).LT.istop(j,i,mlev)) THEN
                     max_node(j,mlev)=istop(j,i,mlev)  

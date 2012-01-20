@@ -27,71 +27,6 @@
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
       !------------------------------------------------------------------------ 
- !                  
- !  
- !  Input        : nsweep      (I) number of iterations(sweeps)
- !  Input/output :
- ! 
- !  Output       : info        (I) return status. 0 upon success
- !
- !  Remarks      :
- !
- !  References   :
- !
- !  Revisions    :
- !------------------------------------------------------------------------------
- !  $Log: ppm_mg_smooth_coarse.f,v $
- !  Revision 1.1.1.1  2007/07/13 10:18:56  ivos
- !  CBL version of the PPM library
- !
- !  Revision 1.15  2006/09/26 16:01:24  ivos
- !  Fixed wrongly indented CPP directives. Remember: they have to start in
- !  Col 1, otherwise it does not compile on certain systems. In fact, this
- !  code did NOT compile as it was!!
- !
- !  Revision 1.14  2006/07/21 11:30:55  kotsalie
- !  FRIDAY
- !
- !  Revision 1.12  2006/02/08 19:55:05  kotsalie
- !  fixed multiple subdomains
- !
- !  Revision 1.11  2006/02/02 17:59:45  michaebe
- !  corrected a bug in the log comment
- !
- !  Revision 1.10  2006/02/02 16:33:19  kotsalie
- !  corrected for mixed bc''s
- !
- !  Revision 1.9  2005/12/08 12:44:46  kotsalie
- !  commiting dirichlet
- !
- !  Revision 1.8  2005/03/14 13:27:32  kotsalie
- !  COMMITED THE VECTOR CASE. IT IS FOR LDA=3
- !
- !  Revision 1.7  2005/01/04 09:45:29  kotsalie
- !  ghostsize=2
- !
- !  Revision 1.6  2004/11/05 18:09:49  kotsalie
- !  FINAL FEATURE BEFORE TEST.I DO NOT USE MASKS
- !
- !  Revision 1.4  2004/10/29 15:59:31  kotsalie
- !  RED BLACK SOR
- !
- !  Revision 1.3  2004/09/28 14:05:31  kotsalie
- !  Changes concernig 4th order finite differences
- !
- !  Revision 1.2  2004/09/23 12:16:49  kotsalie
- !  Added USE statement
- !
- !  Revision 1.1  2004/09/22 18:42:39  kotsalie
- !  MG new version
- !
- !
- !----------------------------------------------------------------------------
- !  Parallel Particle Mesh Library (PPM)
- !  Institute of Computational Science
- !  ETH Zentrum, Hirschengraben 84
- !  CH-8092 Zurich, Switzerland
- !-----------------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if    __KIND == __SINGLE_PRECISION
@@ -170,7 +105,9 @@
          !  Local variables 
          !----------------------------------------------------------------------
          CHARACTER(LEN=256) :: cbuf
-         INTEGER                                    ::  i,j,isub,color
+         INTEGER                                    ::  i,j,isub,color,colos
+         INTEGER,DIMENSION(:,:),POINTER             ::  lorig => NULL()
+         INTEGER,DIMENSION(:,:),POINTER             ::  lext => NULL()
          INTEGER,DIMENSION(:),POINTER               ::  a => NULL()
          INTEGER,DIMENSION(:),POINTER               ::  b => NULL()
          INTEGER,DIMENSION(:),POINTER               ::  c => NULL()
@@ -183,6 +120,7 @@
          REAL(MK)                                   ::  x,y,dx,dy
          REAL(MK)                                   ::  omega
          INTEGER,DIMENSION(1)                       ::  ldu1,ldl1
+         INTEGER,DIMENSION(2)                       ::  ldu2
 #if __MESH_DIM == __2D
          INTEGER,DIMENSION(4)                       ::  ldl4,ldu4
          INTEGER,DIMENSION(3)                       ::  ldl3,ldu3
@@ -225,15 +163,15 @@
 #endif
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-         REAL(MK),DIMENSION(:,:,:),POINTER :: uc_dummy   => NULL()
+         REAL(MK),DIMENSION(:,:,:),POINTER :: uc   => NULL()
 #elif __MESH_DIM == __3D
-         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy   => NULL()
+         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc   => NULL()
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
-         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy   => NULL()
+         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc   => NULL()
 #elif __MESH_DIM == __3D
-         REAL(MK),DIMENSION(:,:,:,:,:),POINTER :: uc_dummy   => NULL()
+         REAL(MK),DIMENSION(:,:,:,:,:),POINTER :: uc   => NULL()
 #endif
 #endif
 #if __DIM == __SFIELD
@@ -378,6 +316,23 @@
 #endif
 #endif
 #endif
+            iopt = ppm_param_alloc_fit
+            ldu2(1) = ppm_dim
+            ldu2(2) = nsubs
+            CALL ppm_alloc(lorig,ldu2,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'origi',__LINE__,info)
+            GOTO 9999
+            ENDIF
+            CALL ppm_alloc(lext,ldu2,iopt,info)
+            IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
+      &                       'origi',__LINE__,info)
+            GOTO 9999
+            ENDIF
              iopt = ppm_param_alloc_fit
              ldl1(1) = 1
              ldu1(1) = nsubs
@@ -423,6 +378,8 @@
        &                       'g',__LINE__,info)
              GOTO 9999
              ENDIF
+            lorig=0
+            lext=0
 #if  __DIM == __SFIELD
 #if  __MESH_DIM == __2D
          !----------------------------------------------------------------------
@@ -435,135 +392,95 @@
              ldu3(1) = max_node(1,mlev)+ghostsize(1)
              ldu3(2) = max_node(2,mlev)+ghostsize(2)
              ldu3(3) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
+             CALL ppm_alloc(uc,ldl3,ldu3,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+       &                       'uc',__LINE__,info)
              GOTO 9999
              ENDIF
-         DO isweep=1,nsweep
-            DO color=0,1
-               DO isub=1,nsubs
-                  tuc=>mgfield(isub,mlev)%uc
-                  uc_dummy(:,:,isub)=tuc(:,:)
-               ENDDO!DO isub 
+             ! write data from mgfield DS to temporary uc field
+             DO isub=1,nsubs
+               tuc=>mgfield(isub,mlev)%uc
+               uc(:,:,isub)=tuc(:,:)
+             ENDDO
+             DO isweep=1,nsweep
+               DO color=0,1
+                DO isub=1,nsubs
+                DO iface=1,4
+                  IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
+                      IF (iface.EQ.1) THEN
+                          i=1
+                          DO j=1,max_node(2,mlev)
+                            uc(i,j,isub)=0.0_MK
+                          ENDDO
+                      ELSEIF (iface.EQ.2) THEN
+                          i=max_node(1,mlev)
+                          DO j=1,max_node(2,mlev)
+                            uc(i,j,isub)=0.0_MK
+                          enddo
+                      ELSEIF (iface.EQ.3) THEN
+                          j=1
+                          DO i=1,max_node(1,mlev)
+                            uc(i,j,isub)=0.0_MK
+                          ENDDO
+                      ELSEIF (iface.EQ.4) THEN
+                          j=max_node(2,mlev)
+                          DO i=1,max_node(1,mlev)
+                            uc(i,j,isub)=0.0_MK
+                          ENDDO
+                      ENDIF !iface
+                  ENDIF !bckind
+                ENDDO!iface
+                ENDDO!DO isub 
                !----------------------------------------------------------------
                !Communicate
                !----------------------------------------------------------------
 
-              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
-        &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
-        &                         info)
-              CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
-        &                          ghostsize,info)
-               a=0
-               b=0
-               c=0
-               d=0
-               DO isub=1,nsubs
-                 tuc=>mgfield(isub,mlev)%uc
-                 tuc(:,:)=uc_dummy(:,:,isub)
-                 IF (.NOT.lperiodic) THEN
-                   DO iface=1,4
-                       IF (bcdef_sca(isub,iface).EQ.&
-                       &   ppm_param_bcdef_periodic) THEN
-                       !DO NOTHING 
-                       ELSEIF (bcdef_sca(isub,iface).EQ.&
-                       &       ppm_param_bcdef_dirichlet) THEN
-                       IF (iface.EQ.1) THEN
-                           a(isub)=1
-                           IF (bcdef_sca(isub,2).EQ.0) THEN
-                               b(isub)=-1  
-                           ENDIF 
-                           i=1
-                           DO j=1,max_node(2,mlev)
-                               tuc(i,j)=0.0_MK
-                           ENDDO
-                       ELSEIF (iface.EQ.2) THEN
-                           b(isub)=1
-                           IF (bcdef_sca(isub,1).EQ.0) THEN
-                               a(isub)=-1  
-                           ENDIF 
-                           i=max_node(1,mlev)
-                           DO j=1,max_node(2,mlev)
-                               tuc(i,j)=0.0_MK
-                           enddo
-                       ELSEIF (iface.EQ.3) THEN
-                           c(isub)=1
-                           IF (bcdef_sca(isub,4).EQ.0) THEN
-                               d(isub)=-1  
-                           ENDIF 
-                           j=1
-                           DO i=1,max_node(1,mlev)
-                               tuc(i,j)=0.0_MK
-                           ENDDO
-                       ELSEIF (iface.EQ.4) THEN
-                           d(isub)=1
-                           IF (bcdef_sca(isub,3).EQ.0) THEN
-                             c(isub)=-1  
-                           ENDIF 
-                           j=max_node(2,mlev)
-                           DO i=1,max_node(1,mlev)
-                               tuc(i,j)=0.0_MK
-                           ENDDO
-                       ENDIF
-                     ENDIF
-                   ENDDO!iface 
-                 ENDIF 
-                 DO j=start(2,isub,mlev)+c(isub),istop(2,isub,mlev)-d(isub)
-                   DO i=start(1,isub,mlev)+mod(j+color,2)+a(isub), &
-      &                 istop(1,isub,mlev)-b(isub)-mod(j+color,2),2
-                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
-                         (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
-                          tuc(i,j) = tuc(i,j)+omega*(c1*( &
-      &                      (tuc(i-1,j)+tuc(i+1,j))*c2 + &
-      &                      (tuc(i,j-1)+tuc(i,j+1))*c3 + &
-      &                       mgfield(isub,mlev)%fc(i,j)) &
-      &                       -tuc(i,j)) 
-                     
-                      ENDIF
-                    ENDDO
-                  ENDDO
-               ENDDO!isub
-               IF (isweep.EQ.nsweep) THEN   
-                IF (color.EQ.1) THEN
-                 DO isub=1,nsubs
-                  tuc=>mgfield(isub,mlev)%uc
-                  uc_dummy(:,:,isub)=tuc(:,:) 
-                 ENDDO   
-                ENDIF
-               ENDIF
-              ENDDO!DO color   
-              IF (isweep.EQ.nsweep) THEN
                CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
-        &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
-        &                         info)
-              CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
-        &                          ghostsize,info)
+               &                         ghostsize,info)
+               CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
+               &                         info)
+               CALL ppm_map_field_send(info)
+               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
+               &                          ghostsize,info)
                DO isub=1,nsubs
-                  tuc=>mgfield(isub,mlev)%uc
-                           tuc(:,:)=uc_dummy(&
-      &                         :,:,isub)
-               ENDDO  
-             ENDIF
-            ENDDO!DO nsweep
+              DO j=lorig(2,isub),lext(2,isub)
+                 DO i=lorig(1,isub)+mod(j+color,2), &
+                    & lext(1,isub)-mod(j+color,2),2
+                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
+                     (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
+                     uc(i,j,isub) = uc(i,j,isub)+omega*(c1*( &
+                     &  (uc(i-1,j,isub)+uc(i+1,j,isub))*c2 + &
+                     &  (uc(i,j-1,isub)+uc(i,j+1,isub))*c3 + &
+                     &           mgfield(isub,mlev)%fc(i,j)) &
+                     &                        -uc(i,j,isub)) 
+
+                   ENDIF
+                 ENDDO
+               ENDDO
+             ENDDO!isub
+           ENDDO!DO color   
+           IF (isweep.EQ.nsweep) THEN
+             CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
+             &                         ghostsize,info)
+             CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
+             &                         info)
+             CALL ppm_map_field_send(info)
+             CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
+             &                          ghostsize,info)
+           ENDIF
+         ENDDO!DO nsweep
+         DO isub=1,nsubs
+           tuc=>mgfield(isub,mlev)%uc
+           tuc(:,:)=uc(:,:,isub)
+         ENDDO  
              iopt = ppm_param_dealloc
-             ldl3(1) = 1-ghostsize(1)
-             ldl3(2) = 1-ghostsize(2)
-             ldl3(3) = 1
-             ldu3(1) = max_node(1,mlev)+ghostsize(1)
-             ldu3(2) = max_node(2,mlev)+ghostsize(2)
-             ldu3(3) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
+             CALL ppm_alloc(uc,ldl3,ldu3,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+       &                       'uc',__LINE__,info)
              GOTO 9999
              ENDIF
 #elif __MESH_DIM == __3D
@@ -579,191 +496,124 @@
              ldu4(2) = max_node(2,mlev)+ghostsize(2)
              ldu4(3) = max_node(3,mlev)+ghostsize(3)
              ldu4(4) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
+             CALL ppm_alloc(uc,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+       &                       'uc',__LINE__,info)
              GOTO 9999
              ENDIF
+             ! write data from mgfield DS to temporary uc field
+             DO isub=1,nsubs
+               tuc=>mgfield(isub,mlev)%uc
+               uc(:,:,:,isub)=tuc(:,:,:)
+             ENDDO
          DO isweep=1,nsweep 
             DO color=0,1
-               DO isub=1,nsubs
-                  tuc=>mgfield(isub,mlev)%uc  
-                    DO k=1-ghostsize(3),max_node(3,mlev)+ghostsize(3)
-                     DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
-                      DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
-                        uc_dummy(i,j,k,isub)=tuc(i,j,k)
-                      ENDDO
-                     ENDDO
-                    ENDDO
-               ENDDO!DO isub 
+                DO isub=1,nsubs
+                DO iface=1,6
+                  IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
+                      IF (iface.EQ.1) THEN
+                          i=1
+                          DO k=1,max_node(3,mlev)
+                            DO j=1,max_node(2,mlev)
+                              uc(i,j,k,isub)=0.0_MK
+                            ENDDO
+                          ENDDO
+                      ELSEIF (iface.EQ.2) THEN
+                          i=max_node(1,mlev)
+                          DO k=1,max_node(3,mlev)
+                            DO j=1,max_node(2,mlev)
+                              uc(i,j,k,isub)=0.0_MK
+                            ENDDO
+                          ENDDO
+                      ELSEIF (iface.EQ.3) THEN
+                          j=1
+                          DO k=1,max_node(3,mlev)
+                            DO i=1,max_node(1,mlev)
+                              uc(i,j,k,isub)=0.0_MK
+                            ENDDO
+                          ENDDO
+                      ELSEIF (iface.EQ.4) THEN
+                          j=max_node(2,mlev)
+                          DO k=1,max_node(3,mlev)
+                            DO i=1,max_node(1,mlev)
+                              uc(i,j,k,isub)=0.0_MK
+                            ENDDO
+                          ENDDO
+                      ELSEIF (iface.EQ.5) THEN
+                          k=1
+                          DO j=1,max_node(2,mlev)
+                            DO i=1,max_node(1,mlev)
+                              uc(i,j,k,isub)=0.0_MK
+                            ENDDO
+                          ENDDO
+                      ELSEIF (iface.EQ.6) THEN
+                          k=max_node(3,mlev)
+                          DO j=1,max_node(2,mlev)
+                            DO i=1,max_node(1,mlev)
+                              uc(i,j,k,isub)=0.0_MK
+                            ENDDO
+                          ENDDO
+                      ENDIF !iface
+                  ENDIF !bckind
+                ENDDO!iface
+                ENDDO!DO isub 
                !----------------------------------------------------------------
                !Communicate
                !----------------------------------------------------------------
               CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
         &                         info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
         &                          ghostsize,info)
-               DO isub=1,nsubs
-                 a=0
-                 b=0
-                 c=0
-                 d=0
-                 e=0
-                 g=0
-                  tuc=>mgfield(isub,mlev)%uc  
-                  tuc(:,:,:)=uc_dummy(:,:,:,isub)
-                 IF (.NOT.lperiodic) THEN
-                  DO iface=1,6
-                   IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_periodic) THEN
-                    !DO NOTHING 
-                   ELSEIF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
-                     IF (iface.EQ.1) THEN
-                        a(isub)=1
-                        IF (bcdef_sca(isub,2).EQ.0) THEN
-                         b(isub)=-1  
-                        ENDIF 
-                       i=1
-                        DO j=1,max_node(2,mlev)
-                         DO k=1,max_node(3,mlev)
-                           tuc(i,j,k)=0.0_MK
-                         enddo
-                        ENDDO
-                     ELSEIF (iface.EQ.2) THEN
-                        b(isub)=1
-                        IF (bcdef_sca(isub,1).EQ.0) THEN
-                         a(isub)=-1  
-                        ENDIF 
-                       i=max_node(1,mlev)
-                        DO j=1,max_node(2,mlev)
-                         DO k=1,max_node(3,mlev)
-                          tuc(i,j,k)=0.0_MK
-                         ENDDO
-                        enddo
-                     ELSEIF (iface.EQ.3) THEN
-                       c(isub)=1
-                        IF (bcdef_sca(isub,4).EQ.0) THEN
-                         d(isub)=-1  
-                        ENDIF 
-                       j=1
-                        DO i=1,max_node(1,mlev)
-                         Do k=1,max_node(3,mlev)
-                          tuc(i,j,k)=0.0_MK
-                         enddo
-                        ENDDO
-                     ELSEIF (iface.EQ.4) THEN
-                       d(isub)=1
-                        IF (bcdef_sca(isub,3).EQ.0) THEN
-                         c(isub)=-1  
-                        ENDIF 
-                       j=max_node(2,mlev)
-                        DO i=1,max_node(1,mlev)
-                         Do k=1,max_node(3,mlev)
-                          tuc(i,j,k)=0.0_MK
-                         enddo
-                        ENDDO
-                     ELSEIF (iface.EQ.5) Then
-                       e(isub)=1
-                        IF (bcdef_sca(isub,6).EQ.0) THEN
-                         g(isub)=-1  
-                        ENDIF 
-                       k=1
-                        DO i=1,max_node(1,mlev)
-                         Do j=1,max_node(2,mlev)
-                          tuc(i,j,k)=0.0_MK
-                         enddo
-                        ENDDO
-                              ELSEIF (iface.EQ.6) Then
-                       g(isub)=1
-                        IF (bcdef_sca(isub,5).EQ.0) THEN
-                         e(isub)=-1  
-                        ENDIF 
-                        k=max_node(3,mlev)
-                                DO i=1,max_node(1,mlev) 
-                                 Do j=1,max_node(2,mlev)
-                          tuc(i,j,k)=0.0_MK
-                                     enddo
-                        ENDDO
-                               endif                  
-                  ENDIF 
-                 ENDDO!iface 
-                ENDIF 
-                  DO k=start(3,isub,mlev)+e(isub),istop(3,isub,mlev)-g(isub) 
-                     DO j=start(2,isub,mlev)+c(isub),istop(2,isub,mlev)-d(isub)
-                        DO i=start(1,isub,mlev)+mod(j+k+color,2)+a(isub), &
-      &                     istop(1,isub,mlev)-b(isub)-mod(j+k+color,2),2
-                          IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
-                          &   (j.GE.1.AND.j.LE.max_node(2,mlev)).AND.&
-                          &   (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
-                              tuc(i,j,k) = tuc(i,j,k)+&
-      &                             omega*(c1*( &
-      &                            (tuc(i-1,j,k)+tuc(i+1,j,k))*c2 + &
-      &                            (tuc(i,j-1,k)+tuc(i,j+1,k))*c3 + &
-      &                            (tuc(i,j,k-1)+tuc(i,j,k+1))*c4 - &
-      &                             mgfield(isub,mlev)%fc(i,j,k))   &
-      &                            -tuc(i,j,k)) 
-                         ENDIF
-                        ENDDO
-                     ENDDO
-                  ENDDO
-               ENDDO!isubs   
-                   IF (isweep.EQ.nsweep) THEN  
-                     IF (color.EQ.1) THEN
-                      DO isub=1,nsubs
-                       tuc=>mgfield(isub,mlev)%uc  
-                       DO k=1-ghostsize(3),max_node(3,mlev)+ghostsize(3)
-                        DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
-                         DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
-                          uc_dummy(i,j,k,isub)=tuc(i,j,k)
-                         ENDDO
-                        ENDDO
-                       ENDDO
+                  
+              DO isub=1,nsubs
+                DO k=lorig(3,isub),lext(3,isub)
+                  DO j=lorig(2,isub),lext(2,isub)
+                    DO i=lorig(1,isub)+mod(j+color,2), &
+                      & lext(1,isub)-mod(j+color,2),2
+                      IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
+                      &   (j.GE.1.AND.j.LE.max_node(2,mlev)).AND.&
+                      &   (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
+                      uc(i,j,k,isub) = uc(i,j,k,isub)+omega*(c1*( &
+                      &  (uc(i-1,j,k,isub)+uc(i+1,j,k,isub))*c2 + &
+                      &  (uc(i,j-1,k,isub)+uc(i,j+1,k,isub))*c3 + &
+                      &  (uc(i,j,k-1,isub)+uc(i,j,k+1,isub))*c4 + &
+                      &           mgfield(isub,mlev)%fc(i,j,k)) &
+                      &                        -uc(i,j,k,isub)) 
 
-                     ENDDO!isub
-                    ENDIF
-                  ENDIF
-           ENDDO!DO color
+                      ENDIF
+                    ENDDO
+                  ENDDO
+                ENDDO
+              ENDDO!isub
+            ENDDO!DO color
                IF (isweep.EQ.nsweep) THEN
                 CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-                CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
+                CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
         &                         info)
                 CALL ppm_map_field_send(info)
 
-                CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
+                CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
         &                          ghostsize,info)
                ENDIF
-               DO isub=1,nsubs
-                  tuc=>mgfield(isub,mlev)%uc  
-                    DO k=1-ghostsize(3),max_node(3,mlev)+ghostsize(3)
-                     DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
-                      DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
-                          tuc(i,j,k)=uc_dummy(i,j,k,isub)
-                      ENDDO
-                     ENDDO
-                   ENDDO
-               ENDDO!isub
-         ENDDO!Do isweep
-             iopt = ppm_param_dealloc
-             ldl4(1) = 1-ghostsize(1)
-             ldl4(2) = 1-ghostsize(2)
-             ldl4(3) = 1-ghostsize(3)
-             ldl4(4) = 1
-             ldu4(1) = max_node(1,mlev)+ghostsize(1)
-             ldu4(2) = max_node(2,mlev)+ghostsize(2)
-             ldu4(3) = max_node(3,mlev)+ghostsize(3)
-             ldu4(4) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
-             IF (info .NE. 0) THEN
+           ENDDO!Do isweep
+           DO isub=1,nsubs
+             tuc=>mgfield(isub,mlev)%uc
+             tuc(:,:,:)=uc(:,:,:,isub)
+           ENDDO  
+           iopt = ppm_param_dealloc
+           CALL ppm_alloc(uc,ldl4,ldu4,iopt,info)
+           IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+             &                       'uc',__LINE__,info)
              GOTO 9999
-             ENDIF
+           ENDIF
 #endif
 #elif __DIM == __VFIELD
 #if  __MESH_DIM == __2D
@@ -779,32 +629,32 @@
              ldu4(2) = max_node(1,mlev)+ghostsize(1)
              ldu4(3) = max_node(2,mlev)+ghostsize(2)
              ldu4(4) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
+             CALL ppm_alloc(uc,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+       &                       'uc',__LINE__,info)
              GOTO 9999
              ENDIF
          DO isweep=1,nsweep
             DO color=0,1
                DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc
-                  uc_dummy(:,:,:,isub)=tuc(:,:,:)
+                  uc(:,:,:,isub)=tuc(:,:,:)
                ENDDO!DO isub 
                !----------------------------------------------------------------
                !Communicate 
                !----------------------------------------------------------------
                CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
         &                         vecdim,info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
         &                          vecdim,ghostsize,info)
                DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc
-                  tuc(:,:,:)=uc_dummy(&
+                  tuc(:,:,:)=uc(&
       &                         :,:,:,isub)
                   DO j=start(2,isub,mlev),istop(2,isub,mlev)
                      DO i=start(1,isub,mlev)+mod(j+color,2),istop(1,isub,mlev),2
@@ -823,7 +673,7 @@
                      IF (color.EQ.1) THEN
                       DO isub=1,nsubs
                        tuc=>mgfield(isub,mlev)%uc
-                       uc_dummy(:,:,:,isub)=tuc(:,:,:)
+                       uc(:,:,:,isub)=tuc(:,:,:)
                       ENDDO
                      ENDIF
                     ENDIF
@@ -831,14 +681,14 @@
               IF (isweep.EQ.nsweep) THEN
               CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
         &                         vecdim,info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
         &                          vecdim,ghostsize,info)
                DO isub=1,nsubs
                   tuc=>mgfield(isub,mlev)%uc
-                  tuc(:,:,:)=uc_dummy(:,:,:,isub)
+                  tuc(:,:,:)=uc(:,:,:,isub)
                ENDDO
               ENDIF 
          ENDDO!DO nsweep
@@ -851,11 +701,11 @@
              ldu4(2) = max_node(1,mlev)+ghostsize(1)
              ldu4(3) = max_node(2,mlev)+ghostsize(2)
              ldu4(4) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
+             CALL ppm_alloc(uc,ldl4,ldu4,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+       &                       'uc',__LINE__,info)
              GOTO 9999
              ENDIF
 #elif __MESH_DIM == __3D
@@ -873,11 +723,11 @@
              ldu5(3) = max_node(2,mlev)+ghostsize(2)
              ldu5(4) = max_node(3,mlev)+ghostsize(3)
              ldu5(5) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
+             CALL ppm_alloc(uc,ldl5,ldu5,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+       &                       'uc',__LINE__,info)
              GOTO 9999
              ENDIF
             iopt = ppm_param_alloc_fit
@@ -900,12 +750,12 @@
                     DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
                       DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
 #ifdef __VECTOR
-                        uc_dummy(1,i,j,k,isub)=tuc(1,i,j,k)
-                        uc_dummy(2,i,j,k,isub)=tuc(2,i,j,k)
-                        uc_dummy(3,i,j,k,isub)=tuc(3,i,j,k)
+                        uc(1,i,j,k,isub)=tuc(1,i,j,k)
+                        uc(2,i,j,k,isub)=tuc(2,i,j,k)
+                        uc(3,i,j,k,isub)=tuc(3,i,j,k)
 #else
                        DO ilda=1,vecdim 
-                        uc_dummy(ilda,i,j,k,isub)=tuc(ilda,i,j,k)
+                        uc(ilda,i,j,k,isub)=tuc(ilda,i,j,k)
                        ENDDO 
 #endif
                       ENDDO
@@ -917,10 +767,10 @@
                !----------------------------------------------------------------
                CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-               CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
+               CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
         &                         vecdim,info)
                CALL ppm_map_field_send(info)
-               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
+               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
         &                          vecdim,ghostsize,info)
                  a=0
                  b=0
@@ -934,12 +784,12 @@
                      DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
                       DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
 #ifdef __VECTOR
-                          tuc(1,i,j,k)=uc_dummy(1,i,j,k,isub)
-                          tuc(2,i,j,k)=uc_dummy(2,i,j,k,isub)
-                          tuc(3,i,j,k)=uc_dummy(3,i,j,k,isub)
+                          tuc(1,i,j,k)=uc(1,i,j,k,isub)
+                          tuc(2,i,j,k)=uc(2,i,j,k,isub)
+                          tuc(3,i,j,k)=uc(3,i,j,k,isub)
 #else
                        DO ilda=1,vecdim 
-                          tuc(ilda,i,j,k)=uc_dummy(ilda,i,j,k,isub)
+                          tuc(ilda,i,j,k)=uc(ilda,i,j,k,isub)
                        ENDDO
 #endif
                       ENDDO
@@ -1096,7 +946,7 @@
                          DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
                            DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
                              DO ilda=1,vecdim 
-                                 uc_dummy(ilda,i,j,k,isub)=tuc(ilda,i,j,k)
+                                 uc(ilda,i,j,k,isub)=tuc(ilda,i,j,k)
                              ENDDO 
                            ENDDO
                          ENDDO
@@ -1109,10 +959,10 @@
           IF (isweep.EQ.nsweep) THEN
               CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
         &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_push(topoid,mg_meshid(mlev),uc,&
         &                         vecdim,info)
               CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc_dummy,&
+              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
         &                          vecdim,ghostsize,info)
                    DO isub=1,nsubs 
                     tuc=>mgfield(isub,mlev)%uc
@@ -1120,7 +970,7 @@
                      DO j=1-ghostsize(2),max_node(2,mlev)+ghostsize(2)
                       DO i=1-ghostsize(1),max_node(1,mlev)+ghostsize(1)
                        DO ilda=1,vecdim 
-                          tuc(ilda,i,j,k)=uc_dummy(ilda,i,j,k,isub)
+                          tuc(ilda,i,j,k)=uc(ilda,i,j,k,isub)
                        ENDDO
                       ENDDO
                      ENDDO
@@ -1139,11 +989,11 @@
              ldu5(4) = max_node(2,mlev)+ghostsize(2)
              ldu5(4) = max_node(3,mlev)+ghostsize(3)
              ldu5(5) = nsubs
-             CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
+             CALL ppm_alloc(uc,ldl5,ldu5,iopt,info)
              IF (info .NE. 0) THEN
              info = ppm_error_fatal
              CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc_dummy',__LINE__,info)
+       &                       'uc',__LINE__,info)
              GOTO 9999
              ENDIF
             iopt = ppm_param_dealloc

@@ -480,9 +480,9 @@
       IF (info .NE. 0) THEN 
          GOTO 9999
       ENDIF 
-      IF (ppm_debug.GT.0) THEN 
-        WRITE(cbuf,*) 'Eu:',E
-        CALL PPM_Write(ppm_rank,'mg_solv',cbuf,info)
+      IF (ppm_debug.NE.0) THEN 
+        WRITE(cbuf,*) 'initial sweep Eu:',E
+        CALL PPM_Write(ppm_rank,'mg_solv_serial',cbuf,info)
       ENDIF
         !---------------------------------------------------------------------
         !Initiation of the function correction. (We start on purpose with lev=2)
@@ -527,6 +527,21 @@
            ENDDO
         ENDDO
         !----------------------------------------------------------------------
+        ! Compute residual
+        !----------------------------------------------------------------------
+        CALL ppm_mg_res_sca(topo_id,u,f,c1,c2,c3,c4,E,info)
+#ifdef __MPI
+        CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
+        E=gEu
+#endif
+      IF (info .NE. 0) THEN 
+         GOTO 9999
+      ENDIF 
+      IF (ppm_debug.NE.0) THEN 
+        WRITE(cbuf,*) 'V cycle Eu:',E
+        CALL PPM_Write(ppm_rank,'mg_solv_serial',cbuf,info)
+      ENDIF
+        !----------------------------------------------------------------------
         !DO the final sweeps
         !--------------------------------------------------------------------
         CALL ppm_mg_smooth_sca(topo_id,u,f,finsweep,1,c1,c2,c3,info)
@@ -537,6 +552,13 @@
 #else
         Eu=E
 #endif
+      IF (info .NE. 0) THEN 
+         GOTO 9999
+      ENDIF 
+      IF (ppm_debug.NE.0) THEN 
+        WRITE(cbuf,*) 'final sweeps Eu:',Eu
+        CALL PPM_Write(ppm_rank,'mg_solv_serial',cbuf,info)
+      ENDIF
 #elif __MESH_DIM == __3D
         c1 = 1.0_MK/(2.0_MK*(rdx2+rdy2+rdz2))
         c2 = rdx2
@@ -552,7 +574,7 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-      IF (ppm_debug.GT.0) THEN 
+      IF (ppm_debug.EQ.0) THEN 
         WRITE(cbuf,*) 'Eu:',E
         CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
       ENDIF
