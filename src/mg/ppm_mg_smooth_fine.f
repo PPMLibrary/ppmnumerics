@@ -551,10 +551,6 @@ dz=dz_d
      &                           (u(i,j-1,k,isub)+u(i,j+1,k,isub))*c3+ &
      &                           (u(i,j,k-1,isub)+u(i,j,k+1,isub))*c4- &
      &                               f(i,j,k,isub))-u(i,j,k,isub))
-                         if (ppm_rank.eq.5) print *,i,j,k,u(i,j,k,isub)
-                       if (ppm_rank.eq.5) print *,u(i-1,j,k,isub),u(i+1,j,k,isub)
-                       if (ppm_rank.eq.5) print *,u(i,j-1,k,isub),u(i,j+1,k,isub)
-                       if (ppm_rank.eq.5) print *,u(i,j,k-1,isub),u(i,j,k+1,isub)
                        ENDIF
                     ENDDO
                 ENDDO
