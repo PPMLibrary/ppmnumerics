@@ -601,6 +601,7 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 DEBUG
+PPMDIR
 F90_LIBS_ppm
 F90_LDFLAGS_ppm
 F90_MODULE_ppm
@@ -5984,6 +5985,7 @@ else
 
 fi
 
+ PPMDIR=$withval
  if test x != x ; then
 
 
@@ -6212,6 +6214,7 @@ else
     LIBS="$F90_LIBS_ppm $LIBS"
 
 fi
+
 
 
 

@@ -165,6 +165,7 @@ AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
     call ppm_finalize(info)
    ])
 
+AC_SUBST(PPMDIR)
 
 # check for fftw3
 have_fftw=no
