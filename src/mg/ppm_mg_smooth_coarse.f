@@ -380,6 +380,29 @@
              ENDIF
             lorig=0
             lext=0
+            !-------------------------------------------------------------
+            !  set up counter origin and extents
+            !-------------------------------------------------------------
+            DO isub=1,nsubs
+                DO iface=1,ppm_dim
+                  IF (bcdef_sca(isub,2*iface-1).EQ.ppm_param_bcdef_periodic) THEN
+                      lorig(iface,isub)=1
+                  ELSEIF (bcdef_sca(isub,2*iface-1).EQ.ppm_param_bcdef_dirichlet) THEN
+                      lorig(iface,isub)=2
+                  ELSEIF (bcdef_sca(isub,2*iface-1).EQ.0) THEN
+                      lorig(iface,isub)=0
+                  ENDIF
+                ENDDO!iface
+                DO iface=1,ppm_dim
+                  IF (bcdef_sca(isub,2*iface).EQ.ppm_param_bcdef_periodic) THEN
+                      lext(iface,isub)=istop(iface,isub,mlev)
+                  ELSEIF (bcdef_sca(isub,2*iface).EQ.ppm_param_bcdef_dirichlet) THEN
+                      lext(iface,isub)=istop(iface,isub,mlev)-1
+                  ELSEIF (bcdef_sca(isub,2*iface).EQ.0) THEN
+                      lext(iface,isub)=istop(iface,isub,mlev)+1
+                  ENDIF
+                ENDDO!iface
+              ENDDO!DO isub 
 #if  __DIM == __SFIELD
 #if  __MESH_DIM == __2D
          !----------------------------------------------------------------------
@@ -445,17 +468,16 @@
                CALL ppm_map_field_pop(topoid,mg_meshid(mlev),uc,&
                &                          ghostsize,info)
                DO isub=1,nsubs
-              DO j=lorig(2,isub),lext(2,isub)
-                 DO i=lorig(1,isub)+mod(j+color,2), &
-                    & lext(1,isub)-mod(j+color,2),2
+                 DO j=lorig(2,isub),lext(2,isub)
+                   DO i=lorig(1,isub)+mod(j+color,2), &
+                     & lext(1,isub)-mod(j+color,2),2
                      IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
                      (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
-                     uc(i,j,isub) = uc(i,j,isub)+omega*(c1*( &
-                     &  (uc(i-1,j,isub)+uc(i+1,j,isub))*c2 + &
-                     &  (uc(i,j-1,isub)+uc(i,j+1,isub))*c3 + &
-                     &           mgfield(isub,mlev)%fc(i,j)) &
-                     &                        -uc(i,j,isub)) 
-
+                       uc(i,j,isub) = uc(i,j,isub)+omega*(c1*( &
+                       &  (uc(i-1,j,isub)+uc(i+1,j,isub))*c2 + &
+                       &  (uc(i,j-1,isub)+uc(i,j+1,isub))*c3 - &
+                       &           mgfield(isub,mlev)%fc(i,j)) &
+                       &                        -uc(i,j,isub)) 
                    ENDIF
                  ENDDO
                ENDDO
@@ -475,39 +497,39 @@
            tuc=>mgfield(isub,mlev)%uc
            tuc(:,:)=uc(:,:,isub)
          ENDDO  
-             iopt = ppm_param_dealloc
-             CALL ppm_alloc(uc,ldl3,ldu3,iopt,info)
-             IF (info .NE. 0) THEN
-             info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc',__LINE__,info)
-             GOTO 9999
-             ENDIF
+         iopt = ppm_param_dealloc
+         CALL ppm_alloc(uc,ldl3,ldu3,iopt,info)
+         IF (info .NE. 0) THEN
+           info = ppm_error_fatal
+           CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+           &                       'uc',__LINE__,info)
+           GOTO 9999
+         ENDIF
 #elif __MESH_DIM == __3D
          !----------------------------------------------------------------------
          !Implementation
          !---------------------------------------------------------------------
-             iopt = ppm_param_alloc_fit
-             ldl4(1) = 1-ghostsize(1)
-             ldl4(2) = 1-ghostsize(2)
-             ldl4(3) = 1-ghostsize(3)
-             ldl4(4) = 1
-             ldu4(1) = max_node(1,mlev)+ghostsize(1)
-             ldu4(2) = max_node(2,mlev)+ghostsize(2)
-             ldu4(3) = max_node(3,mlev)+ghostsize(3)
-             ldu4(4) = nsubs
-             CALL ppm_alloc(uc,ldl4,ldu4,iopt,info)
-             IF (info .NE. 0) THEN
-             info = ppm_error_fatal
-             CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
-       &                       'uc',__LINE__,info)
-             GOTO 9999
-             ENDIF
-             ! write data from mgfield DS to temporary uc field
-             DO isub=1,nsubs
-               tuc=>mgfield(isub,mlev)%uc
-               uc(:,:,:,isub)=tuc(:,:,:)
-             ENDDO
+         iopt = ppm_param_alloc_fit
+         ldl4(1) = 1-ghostsize(1)
+         ldl4(2) = 1-ghostsize(2)
+         ldl4(3) = 1-ghostsize(3)
+         ldl4(4) = 1
+         ldu4(1) = max_node(1,mlev)+ghostsize(1)
+         ldu4(2) = max_node(2,mlev)+ghostsize(2)
+         ldu4(3) = max_node(3,mlev)+ghostsize(3)
+         ldu4(4) = nsubs
+         CALL ppm_alloc(uc,ldl4,ldu4,iopt,info)
+         IF (info .NE. 0) THEN
+           info = ppm_error_fatal
+           CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_coarse',    &
+           &                       'uc',__LINE__,info)
+           GOTO 9999
+         ENDIF
+         ! write data from mgfield DS to temporary uc field
+         DO isub=1,nsubs
+           tuc=>mgfield(isub,mlev)%uc
+           uc(:,:,:,isub)=tuc(:,:,:)
+         ENDDO
          DO isweep=1,nsweep 
             DO color=0,1
                 DO isub=1,nsubs
@@ -573,18 +595,17 @@
               DO isub=1,nsubs
                 DO k=lorig(3,isub),lext(3,isub)
                   DO j=lorig(2,isub),lext(2,isub)
-                    DO i=lorig(1,isub)+mod(j+color,2), &
-                      & lext(1,isub)-mod(j+color,2),2
+                    DO i=lorig(1,isub)+mod(j+k+color,2), &
+                      & lext(1,isub)-mod(j+k+color,2),2
                       IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
                       &   (j.GE.1.AND.j.LE.max_node(2,mlev)).AND.&
                       &   (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
                       uc(i,j,k,isub) = uc(i,j,k,isub)+omega*(c1*( &
                       &  (uc(i-1,j,k,isub)+uc(i+1,j,k,isub))*c2 + &
                       &  (uc(i,j-1,k,isub)+uc(i,j+1,k,isub))*c3 + &
-                      &  (uc(i,j,k-1,isub)+uc(i,j,k+1,isub))*c4 + &
+                      &  (uc(i,j,k-1,isub)+uc(i,j,k+1,isub))*c4 - &
                       &           mgfield(isub,mlev)%fc(i,j,k)) &
                       &                        -uc(i,j,k,isub)) 
-
                       ENDIF
                     ENDDO
                   ENDDO

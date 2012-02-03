@@ -574,7 +574,7 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-      IF (ppm_debug.EQ.0) THEN 
+      IF (ppm_debug.NE.0) THEN 
         WRITE(cbuf,*) 'Eu:',E
         CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
       ENDIF
