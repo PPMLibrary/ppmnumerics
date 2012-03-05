@@ -66,6 +66,7 @@ AC_DEFUN([AX_F90_LIBRARY_SETUP],[
     fi],[
      AC_MSG_ERROR([you must provide --with-$1=path to point to the $1 library])
     ])
+ PPMDIR=$withval
  if test x$2 != x ; then
    AX_F90_HEADER([$1],[$2],[$5],$withval,[
       FCFLAGS="$FCFLAGS $AS_TR_SH(F90_HEADER_$1)"
