@@ -50,6 +50,7 @@ AC_ARG_ENABLE([mpi],
 # Checks for basic compiler and flags
 AC_PROG_CXX
 AC_PROG_CPP
+AC_PROG_SED
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 AC_PROG_FC
@@ -165,6 +166,7 @@ AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
     call ppm_finalize(info)
    ])
 
+AC_SUBST(PPMDIR)
 
 # check for fftw3
 have_fftw=no
