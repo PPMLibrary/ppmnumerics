@@ -88,6 +88,7 @@ $(TARGET): $(OBJECTS)
 	@printf "  AR   %-42s" "Creating library archive"; \
 	$(RUN) "$(ARCMD)" $(LOG) "Error Creating Archive"; \
 	echo -e "\033[0;32mDone\033[0m."
+	@cp $(SRC_DIR)/ppm_numerics.h $(MODULES_DIR)
 
 # Dont delete the given intermediate files
 .SECONDARY: #$(DEPENDENCIES)
