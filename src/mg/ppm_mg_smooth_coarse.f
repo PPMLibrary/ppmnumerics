@@ -471,14 +471,14 @@
                  DO j=lorig(2,isub),lext(2,isub)
                    DO i=lorig(1,isub)+mod(j+color,2), &
                      & lext(1,isub)-mod(j+color,2),2
-                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
-                     (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
+!                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
+!                     (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
                        uc(i,j,isub) = uc(i,j,isub)+omega*(c1*( &
                        &  (uc(i-1,j,isub)+uc(i+1,j,isub))*c2 + &
                        &  (uc(i,j-1,isub)+uc(i,j+1,isub))*c3 - &
                        &           mgfield(isub,mlev)%fc(i,j)) &
                        &                        -uc(i,j,isub)) 
-                   ENDIF
+!                   ENDIF
                  ENDDO
                ENDDO
              ENDDO!isub
@@ -597,16 +597,16 @@
                   DO j=lorig(2,isub),lext(2,isub)
                     DO i=lorig(1,isub)+mod(j+k+color,2), &
                       & lext(1,isub)-mod(j+k+color,2),2
-                      IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
-                      &   (j.GE.1.AND.j.LE.max_node(2,mlev)).AND.&
-                      &   (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
+!                      IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND.&
+!                      &   (j.GE.1.AND.j.LE.max_node(2,mlev)).AND.&
+!                      &   (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
                       uc(i,j,k,isub) = uc(i,j,k,isub)+omega*(c1*( &
                       &  (uc(i-1,j,k,isub)+uc(i+1,j,k,isub))*c2 + &
                       &  (uc(i,j-1,k,isub)+uc(i,j+1,k,isub))*c3 + &
                       &  (uc(i,j,k-1,isub)+uc(i,j,k+1,isub))*c4 - &
                       &           mgfield(isub,mlev)%fc(i,j,k)) &
                       &                        -uc(i,j,k,isub)) 
-                      ENDIF
+!                      ENDIF
                     ENDDO
                   ENDDO
                 ENDDO

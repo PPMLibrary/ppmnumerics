@@ -448,13 +448,13 @@ dz=dz_d
               DO j=lorig(2,isub),lext(2,isub)
                  DO i=lorig(1,isub)+mod(j+color,2), &
                     & lext(1,isub)-mod(j+color,2),2
-                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
-     &                   (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
+!                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
+!     &                   (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
                        u(i,j,isub)=u(i,j,isub) + omega*(c1*(  &
                        &   (u(i-1,j,isub)+u(i+1,j,isub))*c2 + &
                        &   (u(i,j-1,isub)+u(i,j+1,isub))*c3 - &
                        &        f(i,j,isub)) - u(i,j,isub))
-                     ENDIF
+!                     ENDIF
                  ENDDO
               ENDDO
             ENDDO !isub
@@ -543,15 +543,15 @@ dz=dz_d
                   DO j=lorig(2,isub),lext(2,isub)
                     DO i=lorig(1,isub)+mod(j+k+color,2), &
                       & lext(1,isub)-mod(j+k+color,2),2
-                        IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
-     &                      (j.GE.1.AND.j.LE.max_node(2,mlev)).AND. &
-     &                      (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
+!                        IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
+!     &                      (j.GE.1.AND.j.LE.max_node(2,mlev)).AND. &
+!     &                      (k.GE.1.AND.k.LE.max_node(3,mlev))) THEN
                           u(i,j,k,isub) = u(i,j,k,isub)+omega*(&
      &                       c1*((u(i-1,j,k,isub)+u(i+1,j,k,isub))*c2+ &
      &                           (u(i,j-1,k,isub)+u(i,j+1,k,isub))*c3+ &
      &                           (u(i,j,k-1,isub)+u(i,j,k+1,isub))*c4- &
      &                               f(i,j,k,isub))-u(i,j,k,isub))
-                       ENDIF
+!                       ENDIF
                     ENDDO
                 ENDDO
               ENDDO
