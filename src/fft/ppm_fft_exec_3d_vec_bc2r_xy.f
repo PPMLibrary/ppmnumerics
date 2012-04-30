@@ -1,7 +1,7 @@
       !-------------------------------------------------------------------------
       !  Subroutine   : ppm_fft_exec_3d_vec_bc2r_xy
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       ! FFTW execute wrapper for 3d arrays, 2d complex to real

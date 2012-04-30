@@ -1,7 +1,7 @@
       !-------------------------------------------------------------------------
       !  Subroutine   : ppm_fft_normalize_c
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       ! The routine does not work with fields that include ghost layers.
