@@ -1,7 +1,7 @@
       !-------------------------------------------------------------------------
       !  Subroutine   : ppm_module_poisson
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       ! Notes on the init routine:

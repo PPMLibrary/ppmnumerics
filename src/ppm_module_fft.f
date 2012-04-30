@@ -1,7 +1,7 @@
       !-------------------------------------------------------------------------
       !  Subroutine   : ppm_module_fft
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       ! This modules contains routines for creating FFTW plans and executing them

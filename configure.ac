@@ -20,7 +20,7 @@
 AC_PREREQ(2.61)
 m4_pattern_allow([AS_TR_SH])
 
-AC_INIT(PPM, 1.1.9)
+AC_INIT(PPM, 1.2.2)
 
 # Reset existing preprocessing flags
 touch ./src/ppm_define.h
