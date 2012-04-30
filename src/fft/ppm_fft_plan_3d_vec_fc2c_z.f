@@ -1,7 +1,7 @@
       !-------------------------------------------------------------------------
       !  Subroutine   : ppm_fft_plan_3d_vec_fc2c_z
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       ! FFTW plan wrapper for 3d arrays, 1d complex to complex

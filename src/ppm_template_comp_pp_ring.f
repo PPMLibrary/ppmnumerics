@@ -76,7 +76,7 @@
       !  Revision 1.2  2004/04/23 17:25:33  oingo
       !  Revision 1.1  2004/04/22 08:29:06  oingo
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
       !
       !

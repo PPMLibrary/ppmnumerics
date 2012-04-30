@@ -31,7 +31,7 @@
       !
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2010 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
       !
       !
@@ -101,7 +101,7 @@
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
              INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
+           END FUNCTION rhsfunc_ss
 
            ! vector
            FUNCTION rhsfunc_sv(topoid,xp,up,dup,lda,npart,ipack,&
@@ -115,7 +115,7 @@
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
              INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
+           END FUNCTION rhsfunc_sv
 
            ! double precision
 
@@ -132,7 +132,7 @@
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
              INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
+           END FUNCTION rhsfunc_ds
 
            ! vector
            FUNCTION rhsfunc_dv(topoid,xp,up,dup,lda,npart,ipack,&
@@ -146,7 +146,7 @@
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
              INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
+           END FUNCTION rhsfunc_dv
 
         END INTERFACE
 
