@@ -22,6 +22,7 @@ exec_prefix = @exec_prefix@
 libdir = @libdir@
 includedir = @includedir@
 builddir = @builddir@
+CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 CFLAGS = @CFLAGS@
@@ -30,8 +31,9 @@ FCFLAGS = @FCFLAGS@
 FC = @FC@
 CC = @CC@
 CXX = @CXX@
-SED := @SED@
+SED = @SED@
 DEBUG = @DEBUG@
+FUNIT_FLAGS = @FUNIT_FLAGS@
 MODFLAG = @ax_cv_f90_modflag@
 PPMDIR = @PPMDIR@
 
@@ -64,7 +66,6 @@ INCLS := $(subst :, ,$(VPATH))
 SOURCES := $(notdir $(wildcard $(SRC_DIR)/ppm_module_*.f))
 OBJECTS := $(SOURCES:%.f=$(OBJ_DIR)/%.o)
 MODULES := $(SOURCES:%.f=$(MODULES_DIR)/%.mod)
-MODSRCS := $(SOURCES:%.f=$(MODULES_DIR)/__%.f)
 DEPENDENCIES := $(SOURCES:%.f=$(OBJ_DIR)/%.d)
 
 # This creates the install directories if they don't exist
@@ -87,7 +88,7 @@ ARCMD = ar crus $@ $(OBJECTS)
 $(TARGET): $(OBJECTS)
 	@printf "  AR   %-42s" "Creating library archive"; \
 	$(RUN) "$(ARCMD)" $(LOG) "Error Creating Archive"; \
-	echo -e "\033[0;32mDone\033[0m."
+	printf "\033[0;32mDone\033[0m.\n"
 	@cp $(SRC_DIR)/ppm_numerics.h $(MODULES_DIR)
 
 # Dont delete the given intermediate files
@@ -128,6 +129,11 @@ install: all
 
 # This compiles, and copies the PPM library
 new: all install
+
+ftest: all
+	@FC=$(FC) FCFLAGS="$(FCFLAGS)" MODULES=$(MODULES_DIR) \
+	LDFLAGS="-L$(builddir)/lib -lppm $(LDFLAGS) $(LIBS)" \
+	CPP=$(CPP) DEFINE="$(CPPFLAGS)" FSFLAG=$(MODFLAG) $(FUNIT) $(FUNIT_FLAGS) $(FUNFILES)
 
 # This ensures all dependency files are up-to-date
 # WARNING: The directive below will fail silently, in case of problems
