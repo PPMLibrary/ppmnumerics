@@ -1,26 +1,5 @@
       !-------------------------------------------------------------------------
-      !  Module       :            ppm_module_ode_init
-      !-------------------------------------------------------------------------
-      !
-      !  Purpose      : procedure module for ppm_ode_init
-      !
-      !  Remarks      : 
-      !
-      !  References   : 
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_module_ode_init.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:19:00  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.2  2004/07/26 11:21:24  michaebe
-      !  added dummy interface
-      !
-      !  Revision 1.1  2004/07/26 07:45:48  michaebe
-      !  Procedure modules created in the course of atomization.
-      !
-      !
+      !  Module       :            ppm_module_ode_map
       !-------------------------------------------------------------------------
       ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
@@ -46,21 +25,38 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-
       !-------------------------------------------------------------------------
-      MODULE ppm_module_ode_init
+      
+      !-------------------------------------------------------------------------
+      !  Define data types
+      !-------------------------------------------------------------------------
+#define __SINGLE_PRECISION 1
+#define __DOUBLE_PRECISION 2
+
+      MODULE ppm_module_ode_map
 
         !-----------------------------------------------------
-        !  Dummy interface
+        !  Interfaces
         !-----------------------------------------------------
-        INTERFACE ppm_ode_init
-           MODULE PROCEDURE ppm_ode_init
+
+        INTERFACE ppm_ode_map_push
+           MODULE PROCEDURE ppm_ode_map_push_s
+           MODULE PROCEDURE ppm_ode_map_push_d
+        END INTERFACE
+
+        INTERFACE ppm_ode_map_pop
+           MODULE PROCEDURE ppm_ode_map_pop_s
+           MODULE PROCEDURE ppm_ode_map_pop_d
         END INTERFACE
 
       CONTAINS
-#include "ppm_ode_init.f"
+#define __KIND __SINGLE_PRECISION
+#include "ode/ppm_ode_map_push.f"
+#include "ode/ppm_ode_map_pop.f"
+#undef  __KIND
+#define __KIND __DOUBLE_PRECISION
+#include "ode/ppm_ode_map_push.f"
+#include "ode/ppm_ode_map_pop.f"
+#undef  __KIND
 
-      END MODULE ppm_module_ode_init
-
-
-        
+      END MODULE ppm_module_ode_map

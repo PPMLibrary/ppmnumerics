@@ -1,23 +1,5 @@
       !-------------------------------------------------------------------------
-      !  Module       :           ppm_module_bem_quadrule_npoints
-      !-------------------------------------------------------------------------
-      !
-      !  Purpose      : bem module
-      !
-      !  Remarks      : 
-      !
-      !  References   : 
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_module_bem_quadrule_npoints.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:18:57  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.1  2004/07/26 07:29:25  ivos
-      !  First commit after spitting the old modules into single-interface
-      !  units.
-      !
+      !  Module       :            ppm_module_ode_setup
       !-------------------------------------------------------------------------
       ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
@@ -43,23 +25,36 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-
       !-------------------------------------------------------------------------
+      MODULE ppm_module_ode_setup
+      !!! Module for ODE setup routines
 
-      MODULE ppm_module_bem_quadrule_npoints
-
-        !-----------------------------------------------------------------------
-        !  Define interface to ppm_bem_get_quadrule_points
-        !-----------------------------------------------------------------------
-        INTERFACE ppm_bem_quadrule_npoints
-           MODULE PROCEDURE ppm_bem_quadrule_npoints
+        !-----------------------------------------------------
+        !  Dummy interface
+        !-----------------------------------------------------
+        INTERFACE ppm_ode_init
+           MODULE PROCEDURE ppm_ode_init
+        END INTERFACE
+        
+        INTERFACE ppm_ode_finalize
+           MODULE PROCEDURE ppm_ode_finalize
+        END INTERFACE
+        
+        INTERFACE ppm_ode_start
+           MODULE PROCEDURE ppm_ode_start
+        END INTERFACE
+        
+        INTERFACE ppm_ode_create_ode
+           MODULE PROCEDURE ppm_ode_create_ode
         END INTERFACE
 
-        !-----------------------------------------------------------------------
-        ! Include the sources
-        !-----------------------------------------------------------------------
-        CONTAINS
+      CONTAINS
+#include "ode/ppm_ode_init.f"
 
-#include "ppm_bem_quadrule_npoints.f"
+#include "ode/ppm_ode_finalize.f"
 
-      END MODULE ppm_module_bem_quadrule_npoints
+#include "ode/ppm_ode_start.f"
+
+#include "ode/ppm_ode_create_ode.f"
+
+      END MODULE ppm_module_ode_setup

@@ -1,42 +1,41 @@
       !-------------------------------------------------------------------------
       !  Module       :                  ppm_module_ode
       !-------------------------------------------------------------------------
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      !                    Center for Fluid Dynamics (DTU)
       !
-      !  Purpose      : This module contains the user-callable functions of
-      !                 the ode time integrator.
-      !                
-      !  Remarks      :
       !
-      !  References   :
+      ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_module_ode.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:19:00  ivos
-      !  CBL version of the PPM library
+      ! PPM is free software: you can redistribute it and/or modify
+      ! it under the terms of the GNU Lesser General Public License 
+      ! as published by the Free Software Foundation, either 
+      ! version 3 of the License, or (at your option) any later 
+      ! version.
       !
-      !  Revision 1.3  2004/07/26 13:41:34  ivos
-      !  Initial implementation. These are meta-modules for the user-
-      !  callable functions. Only these modules will be given away to
-      !  the user.
+      ! PPM is distributed in the hope that it will be useful,
+      ! but WITHOUT ANY WARRANTY; without even the implied warranty of
+      ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+      ! GNU General Public License for more details.
       !
-      !-------------------------------------------------------------------------
-      !  Perallel Particle Mesh Library (PPM)
-      !  Institute of Computational Science
-      !  ETH Zentrum, Hirschengraben 84
-      !  CH-8092 Zurich, Switzerland
+      ! You should have received a copy of the GNU General Public License
+      ! and the GNU Lesser General Public License along with PPM. If not,
+      ! see <http://www.gnu.org/licenses/>.
+      !
+      ! Parallel Particle Mesh Library (PPM)
+      ! ETH Zurich
+      ! CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
 
       MODULE ppm_module_ode
+      !!! This module contains the user-callable functions of
+      !!! the ode time integrator.
 
          !----------------------------------------------------------------------
          !  PPM modules
          !----------------------------------------------------------------------
          USE ppm_module_ode_alldone
-         USE ppm_module_ode_create_ode
-         USE ppm_module_ode_finalize
-         USE ppm_module_ode_init
+         USE ppm_module_ode_setup
          USE ppm_module_ode_step
-         USE ppm_module_ode_start
          
       END MODULE ppm_module_ode

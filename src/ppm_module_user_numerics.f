@@ -25,13 +25,6 @@
          !----------------------------------------------------------------------
          ! PPM numerics routines
          !----------------------------------------------------------------------
-         USE ppm_module_comp_part
-         USE ppm_module_bem
-         USE ppm_module_fieldsolver
          USE ppm_module_ode
-         USE ppm_module_mg
-         USE ppm_module_fmm
-         USE ppm_module_gmm
-         USE ppm_module_hamjac
 
       END MODULE ppm_module_user_numerics

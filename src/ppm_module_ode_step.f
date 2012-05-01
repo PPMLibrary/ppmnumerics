@@ -1,36 +1,6 @@
       !-------------------------------------------------------------------------
       !  Module       :            ppm_module_ode_step
       !-------------------------------------------------------------------------
-      !
-      !  Purpose      : procedure module for ppm_ode_step
-      !
-      !  Remarks      : 
-      !
-      !  References   : 
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_module_ode_step.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:19:00  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.5  2004/07/26 14:58:05  michaebe
-      !  renamed the preprocessing defines vector and scalar
-      !
-      !  Revision 1.4  2004/07/26 12:00:24  ivos
-      !  Fixes to make it compile.
-      !
-      !  Revision 1.3  2004/07/26 11:48:28  michaebe
-      !  added vector and scalar defines
-      !
-      !  Revision 1.2  2004/07/26 08:14:15  michaebe
-      !  Added overloading for scalar lda.
-      !
-      !  Revision 1.1  2004/07/26 07:45:50  michaebe
-      !  Procedure modules created in the course of atomization.
-      !
-      !
-      !-------------------------------------------------------------------------
       ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
       !
@@ -155,22 +125,19 @@
       CONTAINS
 #define __MODE __SCA
 #define __KIND __SINGLE_PRECISION
-#include "ppm_ode_step.f"
+#include "ode/ppm_ode_step.f"
 #undef  __KIND
 #define __KIND __DOUBLE_PRECISION
-#include "ppm_ode_step.f"
+#include "ode/ppm_ode_step.f"
 #undef  __KIND
 #undef  __MODE
 #define __MODE __VEC
 #define __KIND __SINGLE_PRECISION
-#include "ppm_ode_step.f"
+#include "ode/ppm_ode_step.f"
 #undef  __KIND
 #define __KIND __DOUBLE_PRECISION
-#include "ppm_ode_step.f"
+#include "ode/ppm_ode_step.f"
 #undef  __KIND
 #undef  __MODE
 
       END MODULE ppm_module_ode_step
-
-
-        
