@@ -42,6 +42,7 @@ LIB_PPM := libppmnumerics.a
 TARGET  := $(builddir)/lib/$(LIB_PPM)
 SHELL := /bin/sh
 CPP := cpp
+CG = ppm pp -M $(PPMDIR)/$(srcdir)/macros/:$(srcdir)/macros/
 FUNIT := $(PPMDIR)/utils/funit/bin/funit
 DEPS := $(PPMDIR)/utils/deps.sh
 LOG := compile.log
@@ -95,7 +96,7 @@ $(TARGET): $(OBJECTS)
 .SECONDARY: #$(DEPENDENCIES)
 
 # Implicit rules
-CPPCMD = $(CPP) $(CPPFLAGS) $(CPPINCLS) -traditional-cpp -P $< $@
+CPPCMD = $(CPP) $(CPPFLAGS) $(CPPINCLS) -traditional-cpp -P $< | $(CG) > $@
 $(OBJ_DIR)/%.f : $(SRC_DIR)/%.f
 	@printf "  CPP  %-42s" $<; \
 	$(RUN) "$(CPPCMD)" $(LOG) "Preprocessing Error"
