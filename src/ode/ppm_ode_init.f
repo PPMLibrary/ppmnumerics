@@ -1,50 +1,6 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                 ppm_ode_init
       !-------------------------------------------------------------------------
-      !
-      !  Purpose      : This routine initializes the ode solver
-      !
-      !  Input        : 
-      !
-      !  Output       : info                   (I) return status
-      !
-      !  Remarks      : 
-      !
-      !  References   : 
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_ode_init.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:19:00  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.8  2006/09/04 18:34:53  pchatela
-      !  Fixes and cleanups to make it compile for
-      !  release-1-0
-      !
-      !  Revision 1.7  2004/08/12 12:53:59  michaebe
-      !  inserted a hack for some compilers
-      !
-      !  Revision 1.6  2004/07/26 13:49:18  ivos
-      !  Removed Routines sections from the header comment.
-      !
-      !  Revision 1.5  2004/07/26 11:33:04  michaebe
-      !  inserted the use of the ppm ode data module.
-      !
-      !  Revision 1.4  2004/07/26 07:48:58  michaebe
-      !  Atomized. Removed allocation of globals (moved to ppm_ode_create_ode).
-      !
-      !  Revision 1.3  2004/06/10 16:20:03  ivos
-      !  Moved all cpp directtives to column 1. The NEC cpp did not recognize
-      !  them otherwise!!!
-      !
-      !  Revision 1.2  2004/02/20 14:54:21  michaebe
-      !  added the use of ppm_module_util.
-      !
-      !  Revision 1.1  2004/02/19 08:33:55  michaebe
-      !  initial implementation.
-      !
-      !-------------------------------------------------------------------------
       ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
       !
@@ -69,9 +25,10 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-
       !-------------------------------------------------------------------------
+      
       SUBROUTINE ppm_ode_init(topoid,info)
+      !!! This routine initializes the ode solver
       !-----------------------------------------------------------------------
       !  Includes
       !-----------------------------------------------------------------------
@@ -99,7 +56,6 @@
         !  call substart
         !-----------------------------------------------------------------------
         CALL substart('ppm_ode_init',t0,info)
-        CALL ppm_module_data_ode_activate
         !-----------------------------------------------------------------------
         !  check input arguments
         !-----------------------------------------------------------------------

@@ -25,6 +25,7 @@
          !----------------------------------------------------------------------
          ! PPM numerics routines
          !----------------------------------------------------------------------
-         USE ppm_module_ode
+         USE ppm_module_numerics_interfaces
+         USE ppm_module_integrator_typedef
 
       END MODULE ppm_module_user_numerics

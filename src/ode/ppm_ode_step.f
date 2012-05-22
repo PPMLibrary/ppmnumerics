@@ -2,106 +2,8 @@
       !  Subroutine   :                 ppm_ode_step
       !-------------------------------------------------------------------------
       !
-      !  Purpose      : integrates one stage of a mode
       !
-      !  Input        : odeid                  (I) id of mode to advance
-      !                 xp(:,:)                (F) xp (trad. coords)
-      !                 up(:,:)                (F) function to integrate
-      !                 dup(:,:)               (F) derivative of up (in time)
-      !                 lda                    (I) leading dimension of up
-      !                 Npart                  (I) numper of particles
-      !                 bfr(:,:)               (F) buffer
-      !                 istage                 (I) which stage were in
-      !                 time(4)                (F) time data: time(1) is the
-      !                                            start time, time(2) the end
-      !                                            time, time(3) the current
-      !                                            time and time (4) the
-      !                                            time step
-      !                 rhsfunc                (I) function pointer to the rhs
-      !                 ipackdata(:,:)         (I) optional storage array
-      !                 lpackdata(:,:)         (L) optional storage array
-      !                 rpackdata(:,:)         (F) optional storage array
       !
-      !  Output       : info                   (I) return status
-      !
-      !  Remarks      : 
-      !
-      !  References   : 
-      !
-      !  Revisions    :
-      !-------------------------------------------------------------------------
-      !  $Log: ppm_ode_step.f,v $
-      !  Revision 1.1.1.1  2007/07/13 10:19:01  ivos
-      !  CBL version of the PPM library
-      !
-      !  Revision 1.20  2006/09/04 18:34:54  pchatela
-      !  Fixes and cleanups to make it compile for
-      !  release-1-0
-      !
-      !  Revision 1.19  2006/02/03 09:37:06  ivos
-      !  Changed input arguments from INOUT to POINTER to allow for ghost_put.
-      !
-      !  Revision 1.18  2005/08/05 09:30:06  ivos
-      !  Added the flabbergsting STS of Michael.
-      !
-      !  Revision 1.17  2005/07/22 08:03:43  pchatela
-      !  Used a DO loop rather than a vector notation for the 1st step inside RK4.
-      !  2 reasons:
-      !  1) DO loops are used everywhere else in the file...
-      !  2) It apparently causes a seg fault for a system with moderate memory (like my personal laptop)
-      !
-      !  Revision 1.16  2005/01/05 16:27:18  ivos
-      !  fixed INTENT and POINTER attributes of the arguments.
-      !
-      !  Revision 1.15  2004/10/11 06:53:14  hiebers
-      !  cosmetics
-      !
-      !  Revision 1.14  2004/10/01 15:15:11  hiebers
-      !  added Runge Kutta 4th order
-      !
-      !  Revision 1.13  2004/08/26 15:21:00  michaebe
-      !  inserted 1:npart to be able to handle ghosts.  ghosts?
-      !
-      !  Revision 1.12  2004/08/13 15:30:45  michaebe
-      !  added mid point runge kutta
-      !
-      !  Revision 1.11  2004/08/12 13:45:23  michaebe
-      !  modified ppm_ode_sent() = ..
-      !
-      !  Revision 1.10  2004/07/27 10:29:20  michaebe
-      !  renamed the scheme parameters from ppm_ode_scheme.. to
-      !  ppm_param_ode_scheme..
-      !
-      !  Revision 1.9  2004/07/26 14:57:18  michaebe
-      !  renamed the vector and scalar defines
-      !
-      !  Revision 1.8  2004/07/26 13:49:19  ivos
-      !  Removed Routines sections from the header comment.
-      !
-      !  Revision 1.7  2004/07/26 11:49:01  michaebe
-      !  added overloaded end subroutine
-      !
-      !  Revision 1.6  2004/07/26 11:33:04  michaebe
-      !  inserted the use of the ppm ode data module.
-      !
-      !  Revision 1.5  2004/07/26 08:13:51  michaebe
-      !  Added scalar code for lda=1.
-      !
-      !  Revision 1.4  2004/07/26 07:59:51  michaebe
-      !  Cosmetics. Lines partially too long.
-      !
-      !  Revision 1.3  2004/07/26 07:54:57  michaebe
-      !  Atomized. Furthermore added carrier arrays to transport auxillary data
-      !  to the user-given right hand side function.
-      !
-      !  Revision 1.2  2004/06/10 16:20:04  ivos
-      !  Moved all xpp directtives to column 1. The NEC xpp did not recognize
-      !  them otherwise!!!
-      !
-      !  Revision 1.1  2004/02/19 08:33:57  michaebe
-      !  initial implementation.
-      !
-      !-------------------------------------------------------------------------
       ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
       !                    Center for Fluid Dynamics (DTU)
       !
@@ -128,23 +30,9 @@
       ! CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
 
-#if   __MODE == __SCA
-#if   __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_ode_step_ss(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
-#elif __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_ode_step_ds(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
-#endif
-#elif __MODE == __VEC
-#if   __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_ode_step_sv(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
-#elif __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_ode_step_dv(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
-#endif
-#endif
+      SUBROUTINE ppm_ode_step_ss(odeid,rhsfunc,fields_and_parts,discretizaitons,&
+      &          bfr,istage,info)
+      !!! integrates one stage of a mode
         !-----------------------------------------------------------------------
         !  Includes
         !-----------------------------------------------------------------------
@@ -160,89 +48,23 @@
         USE ppm_module_error
         USE ppm_module_alloc
         USE ppm_module_numerics_data
+        USE ppm_module_interfaces
         IMPLICIT NONE
-#if     __KIND == __SINGLE_PRECISION
-        INTEGER, PARAMETER :: mk = ppm_kind_single
-#else
-        INTEGER, PARAMETER :: mk = ppm_kind_double
-#endif
-#ifdef __F2003
-#if     __KIND == __SINGLE_PRECISION
-#if     __MODE == __SCA
-        PROCEDURE(rhsfunc_ss)                               :: rhsfunc
-#elif   __MODE == __VEC
-        PROCEDURE(rhsfunc_sv)                               :: rhsfunc
-#endif
-#else
-#if     __MODE == __SCA
-        PROCEDURE(rhsfunc_ds)                               :: rhsfunc
-#elif   __MODE == __VEC
-        PROCEDURE(rhsfunc_dv)                               :: rhsfunc
-#endif
-#endif
-#else
-#if     __KIND == __SINGLE_PRECISION
-        INTERFACE
-           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
-             INTEGER                          , INTENT(IN)  :: topoid
-             INTEGER                          , INTENT(IN)  :: lda,npart
-             INTEGER                          , INTENT(OUT) :: info
-#if     __MODE == __SCA
-             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: xp
-             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER     :: up
-             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER     :: dup
-#elif   __MODE == __VEC
-             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: xp,up
-             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: dup
-#endif
-             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
-             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
-             REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
-        END INTERFACE
-#else
-        INTERFACE
-           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
-             INTEGER                          , INTENT(IN)  :: topoid
-             INTEGER                          , INTENT(IN)  :: lda,npart
-             INTEGER                          , INTENT(OUT) :: info
-#if     __MODE == __SCA
-             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: xp
-             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER     :: up
-             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER     :: dup
-#elif   __MODE == __VEC
-             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: xp,up
-             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: dup
-#endif
-             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
-             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
-             REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
-        END INTERFACE
-#endif
-#endif
         !-----------------------------------------------------------------------
         !  Arguments
         !-----------------------------------------------------------------------
-        INTEGER,                    INTENT(  out) :: info
         INTEGER,                    INTENT(in   ) :: odeid
-#if     __MODE == __SCA
-        REAL(mk), DIMENSION(:  ), POINTER         :: up,dup        
-#elif   __MODE == __VEC        
-        REAL(mk), DIMENSION(:,:), POINTER         :: up,dup
-#endif        
-        REAL(mk), DIMENSION(:,:), POINTER         :: xp
+        !!! id of mode to advance
+        PROCEDURE(rhsfunc)                        :: rhsfunc
+        !!! function pointer to the rhs
+        CLASS(ppm_v_field),       POINTER         :: fields_and_parts
+        CLASS(ppm_v_discr_kind),  POINTER         :: discretizations
         REAL(mk), DIMENSION(:,:), POINTER         :: bfr
+        !!! buffer
         INTEGER,                    INTENT(in   ) :: istage
-        REAL(mk), DIMENSION(4),     INTENT(inout) :: time
-        INTEGER,                    INTENT(in   )   :: lda, Npart
-        INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipackdata
-        REAL(mk), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpackdata
-        LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpackdata
+        !!! which stage were in
+        INTEGER,                    INTENT(  out) :: info
+        !!! return status
         !-----------------------------------------------------------------------
         !  Local Variables
         !-----------------------------------------------------------------------
@@ -280,109 +102,13 @@
            GOTO 9999
         END IF
         IF(ppm_debug.GT.0) THEN
-           IF(.NOT.ppm_initialized) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_ppm_noinit,'ppm_ode_step',&
-                   & 'Please call ppm_init first!',__LINE__,info)
-              GOTO 9999
-           END IF
-           !--------------------------------------------------------------------
-           ! check odeid
-           !--------------------------------------------------------------------
-           umidmin = LBOUND(ppm_internal_mid,1)
-           umidmax = UBOUND(ppm_internal_mid,1)
-           IF(odeid.LT.umidmin.OR.odeid.GT.umidmax) THEN
-              !-----------------------------------------------------------------
-              ! user mid does not exist
-              !-----------------------------------------------------------------
-              info = ppm_error_error
+          CALL check_args
+          IF (info.NE.0)
               CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'ODEID does not exist',__LINE__,info)
+                   & 'Error in arguments',__LINE__,info)
               GOTO 9999
-           ELSE
-              IF(ppm_internal_mid(odeid).EQ.-HUGE(odeid)) THEN
-                 !--------------------------------------------------------------
-                 ! user mid does not exist
-                 !--------------------------------------------------------------
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_ode_step',& 
-                      & 'ODEID does not exist',__LINE__,info)
-                 GOTO 9999
-              END IF
-           END IF
-           !--------------------------------------------------------------------
-           ! check dimension
-           !--------------------------------------------------------------------
-           IF(Npart.LT.0) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'Npart cannot be <0',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(lda.LE.0) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'LDA must be >00',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(time(4).LE.0.0_mk) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'dt must be >=0',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(time(3).LT.time(1)) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'time must be >= tstart',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(scheme.EQ.ppm_param_ode_scheme_sts) THEN
-                IF(.NOT.PRESENT(ipackdata)) THEN
-                    info = ppm_error_error
-                    CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                         & 'for STS you need to specify N in ipackdata(1,1)',&
-                         & __LINE__,info)
-                    GOTO 9999
-                 ELSE
-                    IF(ipackdata(1,1).NE.1.AND.ipackdata(1,1).NE.7.AND.    &
-                         & ipackdata(1,1).NE.9.AND.ipackdata(1,1).NE.20) THEN
-                       info = ppm_error_error
-                       CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                            & 'ipackdata(1,1) must be element of {1,7,9,20}',&
-                            & __LINE__,info)
-                       GOTO 9999
-                    END IF
-                END IF
-           END IF
-           !--------------------------------------------------------------------
-           ! check association of up, dup, bfr
-           !--------------------------------------------------------------------
-           IF(.NOT.ASSOCIATED(up)) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'UP is empty',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(.NOT.ASSOCIATED(dup)) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'DUP is empty',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(.NOT.ASSOCIATED(bfr)) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'BFR is empty',__LINE__,info)
-              GOTO 9999
-           END IF
-           CALL ppm_check_topoid(ppm_ode_topoid,topo_valid,info)
-           IF (.NOT. topo_valid) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'topoid not valid',__LINE__,info)
-              GOTO 9999
-           ENDIF
+          END IF
+
         END IF ! (ppm_debug.GT.0)
         topoid = ppm_ode_topoid
         mid = ppm_internal_mid(odeid)
@@ -444,22 +170,22 @@
            END IF
            ! how much to save of this
            ppm_ode_sent(mid) = 0
-           CASE(ppm_param_ode_scheme_sts)
-              !-----------------------------------------------------
-              !  compute the new dt
-              !-----------------------------------------------------
-              stsn = ipackdata(1,1)
-              if(present(rpackdata)) stsnu(stsn) = rpackdata(1,1)
-              tau = dt/((stsnu(stsn)-1.0_mk)*&
-             & COS((2.0_mk*REAL(istage,mk)-1.0_mk)/REAL(stsn,mk)*M_PI*0.5_mk)&
-             & +1.0_mk+stsnu(stsn))
-              !-----------------------------------------------------------------
-              !=======
-              !  euler:
-              !=======
-              !-----------------------------------------------------------------
-              !  call right hand side and do an euler step
-              !-----------------------------------------------------------------
+         CASE(ppm_param_ode_scheme_sts)
+           !-----------------------------------------------------
+           !  compute the new dt
+           !-----------------------------------------------------
+           stsn = ipackdata(1,1)
+           if(present(rpackdata)) stsnu(stsn) = rpackdata(1,1)
+           tau = dt/((stsnu(stsn)-1.0_mk)*&
+           & COS((2.0_mk*REAL(istage,mk)-1.0_mk)/REAL(stsn,mk)*M_PI*0.5_mk)&
+           & +1.0_mk+stsnu(stsn))
+           !-----------------------------------------------------------------
+           !=======
+           !  euler:
+           !=======
+           !-----------------------------------------------------------------
+           !  call right hand side and do an euler step
+           !-----------------------------------------------------------------
 #include "ppm_ode_rhsfunc_macro.h"
 #if      __MODE == __SCA           
            DO j=1,npart
@@ -472,12 +198,12 @@
               END DO
            END DO
 #endif
-              t  = t  + tau
-              IF(ppm_ode_state(mid).EQ.ppm_ode_state_kickoff) THEN
-                 ppm_ode_state(mid) = ppm_ode_state_running
-              END IF
-              ! how much to save of this
-              ppm_ode_sent(mid) = 0
+          t  = t  + tau
+          IF(ppm_ode_state(mid).EQ.ppm_ode_state_kickoff) THEN
+            ppm_ode_state(mid) = ppm_ode_state_running
+          END IF
+          ! how much to save of this
+          ppm_ode_sent(mid) = 0
         CASE(ppm_param_ode_scheme_tvdrk2)
            !--------------------------------------------------------------------
            !============
@@ -704,6 +430,116 @@
         !-----------------------------------------------------------------------
         CALL substop('ppm_ode_step',t0,info)
         RETURN
+           
+       SUBROUTINE check_args 
+        
+        
+            IF(.NOT.ppm_initialized) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_ppm_noinit,'ppm_ode_step',&
+                   & 'Please call ppm_init first!',__LINE__,info)
+              GOTO 8888
+           END IF
+           !--------------------------------------------------------------------
+           ! check odeid
+           !--------------------------------------------------------------------
+           umidmin = LBOUND(ppm_internal_mid,1)
+           umidmax = UBOUND(ppm_internal_mid,1)
+           IF(odeid.LT.umidmin.OR.odeid.GT.umidmax) THEN
+              !-----------------------------------------------------------------
+              ! user mid does not exist
+              !-----------------------------------------------------------------
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'ODEID does not exist',__LINE__,info)
+              GOTO 8888
+           ELSE
+              IF(ppm_internal_mid(odeid).EQ.-HUGE(odeid)) THEN
+                 !--------------------------------------------------------------
+                 ! user mid does not exist
+                 !--------------------------------------------------------------
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,'ppm_ode_step',& 
+                      & 'ODEID does not exist',__LINE__,info)
+                 GOTO 8888
+              END IF
+           END IF
+           !--------------------------------------------------------------------
+           ! check dimension
+           !--------------------------------------------------------------------
+           IF(Npart.LT.0) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'Npart cannot be <0',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(lda.LE.0) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'LDA must be >00',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(time(4).LE.0.0_mk) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'dt must be >=0',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(time(3).LT.time(1)) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'time must be >= tstart',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(scheme.EQ.ppm_param_ode_scheme_sts) THEN
+                IF(.NOT.PRESENT(ipackdata)) THEN
+                    info = ppm_error_error
+                    CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                         & 'for STS you need to specify N in ipackdata(1,1)',&
+                         & __LINE__,info)
+                    GOTO 8888
+                 ELSE
+                    IF(ipackdata(1,1).NE.1.AND.ipackdata(1,1).NE.7.AND.    &
+                         & ipackdata(1,1).NE.9.AND.ipackdata(1,1).NE.20) THEN
+                       info = ppm_error_error
+                       CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                            & 'ipackdata(1,1) must be element of {1,7,9,20}',&
+                            & __LINE__,info)
+                       GOTO 8888
+                    END IF
+                END IF
+           END IF
+           !--------------------------------------------------------------------
+           ! check association of up, dup, bfr
+           !--------------------------------------------------------------------
+           IF(.NOT.ASSOCIATED(up)) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'UP is empty',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(.NOT.ASSOCIATED(dup)) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'DUP is empty',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(.NOT.ASSOCIATED(bfr)) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'BFR is empty',__LINE__,info)
+              GOTO 8888
+           END IF
+           CALL ppm_check_topoid(ppm_ode_topoid,topo_valid,info)
+           IF (.NOT. topo_valid) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
+                   & 'topoid not valid',__LINE__,info)
+              GOTO 8888
+           ENDIF
+8888 CONTINUE
+      END SUBROUTINE check_args
+
 
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION

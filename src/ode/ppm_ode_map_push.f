@@ -2,14 +2,7 @@
       !  Subroutine   :                 ppm_ode_map_push
       !-------------------------------------------------------------------------
       !
-      !  Purpose      : pushes whats needed of the buffer
       !
-      !  Input        : odeid                   (I) mode to push
-      !                 bfr(:,:)               (F) buffer to push
-      !                 lda                    (I) leading dimension
-      !                 Npart                  (I) number of particles
-      !
-      !  Output       : info                   (I) return status
       !
       !  Remarks      : 
       !
@@ -78,6 +71,7 @@
 #elif __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_ode_map_push_d(odeid,bfr,lda,Npart,mpart,info)
 #endif
+      !!! pushes whats needed of the buffer
         !-----------------------------------------------------------------------
         !  Includes
         !-----------------------------------------------------------------------
@@ -102,22 +96,28 @@
         !-----------------------------------------------------------------------
         !  Arguments
         !-----------------------------------------------------------------------
-        INTEGER,                    INTENT(  out) :: info
         INTEGER,                    INTENT(in   ) :: odeid
+        !!! mode to push
         REAL(mk), DIMENSION(:,:),   POINTER       :: bfr
+        !!! buffer to push
         INTEGER,                    INTENT(in   ) :: lda
+        !!! leading dimension
         INTEGER,                    INTENT(in   ) :: Npart
+        !!! number of particles
         INTEGER,                    INTENT(inout) :: mpart
+        INTEGER,                    INTENT(  out) :: info
+        !!! return status
         !-----------------------------------------------------------------------
         ! Local Variables
         !-----------------------------------------------------------------------
         INTEGER                                   :: ldasend
         INTEGER                                   :: throwaway
         INTEGER                                   :: mid, umidmax, umidmin
+        CHARACTER(LEN=*), PARAMETER               :: caller = 'ppm_ode_map_push'
         !-----------------------------------------------------------------------
         !  call substart
         !-----------------------------------------------------------------------
-        CALL substart('ppm_ode_map_push',t0,info)
+        CALL substart(caller,t0,info)
         !-----------------------------------------------------------------------
         ! general remark:
         ! were going to push only the stages that are needed to the
@@ -137,60 +137,11 @@
         !  check input arguments
         !-----------------------------------------------------------------------
         IF(ppm_debug.GT.0) THEN
-           !--------------------------------------------------------------------
-           ! check if ppm is initialized
-           !--------------------------------------------------------------------
-           IF(.NOT.ppm_initialized) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_ppm_noinit,'ppm_ode_map_push',&
-                   & 'Please call ppm_init first!',__LINE__,info)
-              GOTO 9999
-           END IF
-           !--------------------------------------------------------------------
-           ! check odeid
-           !--------------------------------------------------------------------
-           umidmin = LBOUND(ppm_internal_mid,1)
-           umidmax = UBOUND(ppm_internal_mid,1)
-           IF(odeid.LT.umidmin.OR.odeid.GT.umidmax) THEN
-              !-----------------------------------------------------------------
-              ! user mid does not exist
-              !-----------------------------------------------------------------
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'odeid does not exist',__LINE__,info)
-              GOTO 9999
-           ELSE
-              IF(ppm_internal_mid(odeid).EQ.-HUGE(odeid)) THEN
-                 !--------------------------------------------------------------
-                 ! user mid does not exist
-                 !--------------------------------------------------------------
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_ode_step',& 
-                      & 'odeid does not exist',__LINE__,info)
-                 GOTO 9999
-              END IF
-           END IF
-           !--------------------------------------------------------------------
-           ! check dimension
-           !--------------------------------------------------------------------
-           IF(Npart.LT.0) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'Npart cannot be <0',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(lda.LE.0) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'LDA must be >00',__LINE__,info)
-              GOTO 9999
-           END IF
-           IF(.NOT.ASSOCIATED(bfr)) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
-                   & 'BFR is empty',__LINE__,info)
-              GOTO 9999
-           END IF
+          IF (info.NE.0) THEN
+             CALL ppm_error(ppm_err_argument,caller,& 
+                  & 'Error in arguments',__LINE__,info)
+             GOTO 9999
+           ENDIF
         END IF
 
         mid     = ppm_internal_mid(odeid)
@@ -205,8 +156,69 @@
         !-----------------------------------------------------------------------
         ! substop
         !-----------------------------------------------------------------------
-        CALL substop('ppm_ode_map_push',t0,info)
+        CALL substop(caller,t0,info)
         RETURN
+
+        CONTAINS
+
+        SUBROUTINE check_args
+           !--------------------------------------------------------------------
+           ! check if ppm is initialized
+           !--------------------------------------------------------------------
+           IF(.NOT.ppm_initialized) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_ppm_noinit,caller,&
+                   & 'Please call ppm_init first!',__LINE__,info)
+              GOTO 8888
+           END IF
+           !--------------------------------------------------------------------
+           ! check odeid
+           !--------------------------------------------------------------------
+           umidmin = LBOUND(ppm_internal_mid,1)
+           umidmax = UBOUND(ppm_internal_mid,1)
+           IF(odeid.LT.umidmin.OR.odeid.GT.umidmax) THEN
+              !-----------------------------------------------------------------
+              ! user mid does not exist
+              !-----------------------------------------------------------------
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,caller, &
+                   & 'odeid does not exist',__LINE__,info)
+              GOTO 8888
+           ELSE
+              IF(ppm_internal_mid(odeid).EQ.-HUGE(odeid)) THEN
+                 !--------------------------------------------------------------
+                 ! user mid does not exist
+                 !--------------------------------------------------------------
+                 info = ppm_error_error
+                 CALL ppm_error(ppm_err_argument,caller,& 
+                      & 'odeid does not exist',__LINE__,info)
+                 GOTO 8888
+              END IF
+           END IF
+           !--------------------------------------------------------------------
+           ! check dimension
+           !--------------------------------------------------------------------
+           IF(Npart.LT.0) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,caller, &
+                   & 'Npart cannot be <0',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(lda.LE.0) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,caller, &
+                   & 'LDA must be >00',__LINE__,info)
+              GOTO 8888
+           END IF
+           IF(.NOT.ASSOCIATED(bfr)) THEN
+              info = ppm_error_error
+              CALL ppm_error(ppm_err_argument,caller, &
+                   & 'BFR is empty',__LINE__,info)
+              GOTO 8888
+           END IF
+8888    CONTINUE        
+
+        END SUBROUTINE check_args
 
 #if   __KIND == __SINGLE_PRECISION
       END SUBROUTINE ppm_ode_map_push_s
