@@ -168,14 +168,6 @@ if test x$ax_cv_f90_modext = xunknown ; then
     AC_MSG_ERROR([unable to find f90 modules extension])
 fi
 
-AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
-    use ppm_module_finalize
-    integer :: info
-    call ppm_finalize(info)
-   ])
-
-AC_SUBST(PPMDIR)
-
 # check for fftw3
 have_fftw=no
 AC_CHECK_LIB([fftw3],[dfftw_execute])
@@ -187,8 +179,33 @@ if test "x${have_fftw}" = xno; then
   echo " It can be downloaded at: http://www.fftw.org/download.html"
   echo "------------------------------------------"
   (exit 1); exit 1;
+else
+  AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__FFTW"])
 fi
-echo "#define __FFTW" >> ./src/ppm_define.h
+
+# Check for METIS
+have_metis=no
+AC_SEARCH_LIBS([METIS_PartGraphRecursive],[metis],[have_metis=yes])
+if test "x${have_metis}" = xno; then
+  echo "------------------------------------------"
+  echo " The METIS library is required to build PPM. "
+  echo " Either the library is missing or incorrectly compiled/linked."
+  echo " Stopping...   Please download at:"
+  echo " http://glaros.dtc.umn.edu/gkhome/metis/metis/download"
+  echo "------------------------------------------"
+  (exit 1); exit 1;
+else
+  AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__METIS"])
+fi
+
+AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
+    use ppm_module_finalize
+    integer :: info
+    call ppm_finalize(info)
+   ])
+
+AC_SUBST(PPMDIR)
+
 
 # Check to see if linux was enabled with -enable-linux
 AC_ARG_ENABLE([linux],[AS_HELP_STRING([--enable-linux],
@@ -203,21 +220,6 @@ AC_ARG_ENABLE([vector],[AS_HELP_STRING([--enable-vector],
   [enable __VECTOR (default is no)])],
   [echo "#define __VECTOR" >> ./src/ppm_define.h])
 
-AC_ARG_ENABLE([mathkeisan],[AS_HELP_STRING([--enable-mathkeisan],
-  [enable __MATHKEISAN (default is no)])],
-  [echo "#define __MATHKEISAN" >> ./src/ppm_define.h])
-
-AC_ARG_ENABLE([sxf90],[AS_HELP_STRING([--enable-sxf90],
-  [enable __MATHKEISAN (default is no)])],
-  [echo "#define __SXF90" >> ./src/ppm_define.h])
-
-AC_ARG_ENABLE([crayfishpack],[AS_HELP_STRING([--enable-crayfishpack],
-  [enable __CRAYFISHPACK (default is no)])],
-  [echo "#define __CRAYFISHPACK" >> ./src/ppm_define.h])
-
-AC_ARG_ENABLE([hypre],[AS_HELP_STRING([--enable-hypre],
-  [enable __HYPRE (default is no)])],
-  [echo "#define __HYPRE" >> ./src/ppm_define.h])
 
 AC_ARG_ENABLE([no-microinstr],[AS_HELP_STRING([--enable-no-microinstr],
   [enable __NOMICROINSTRUCTIONS (default is no)])],
