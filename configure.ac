@@ -43,6 +43,7 @@ AC_ARG_ENABLE([mpi],
     use_mpi=yes],
   [AC_MSG_NOTICE([MPI was not enabled. Building non-parallel version of PPM.])])
 
+
 : ${CFLAGS="-O3"}
 : ${CXXFLAGS="-O3"}
 : ${FCFLAGS="-O3"}
@@ -126,6 +127,13 @@ if test "x${use_mpi}" == xyes; then
 #                  [AC_MSG_ERROR([Cannot build PPM with MPI support like this])])
     AC_LANG([C])
 fi
+
+AC_SUBST(MPI_ENABLED,["false"])
+if test "x${use_mpi}" = xyes; then
+    AC_SUBST(FUNIT_FLAGS,["--with-mpi"])
+    AC_SUBST(MPI_ENABLED,["true"])
+fi
+
 
 # Checks for libraries and set preprocessing flags
 

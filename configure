@@ -606,6 +606,8 @@ F90_LIBS_ppm
 F90_LDFLAGS_ppm
 F90_MODULE_ppm
 F90_HEADER_ppm
+FUNIT_FLAGS
+MPI_ENABLED
 ax_cv_f90_modflag
 EGREP
 GREP
@@ -3503,6 +3505,7 @@ $as_echo "$as_me: MPI was not enabled. Building non-parallel version of PPM." >&
 fi
 
 
+
 : ${CFLAGS="-O3"}
 : ${CXXFLAGS="-O3"}
 : ${FCFLAGS="-O3"}
@@ -5919,6 +5922,16 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
+
+MPI_ENABLED="false"
+
+if test "x${use_mpi}" = xyes; then
+    FUNIT_FLAGS="--with-mpi"
+
+    MPI_ENABLED="true"
+
+fi
+
 
 # Checks for libraries and set preprocessing flags
 
