@@ -27,5 +27,6 @@
          !----------------------------------------------------------------------
          USE ppm_module_numerics_interfaces
          USE ppm_module_integrator_typedef
+         USE ppm_module_ode_typedef
 
       END MODULE ppm_module_user_numerics

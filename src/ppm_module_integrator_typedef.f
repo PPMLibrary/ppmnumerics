@@ -172,10 +172,42 @@ subroutine eulerf_step(this,t,dt,info)
         !end foreach
       class is (ppm_t_particles_d)
         pset_d => discr
-        foreach p in particles(pset_d) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          f_p = f_p + dt*df_p
-        end foreach
+        if (field%lda.eq.1) then
+          foreach p in particles(pset_d) with sca_fields(f=field,df=change)
+            f_p = f_p + dt*df_p
+          end foreach
+        else
+          foreach p in particles(pset_d) with vec_fields(f=field,df=change)
+            f_p(:) = f_p(:) + dt*df_p(:)
+          end foreach
+        endif
       class is (ppm_t_equi_mesh)
+        mesh => discr
+        if (ppm_dim.eq.2) then
+          if (field%lda.eq.1) then
+            foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j)
+              for all
+                field_n = field_n + dt*change_n
+            end foreach
+          else
+            foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j)
+              for all
+                field_n(:) = field_n(:) + dt*change_n(:)
+            end foreach
+          endif
+        else
+          if (field%lda.eq.1) then
+            foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j,k)
+              for all
+                field_n = field_n + dt*change_n
+            end foreach
+          else
+            foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j,k)
+              for all
+                field_n(:) = field_n(:) + dt*change_n(:)
+            end foreach
+          endif
+        endif
       end select
     class is (ppm_t_particles_s)
       !pset_s => field
@@ -184,7 +216,7 @@ subroutine eulerf_step(this,t,dt,info)
       !end foreach
     class is (ppm_t_particles_d)
       pset_d => field
-      foreach p in particles(pset_d) with positions(x) fields(dx=change) types(dx=vector)
+      foreach p in particles(pset_d) with positions(x) vec_fields(dx=change)
         x_p(:) = x_p(:) + dt*dx_p(:)
       end foreach
     end select
