@@ -63,11 +63,10 @@ type,abstract :: ppm_t_integrator_
     !!! suitable kick off scheme
     
     procedure(ppm_p_rhsfunc), pointer, nopass   :: rhsfunc => null()
-    class(ppm_v_main_abstr), pointer    :: fields => null()
-    class(ppm_v_discr_kind), pointer    :: discretizations => null()
-    class(ppm_v_field), pointer         :: rhs_fields => null()
-    class(ppm_v_discr_kind), pointer    :: rhs_discr => null()
-    class(ppm_v_field), pointer         :: changes => null()
+    class(ppm_v_main_abstr), pointer       :: fields => null()
+    class(ppm_v_discr_kind), pointer       :: discretizations => null()
+    class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr => null()
+    class(ppm_v_field), pointer            :: changes => null()
     
     contains
     procedure(integrator_create_),       deferred :: create
@@ -110,12 +109,11 @@ end type ppm_t_ode_
 !  INTERFACES
 !----------------------------------------------------------------------
 abstract interface
-  integer function ppm_p_rhsfunc(fields,discretizations,changes)
+  integer function ppm_p_rhsfunc(fields_and_discr,changes)
   import ppm_v_field
-  import ppm_v_discr_kind
-  class(ppm_v_field),      pointer          :: fields => null()
-  class(ppm_v_discr_kind), pointer          :: discretizations => null()
-  class(ppm_v_field),      pointer          :: changes => null()
+  import ppm_v_field_discr_pair
+  class(ppm_v_field_discr_pair), pointer    :: fields_and_discr
+  class(ppm_v_field),      pointer          :: changes
   end function ppm_p_rhsfunc
 end interface
 

@@ -16,6 +16,7 @@ implicit none
 ! TODO: replace this temporary hack by ppmcg templates
   integer, parameter :: mk = ppm_kind_double
 
+  private mk
 !----------------------------------------------------------------------
 !  Types
 !----------------------------------------------------------------------
@@ -33,7 +34,7 @@ end type ppm_t_eulerf
 contains
 
 
-subroutine eulerf_create(this,fields,rhsfunc,rhs_fields,info)
+subroutine eulerf_create(this,fields,rhsfunc,rhs_fields_discr,info)
   implicit none
   !----------------------------------------------------------------------
   !  Arguments 
@@ -47,8 +48,11 @@ subroutine eulerf_create(this,fields,rhsfunc,rhs_fields,info)
   !!! intended discretization in a ppm_t_pair object
   procedure(ppm_p_rhsfunc)               :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_main_abstr), pointer       :: rhs_fields
+  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
   !!! The fields to be passed to the right hand side function.
+  !!!
+  !!! The elements of the container can be fields, or pairs continaing a field
+  !!! and its intended discretization.
   integer,                 intent(  out) :: info
   !----------------------------------------------------------------------
   !  Variables
@@ -68,66 +72,90 @@ subroutine eulerf_create(this,fields,rhsfunc,rhs_fields,info)
   this%scheme_kickoff = 1
   
 
- 
   allocate(this%fields,stat=info)
+  or_fail_alloc("this%fields")
   allocate(this%changes,stat=info)
+  or_fail_alloc("this%changes")
   allocate(this%discretizations,stat=info)
+  or_fail_alloc("this%discretizations")
   el => fields%begin()
   do while (associated(el))
    allocate(ppm_t_field::c,stat=info)
-   call c%create(ppm_dim,info)
    select type(el)
    class is (ppm_t_field_)
      el_f => el
      di => el_f%discr_info%begin()
+     call c%create(el_f%lda,info)
      call c%discretize_on(di%discr_ptr,info)
+     or_fail("Discretizing change failed")
      call this%discretizations%push(di%discr_ptr,info)
+     or_fail("Pushing change discretization failed")
      temp => el
      call this%fields%push(temp,info)
+     or_fail("Pushing field failed")
    class is (ppm_t_discr_kind)
      d => el
+     call c%create(ppm_dim,info)
      call c%discretize_on(d,info)
+     or_fail("Discretizing change failed")
      call this%discretizations%push(d,info)
+     or_fail("Pushing change discretization failed")
      temp => d
      call this%fields%push(temp,info)
+     or_fail("Pushing field failed")
    class is (ppm_t_field_discr_pair)
      el_p => el
+     call c%create(el_p%field%lda,info)
      call c%discretize_on(el_p%discretization,info)
+     or_fail("Discretizing change failed")
      call this%discretizations%push(el_p%discretization,info)
+     or_fail("Pushing change discretization failed")
      temp => el_p%field
      call this%fields%push(temp,info)
+     or_fail("Pushing field failed")
+    class default
+      fail("fields should only contain fields discrs and pairs",ppm_err_argument)
    end select
    call this%changes%push(c,info)
     el => fields%next()
   end do
 
-  allocate(this%rhs_fields,stat=info)
-  allocate(this%rhs_discr,stat=info)
-  el => rhs_fields%begin()
-  do while (associated(el))
-    select type(el)
-    class is (ppm_t_field)
-      el_f => el
-      nullify(d)
-      call this%rhs_fields%push(el_f,info)
-      call this%rhs_discr%push(d,info)
-    class is (ppm_t_field_discr_pair)
-      el_p => el
-      call this%rhs_fields%push(el_p%field,info)
-      call this%rhs_discr%push(el_p%discretization,info)
-    end select
-    el => rhs_fields%next()
+  ! copy the rhs_fields_discr vector
+  allocate(this%rhs_fields_discr,stat=info)
+  or_fail_alloc("this%rhs_fields_discr")
+  el_p => rhs_fields_discr%begin()
+  do while (associated(el_p))
+    call this%rhs_fields_discr%push(el_p,info)
+    el_p => rhs_fields_discr%next()
   end do
+ 
+  ! set the right hand side function
+  this%rhsfunc => rhsfunc
  
   end_subroutine()
 end subroutine eulerf_create
 
 subroutine eulerf_destroy(this,info)
   implicit none
+  !----------------------------------------------------------------------
+  ! Arguments 
+  !----------------------------------------------------------------------
   class(ppm_t_eulerf)          :: this
   integer    , intent(  out)   :: info
+  !----------------------------------------------------------------------
+  ! Variables
+  !----------------------------------------------------------------------
+  class(ppm_t_field_), pointer               :: change => null()
   start_subroutine("eulerf_destroy")
   
+  change => this%changes%begin()
+  do while (associated(change))
+    check_associated(change,"Fields and changes should have same length")
+    call change%destroy(info) 
+     or_fail("Destroying change failed")
+    change => this%changes%next()
+  end do
+ 
   end_subroutine()
 end subroutine eulerf_destroy
 
@@ -152,8 +180,7 @@ subroutine eulerf_step(this,t,dt,info)
   class(ppm_t_equi_mesh), pointer            :: mesh => null()
   start_subroutine("eulerf_step")
 
-
-  rhs_info = this%rhsfunc(this%rhs_fields,this%rhs_discr,this%changes)
+  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
 
   field => this%fields%begin()
   change => this%changes%begin()
