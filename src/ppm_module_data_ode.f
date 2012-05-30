@@ -50,10 +50,14 @@
         INTEGER, DIMENSION(7)       :: ppm_ode_scheme_memsize
         INTEGER, DIMENSION(7)       :: ppm_ode_scheme_nstages
         INTEGER, DIMENSION(7)       :: ppm_ode_scheme_kickoff
-        DATA ppm_ode_scheme_order /1,2,2,4,2,3,1/
+        DATA ppm_ode_scheme_order   /1,2,2,4,2,3,1/
         DATA ppm_ode_scheme_memsize /1,2,2,4,2,1,0/
         DATA ppm_ode_scheme_nstages /1,2,2,4,2,3,999999/
         DATA ppm_ode_scheme_kickoff /1,2,2,4,2,6,7/
+        ! suggest DATA ppm_ode_scheme_order    /1,2,2,4,1/
+        ! suggest: DATA ppm_ode_scheme_memsize /0,1,1,4,0/
+        ! suggest: DATA ppm_ode_scheme_nstages /1,2,2,4,999999/
+        ! suggest DATA ppm_ode_scheme_kickoff  /1,2,2,4,7/
         
         
         !-----------------------------------------------------------------------

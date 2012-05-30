@@ -61,8 +61,8 @@
       INTEGER, PARAMETER :: ppm_param_ode_scheme_tvdrk2   = 2
       INTEGER, PARAMETER :: ppm_param_ode_scheme_midrk2   = 3
       INTEGER, PARAMETER :: ppm_param_ode_scheme_rk4      = 4
-      INTEGER, PARAMETER :: ppm_param_ode_scheme_trapez   = 5
-      INTEGER, PARAMETER :: ppm_param_ode_scheme_tvdrk3   = 6
+      !INTEGER, PARAMETER :: ppm_param_ode_scheme_trapez   = 5
+      !INTEGER, PARAMETER :: ppm_param_ode_scheme_tvdrk3   = 6
       INTEGER, PARAMETER :: ppm_param_ode_scheme_sts      = 7
 
       

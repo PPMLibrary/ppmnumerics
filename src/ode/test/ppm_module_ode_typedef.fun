@@ -185,7 +185,7 @@ integer                                        :: nterms
         Assert_Equal(info,0)
         t = 0.0_mk
         dt = 0.1_mk
-        call ode%step(t,dt,info)
+        call ode%step(t,dt,1,info)
         Assert_Equal(info,0)
         
         call Part1%get_field(Field1,wp_1r,info)
@@ -274,7 +274,7 @@ integer                                        :: nterms
         Assert_Equal(info,0)
         t = 0.0_mk
         dt = 0.1_mk
-        call ode%step(t,dt,info)
+        call ode%step(t,dt,1,info)
         Assert_Equal(info,0)
        
         call Part1%get_xp(moved_xp,info)
@@ -400,7 +400,7 @@ integer                                        :: nterms
         Assert_Equal(info,0)
         t = 0.0_mk
         dt = 0.1_mk
-        call ode%step(t,dt,info)
+        call ode%step(t,dt,1,info)
         Assert_Equal(info,0)
         
         IF (ndim.EQ.2) THEN

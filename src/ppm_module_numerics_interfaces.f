@@ -62,12 +62,12 @@ type,abstract :: ppm_t_integrator_
     integer                     :: scheme_kickoff
     !!! suitable kick off scheme
     
-    procedure(ppm_p_rhsfunc), pointer, nopass   :: rhsfunc => null()
-    class(ppm_v_main_abstr), pointer       :: fields => null()
-    class(ppm_v_discr_kind), pointer       :: discretizations => null()
-    class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr => null()
-    class(ppm_v_field), pointer            :: changes => null()
-    
+    procedure(ppm_p_rhsfunc),         pointer, nopass :: rhsfunc          => null()
+    class(ppm_v_main_abstr),          pointer         :: fields           => null()
+    class(ppm_v_discr_kind),          pointer         :: discretizations  => null()
+    class(ppm_v_field_discr_pair),    pointer         :: rhs_fields_discr => null()
+    class(ppm_v_field),               pointer         :: changes          => null()
+    class(ppm_v_field), dimension(:), pointer         :: buffers          => null() 
     contains
     procedure(integrator_create_),       deferred :: create
     procedure(integrator_destroy_),      deferred :: destroy
@@ -103,6 +103,8 @@ type,abstract :: ppm_t_ode_
     procedure(ode_create_),        deferred :: create
     procedure(ode_destroy_),       deferred :: destroy
     procedure(ode_step_),          deferred :: step
+    procedure(ode_map_push_),      deferred :: map_push
+    procedure(ode_map_push_),      deferred :: map_pop
 end type ppm_t_ode_
 
 !----------------------------------------------------------------------
