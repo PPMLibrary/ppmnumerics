@@ -52,6 +52,18 @@ type,extends(ppm_t_integrator) :: ppm_t_tvdrk2
   procedure :: step => tvdrk2_step
 end type ppm_t_tvdrk2
 
+type,extends(ppm_t_integrator) :: ppm_t_rk4
+  contains
+  procedure :: create => rk4_create
+  procedure :: step => rk4_step
+end type ppm_t_rk4
+
+type,extends(ppm_t_integrator) :: ppm_t_midrk2
+  contains
+  procedure :: create => midrk2_create
+  procedure :: step => midrk2_step
+end type ppm_t_midrk2
+
 !----------------------------------------------------------------------
 !  Type-bound procedures
 !----------------------------------------------------------------------
@@ -96,7 +108,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
 
   allocate(this%fields,stat=info)
   or_fail_alloc("this%fields")
-  allocate(this%buffers(this%scheme_memsize),stat=info)
+  allocate(this%buffers,stat=info)
   or_fail_alloc("this%buffers")
   allocate(this%changes,stat=info)
   or_fail_alloc("this%changes")
@@ -105,6 +117,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   el => fields%begin()
   do while (associated(el))
     allocate(ppm_t_field::c,stat=info)
+    allocate(ppm_t_field::buf,stat=info)
     select type(el)
     class is (ppm_t_field_)
       el_f => el
@@ -117,12 +130,8 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      do ibuf=1,this%scheme_memsize
-        allocate(ppm_t_field::buf,stat=info)
-        call buf%create(el_f%lda,info)
-        call buf%discretize_on(di%discr_ptr,info)
-        call this%buffers(ibuf)%push(buf,info)
-      enddo
+      call buf%create(el_f%lda*this%scheme_memsize,info)
+      call buf%discretize_on(di%discr_ptr,info)
     class is (ppm_t_discr_kind)
       d => el
       call c%create(ppm_dim,info)
@@ -133,12 +142,8 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => d
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      do ibuf=1,this%scheme_memsize
-        allocate(ppm_t_field::buf,stat=info)
-        call buf%create(ppm_dim,info)
-        call buf%discretize_on(d,info)
-        call this%buffers(ibuf)%push(buf,info)
-      enddo
+      call buf%create(ppm_dim*this%scheme_memsize,info)
+      call buf%discretize_on(d,info)
     class is (ppm_t_field_discr_pair)
       el_p => el
       call c%create(el_p%field%lda,info)
@@ -149,16 +154,13 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el_p%field
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      do ibuf=1,this%scheme_memsize
-        allocate(ppm_t_field::buf,stat=info)
-        call buf%create(el_p%field%lda,info)
-        call buf%discretize_on(el_p%discretization,info)
-        call this%buffers(ibuf)%push(buf,info)
-      enddo
+      call buf%create(el_p%field%lda*this%scheme_memsize,info)
+      call buf%discretize_on(el_p%discretization,info)
     class default
       fail("fields should only contain fields discrs and pairs",ppm_err_argument)
   end select
   call this%changes%push(c,info)
+  call this%buffers%push(buf,info)
   el => fields%next()
   end do
 
@@ -293,24 +295,24 @@ subroutine eulerf_step(this,t,dt,istage,info)
         if (ppm_dim.eq.2) then
           if (field%lda.eq.1) then
             foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j)
-              for all
+              for real
                 field_n = field_n + dt*change_n
             end foreach
           else
             foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j)
-              for all
+              for real
                 field_n(:) = field_n(:) + dt*change_n(:)
             end foreach
           endif
         else
           if (field%lda.eq.1) then
             foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j,k)
-              for all
+              for real
                 field_n = field_n + dt*change_n
             end foreach
           else
             foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j,k)
-              for all
+              for real
                 field_n(:) = field_n(:) + dt*change_n(:)
             end foreach
           endif
@@ -462,24 +464,24 @@ subroutine sts_step(this,t,dt,istage,info)
         if (ppm_dim.eq.2) then
           if (field%lda.eq.1) then
             foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j)
-              for all
+              for real
                 field_n = field_n + tau*change_n
             end foreach
           else
             foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j)
-              for all
+              for real
                 field_n(:) = field_n(:) + tau*change_n(:)
             end foreach
           endif
         else
           if (field%lda.eq.1) then
             foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j,k)
-              for all
+              for real
                 field_n = field_n + tau*change_n
             end foreach
           else
             foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j,k)
-              for all
+              for real
                 field_n(:) = field_n(:) + tau*change_n(:)
             end foreach
           endif
@@ -581,7 +583,7 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
     field => this%fields%begin()
     change => this%changes%begin()
     discr => this%discretizations%begin()
-    buffer => this%buffers(1)%begin()
+    buffer => this%buffers%begin()
     do while (associated(field))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
@@ -613,13 +615,13 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
           if (ppm_dim.eq.2) then
             if (field%lda.eq.1) then
               foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
-                for all
+                for real
                   buffer_n = field_n
                   field_n = field_n + dt*change_n
               end foreach
             else
               foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for all
+                for real
                   buffer_n(:) = field_n(:)
                   field_n(:) = field_n(:) + dt*change_n(:)
               end foreach
@@ -627,13 +629,13 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
           else
             if (field%lda.eq.1) then
               foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
-                for all
+                for real
                   buffer_n = field_n
                   field_n = field_n + dt*change_n
               end foreach
             else
               foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for all
+                for real
                   buffer_n(:) = field_n(:)
                   field_n(:) = field_n(:) + dt*change_n(:)
               end foreach
@@ -655,7 +657,7 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
       end select
       field => this%fields%next()
       change => this%changes%next()
-      buffer => this%buffers(1)%next()
+      buffer => this%buffers%next()
       discr => this%discretizations%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
@@ -669,7 +671,7 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
     
     field => this%fields%begin()
     change => this%changes%begin()
-    buffer => this%buffers(1)%begin()
+    buffer => this%buffers%begin()
     discr => this%discretizations%begin()
     do while (associated(field))
       check_associated(change,"Fields and changes should have same length")
@@ -703,13 +705,13 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
           if (ppm_dim.eq.2) then
             if (field%lda.eq.1) then
               foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
-                for all
+                for real
                   field_n = field_n + dt*change_n
                   field_n  = 0.5_mk * (field_n + buffer_n)
               end foreach
             else
               foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for all
+                for real
                   field_n(:) = field_n(:) + dt*change_n(:)
                   field_n(:)  = 0.5_mk * (field_n(:) + buffer_n(:))
               end foreach
@@ -717,13 +719,13 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
           else
             if (field%lda.eq.1) then
               foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
-                for all
+                for real
                   field_n = field_n + dt*change_n
                   field_n  = 0.5_mk * (field_n + buffer_n)
               end foreach
             else
               foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for all
+                for real
                   field_n(:) = field_n(:) + dt*change_n(:)
                   field_n(:)  = 0.5_mk * (field_n(:) + buffer_n(:))
               end foreach
@@ -745,7 +747,7 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
       end select
       field => this%fields%next()
       change => this%changes%next()
-      buffer => this%buffers(1)%next()
+      buffer => this%buffers%next()
       discr => this%discretizations%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
@@ -758,6 +760,701 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
 
   end_subroutine()
 end subroutine tvdrk2_step
+
+
+subroutine midrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+  implicit none
+  !----------------------------------------------------------------------
+  !  Arguments 
+  !----------------------------------------------------------------------
+  class(ppm_t_midrk2)                    :: this
+  class(ppm_v_main_abstr), pointer       :: fields
+  !!! This vector holds all entities to be updated by the integrator the
+  !!! elements may be fields or particle discretizations.
+  !!!
+  !!! fields must either have one discretization or wrapped together with the
+  !!! intended discretization in a ppm_t_pair object
+  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  !!! The right hand side function to be executed by the eulerf::step function
+  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  !!! The fields to be passed to the right hand side function.
+  !!!
+  !!! The elements of the container can be fields, or pairs continaing a field
+  !!! and its intended discretization.
+  integer,                 intent(  out) :: info
+  class(ppm_t_options),target,optional,intent(in   ) :: options
+  start_subroutine("midrk2_create")
+  
+  this%scheme_order   = 2
+  this%scheme_memsize = 1
+  this%scheme_nstages = 2
+  this%scheme_kickoff = ppm_param_ode_scheme_tvdrk2
+ 
+  ! TODO allocate buffer   
+  call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)
+
+
+  end_subroutine()
+
+end subroutine midrk2_create
+
+
+subroutine midrk2_step(this,t,dt,istage,info)
+  implicit none
+  !----------------------------------------------------------------------
+  ! Arguments 
+  !----------------------------------------------------------------------
+  class(ppm_t_midrk2)                                :: this
+  real(ppm_kind_double)            ,intent(inout)    :: t
+  real(ppm_kind_double)            ,intent(in   )    :: dt
+  integer                          ,intent(in   )    :: istage
+  integer                          ,intent(  out)    :: info
+  !----------------------------------------------------------------------
+  ! Variables
+  !----------------------------------------------------------------------
+  integer                                    :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: field => null()
+  class(ppm_t_field_), pointer               :: change => null()
+  class(ppm_t_field_), pointer               :: buffer => null()
+  class(ppm_t_discr_kind), pointer           :: discr  => null()
+  class(ppm_t_particles_d), pointer          :: pset_d => null()
+  class(ppm_t_particles_s), pointer          :: pset_s => null()
+  class(ppm_t_equi_mesh), pointer            :: mesh => null()
+  start_subroutine("midrk2_step")
+           
+
+  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
+
+  ! TODO check if buffers where mapped
+  select case (istage)
+  case (1)
+    !----------------------------------------------------------------------
+    ! STAGE 1: Store the current field in a secondary buffer and update it
+    ! with dt*df
+    !----------------------------------------------------------------------
+    field => this%fields%begin()
+    change => this%changes%begin()
+    discr => this%discretizations%begin()
+    buffer => this%buffers%begin()
+    do while (associated(field))
+      check_associated(change,"Fields and changes should have same length")
+      check_associated(discr,"Fields and discretizations should have same length")
+      check_associated(buffer,"Fields and buffers should have same length")
+
+      select type (field)
+      class is (ppm_t_field)
+        select type (discr)
+        class is (ppm_t_particles_s)
+          !pset_s => discr
+          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
+          !  f_p = f_p + tau*df_p
+          !end foreach
+        class is (ppm_t_particles_d)
+          pset_d => discr
+          if (field%lda.eq.1) then
+            foreach p in particles(pset_d) with sca_fields(f=field,df=change,bfr=buffer)
+              bfr_p = f_p
+              f_p = f_p + 0.5_mk*dt*df_p
+            end foreach
+          else
+            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
+              bfr_p(:) = f_p(:)
+              f_p(:) = f_p(:) + 0.5_mk*dt*df_p(:)
+            end foreach
+          endif
+        class is (ppm_t_equi_mesh)
+          mesh => discr
+          if (ppm_dim.eq.2) then
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
+                for real
+                  buffer_n = field_n
+                  field_n = field_n + 0.5_mk*dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
+                for real
+                  buffer_n(:) = field_n(:)
+                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
+              end foreach
+            endif
+          else
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  buffer_n = field_n
+                  field_n = field_n + 0.5_mk*dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  buffer_n(:) = field_n(:)
+                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
+              end foreach
+            endif
+          endif
+        end select
+      class is (ppm_t_particles_s)
+        !pset_s => field
+        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
+        !  bfr_p(:) = x_p(:)
+        !  x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
+        !end foreach
+      class is (ppm_t_particles_d)
+        pset_d => field
+        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
+          bfr_p(:) = x_p(:)
+          x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
+        end foreach
+      end select
+      field => this%fields%next()
+      change => this%changes%next()
+      buffer => this%buffers%next()
+      discr => this%discretizations%next()
+    end do
+    check_false("associated(change)","Fields and changes should have same length")
+    check_false("associated(discr)","Fields and discretizations should have same length")
+    check_false("associated(buffer)","Fields and buffers should have same length")
+  
+  case (2)
+    !----------------------------------------------------------------------
+    ! STAGE 2: Do another update and interpolate with previously saved data
+    !----------------------------------------------------------------------
+    
+    field => this%fields%begin()
+    change => this%changes%begin()
+    buffer => this%buffers%begin()
+    discr => this%discretizations%begin()
+    do while (associated(field))
+      check_associated(change,"Fields and changes should have same length")
+      check_associated(discr,"Fields and discretizations should have same length")
+      check_associated(buffer,"Fields and buffers should have same length")
+
+      select type (field)
+      class is (ppm_t_field)
+        select type (discr)
+        class is (ppm_t_particles_s)
+          !pset_s => discr
+          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
+          !  f_p = bfr_p + dt*df_p
+          !end foreach
+        class is (ppm_t_particles_d)
+          pset_d => discr
+          if (field%lda.eq.1) then
+            foreach p in particles(pset_d) with sca_fields(f=field,df=change,bfr=buffer)
+              f_p = bfr_p + dt*df_p
+            end foreach
+          else
+            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
+              f_p(:) = bfr_p(:) + dt*df_p(:)
+            end foreach
+          endif
+        class is (ppm_t_equi_mesh)
+          mesh => discr
+          if (ppm_dim.eq.2) then
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
+                for real
+                  field_n = buffer_n + dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
+                for real
+                  field_n(:) = buffer_n(:) + dt*change_n(:)
+              end foreach
+            endif
+          else
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  field_n = buffer_n + dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  field_n(:) = buffer_n(:) + dt*change_n(:)
+              end foreach
+            endif
+          endif
+        end select
+      class is (ppm_t_particles_s)
+        !pset_s => field
+        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
+        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
+        !end foreach
+      class is (ppm_t_particles_d)
+        pset_d => field
+        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
+          x_p(:) = bfr_p(:) + dt*dx_p(:)
+        end foreach
+      end select
+      field => this%fields%next()
+      change => this%changes%next()
+      buffer => this%buffers%next()
+      discr => this%discretizations%next()
+    end do
+    check_false("associated(change)","Fields and changes should have same length")
+    check_false("associated(discr)","Fields and discretizations should have same length")
+    check_false("associated(buffer)","Fields and buffers should have same length")
+
+  end select
+
+  t  = t  + dt
+
+  end_subroutine()
+end subroutine midrk2_step
+
+
+subroutine rk4_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+  implicit none
+  !----------------------------------------------------------------------
+  !  Arguments 
+  !----------------------------------------------------------------------
+  class(ppm_t_rk4)                    :: this
+  class(ppm_v_main_abstr), pointer       :: fields
+  !!! This vector holds all entities to be updated by the integrator the
+  !!! elements may be fields or particle discretizations.
+  !!!
+  !!! fields must either have one discretization or wrapped together with the
+  !!! intended discretization in a ppm_t_pair object
+  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  !!! The right hand side function to be executed by the eulerf::step function
+  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  !!! The fields to be passed to the right hand side function.
+  !!!
+  !!! The elements of the container can be fields, or pairs continaing a field
+  !!! and its intended discretization.
+  integer,                 intent(  out) :: info
+  class(ppm_t_options),target,optional,intent(in   ) :: options
+  start_subroutine("rk4_create")
+  
+  this%scheme_order   = 4
+  this%scheme_memsize = 4
+  this%scheme_nstages = 4
+  this%scheme_kickoff = ppm_param_ode_scheme_rk4
+ 
+  ! TODO allocate buffer   
+  call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)
+
+
+  end_subroutine()
+
+end subroutine rk4_create
+
+
+subroutine rk4_step(this,t,dt,istage,info)
+  implicit none
+  !----------------------------------------------------------------------
+  ! Arguments 
+  !----------------------------------------------------------------------
+  class(ppm_t_rk4)                                :: this
+  real(ppm_kind_double)            ,intent(inout)    :: t
+  real(ppm_kind_double)            ,intent(in   )    :: dt
+  integer                          ,intent(in   )    :: istage
+  integer                          ,intent(  out)    :: info
+  !----------------------------------------------------------------------
+  ! Variables
+  !----------------------------------------------------------------------
+  integer                                    :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: field => null()
+  class(ppm_t_field_), pointer               :: change => null()
+  class(ppm_t_field_), pointer               :: buffer => null()
+  class(ppm_t_discr_kind), pointer           :: discr  => null()
+  class(ppm_t_particles_d), pointer          :: pset_d => null()
+  class(ppm_t_particles_s), pointer          :: pset_s => null()
+  class(ppm_t_equi_mesh), pointer            :: mesh => null()
+  integer                                    :: bs
+  start_subroutine("rk4_step")
+           
+
+  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
+
+  ! TODO check if buffers where mapped
+  select case (istage)
+  case (1)
+    !----------------------------------------------------------------------
+    ! STAGE 1: Store the current field in a secondary buffer and update it
+    ! with dt*df
+    !----------------------------------------------------------------------
+    field => this%fields%begin()
+    change => this%changes%begin()
+    discr => this%discretizations%begin()
+    buffer => this%buffers%begin()
+    do while (associated(field))
+      check_associated(change,"Fields and changes should have same length")
+      check_associated(discr,"Fields and discretizations should have same length")
+      check_associated(buffer,"Fields and buffers should have same length")
+
+      select type (field)
+      class is (ppm_t_field)
+        bs = field%lda
+        select type (discr)
+        class is (ppm_t_particles_s)
+          !pset_s => discr
+          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
+          !  f_p = f_p + tau*df_p
+          !end foreach
+        class is (ppm_t_particles_d)
+          pset_d => discr
+          if (field%lda.eq.1) then
+            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
+              bfr_p(1) = f_p
+              bfr_p(2) = df_p
+              f_p = f_p + 0.5_mk*dt*df_p
+            end foreach
+          else
+            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
+              bfr_p(1:bs) = f_p(:)
+              bfr_p(bs+1:2*bs) = df_p(:)
+              f_p(:) = f_p(:) + 0.5_mk*dt*df_p(:)
+            end foreach
+          endif
+        class is (ppm_t_equi_mesh)
+          mesh => discr
+          if (ppm_dim.eq.2) then
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
+                for real
+                  buffer_n(1) = field_n
+                  buffer_n(2) = change_n
+                  field_n = field_n + 0.5_mk*dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
+                for real
+                  buffer_n(1:bs) = field_n(:)
+                  buffer_n(bs+1:2*bs) = change_n(:)
+                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
+              end foreach
+            endif
+          else
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
+                for real
+                  buffer_n(1) = field_n
+                  buffer_n(2) = change_n
+                  field_n = field_n + 0.5_mk*dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  buffer_n(1:bs) = field_n(:)
+                  buffer_n(bs+1:2*bs) = change_n(:)
+                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
+              end foreach
+            endif
+          endif
+        end select
+      class is (ppm_t_particles_s)
+        bs = ppm_dim
+        !pset_s => field
+        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
+        !  bfr_p(:) = x_p(:)
+        !  x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
+        !end foreach
+      class is (ppm_t_particles_d)
+        bs = ppm_dim
+        pset_d => field
+        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
+          bfr_p(1:bs) = x_p(:)
+          bfr_p(bs+1:2*bs) = dx_p(:)
+          x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
+        end foreach
+      end select
+      field => this%fields%next()
+      change => this%changes%next()
+      buffer => this%buffers%next()
+      discr => this%discretizations%next()
+    end do
+    check_false("associated(change)","Fields and changes should have same length")
+    check_false("associated(discr)","Fields and discretizations should have same length")
+    check_false("associated(buffer)","Fields and buffers should have same length")
+  
+  case (2)
+    !----------------------------------------------------------------------
+    ! STAGE 2: Do another update and interpolate with previously saved data
+    !----------------------------------------------------------------------
+    
+    field => this%fields%begin()
+    change => this%changes%begin()
+    buffer => this%buffers%begin()
+    discr => this%discretizations%begin()
+    do while (associated(field))
+      check_associated(change,"Fields and changes should have same length")
+      check_associated(discr,"Fields and discretizations should have same length")
+      check_associated(buffer,"Fields and buffers should have same length")
+
+      select type (field)
+      class is (ppm_t_field)
+        bs = field%lda
+        select type (discr)
+        class is (ppm_t_particles_s)
+          !pset_s => discr
+          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
+          !   bfr_p(2) = df_p
+          !  f_p = bfr_p + dt*df_p
+          !end foreach
+        class is (ppm_t_particles_d)
+          pset_d => discr
+          if (field%lda.eq.1) then
+            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
+              bfr_p(3) = df_p
+              f_p = bfr_p(1) + 0.5_mk*dt*df_p
+            end foreach
+          else
+            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
+              bfr_p(2*bs+1:3*bs) = df_p(:)
+              f_p(:) = bfr_p(1:bs) + 0.5_mk*dt*df_p(:)
+            end foreach
+          endif
+        class is (ppm_t_equi_mesh)
+          mesh => discr
+          if (ppm_dim.eq.2) then
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
+                for real
+                  buffer_n(3) = change_n
+                  field_n = buffer_n(1) + 0.5_mk*dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
+                for real
+                  buffer_n(2*bs+1:3*bs) = change_n(:)
+                  field_n(:) = buffer_n(1:bs) + 0.5_mk*dt*change_n(:)
+              end foreach
+            endif
+          else
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
+                for real
+                  buffer_n(3) = change_n
+                  field_n = buffer_n(1) + 0.5_mk*dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  buffer_n(2*bs+1:3*bs) = change_n(:)
+                  field_n(:) = buffer_n(1:bs) + 0.5_mk*dt*change_n(:)
+              end foreach
+            endif
+          endif
+        end select
+      class is (ppm_t_particles_s)
+        bs = ppm_dim
+        !pset_s => field
+        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
+        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
+        !end foreach
+      class is (ppm_t_particles_d)
+        bs = ppm_dim
+        pset_d => field
+        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
+          bfr_p(2*bs+1:3*bs) = dx_p(:)
+          x_p(:) = bfr_p(1:bs) + 0.5_mk*dt*dx_p(:)
+        end foreach
+      end select
+      field => this%fields%next()
+      change => this%changes%next()
+      buffer => this%buffers%next()
+      discr => this%discretizations%next()
+    end do
+    check_false("associated(change)","Fields and changes should have same length")
+    check_false("associated(discr)","Fields and discretizations should have same length")
+    check_false("associated(buffer)","Fields and buffers should have same length")
+  
+  case (3)
+    !----------------------------------------------------------------------
+    ! STAGE 3: Third Runge-Kutta substep
+    !----------------------------------------------------------------------
+    
+    field => this%fields%begin()
+    change => this%changes%begin()
+    buffer => this%buffers%begin()
+    discr => this%discretizations%begin()
+    do while (associated(field))
+      check_associated(change,"Fields and changes should have same length")
+      check_associated(discr,"Fields and discretizations should have same length")
+      check_associated(buffer,"Fields and buffers should have same length")
+
+      select type (field)
+      class is (ppm_t_field)
+        bs = field%lda
+        select type (discr)
+        class is (ppm_t_particles_s)
+          !pset_s => discr
+          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
+          !   bfr_p(2) = df_p
+          !  f_p = bfr_p + dt*df_p
+          !end foreach
+        class is (ppm_t_particles_d)
+          pset_d => discr
+          if (field%lda.eq.1) then
+            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
+              bfr_p(4) = df_p
+              f_p = bfr_p(1) + dt*df_p
+            end foreach
+          else
+            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
+              bfr_p(3*bs+1:4*bs) = df_p(:)
+              f_p(:) = bfr_p(1:bs) + dt*df_p(:)
+            end foreach
+          endif
+        class is (ppm_t_equi_mesh)
+          mesh => discr
+          if (ppm_dim.eq.2) then
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
+                for real
+                  buffer_n(4) = change_n
+                  field_n = buffer_n(1) + dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
+                for real
+                  buffer_n(3*bs+1:4*bs) = change_n(:)
+                  field_n(:) = buffer_n(1:bs) + dt*change_n(:)
+              end foreach
+            endif
+          else
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
+                for real
+                  buffer_n(4) = change_n
+                  field_n = buffer_n(1) + dt*change_n
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  buffer_n(3*bs+1:4*bs) = change_n(:)
+                  field_n(:) = buffer_n(1:bs) + dt*change_n(:)
+              end foreach
+            endif
+          endif
+        end select
+      class is (ppm_t_particles_s)
+        bs = ppm_dim
+        !pset_s => field
+        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
+        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
+        !end foreach
+      class is (ppm_t_particles_d)
+        bs = ppm_dim
+        pset_d => field
+        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
+          bfr_p(3*bs+1:4*bs) = dx_p(:)
+          x_p(:) = bfr_p(1:bs) + dt*dx_p(:)
+        end foreach
+      end select
+      field => this%fields%next()
+      change => this%changes%next()
+      buffer => this%buffers%next()
+      discr => this%discretizations%next()
+    end do
+    check_false("associated(change)","Fields and changes should have same length")
+    check_false("associated(discr)","Fields and discretizations should have same length")
+    check_false("associated(buffer)","Fields and buffers should have same length")
+  
+  case (4)
+    !----------------------------------------------------------------------
+    ! STAGE 4: Final step, interpolating the previous results
+    ! x_n + 1/6 dt (k1 + 2 k2 + 2k3 +k4)
+    !----------------------------------------------------------------------
+    
+    field => this%fields%begin()
+    change => this%changes%begin()
+    buffer => this%buffers%begin()
+    discr => this%discretizations%begin()
+    do while (associated(field))
+      check_associated(change,"Fields and changes should have same length")
+      check_associated(discr,"Fields and discretizations should have same length")
+      check_associated(buffer,"Fields and buffers should have same length")
+
+      select type (field)
+      class is (ppm_t_field)
+        bs = field%lda
+        select type (discr)
+        class is (ppm_t_particles_s)
+          !pset_s => discr
+          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
+          !   bfr_p(2) = df_p
+          !  f_p = bfr_p + dt*df_p
+          !end foreach
+        class is (ppm_t_particles_d)
+          pset_d => discr
+          if (field%lda.eq.1) then
+            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
+              f_p = bfr_p(1) + 1.0_mk/6.0_mk * dt * &
+              &     (bfr_p(2) + 2.0_mk*bfr_p(3) + 2.0_mk*bfr_p(4) + df_p)
+            end foreach
+          else
+            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
+              f_p(:) = bfr_p(1:bs) + 1.0_mk/6.0_mk * dt * &
+              &     (bfr_p(bs+1:2*bs) + 2.0_mk*bfr_p(2*bs+1:3*bs) + &
+              &      2.0_mk*bfr_p(3*bs+1:4*bs) + df_p(:))
+            end foreach
+          endif
+        class is (ppm_t_equi_mesh)
+          mesh => discr
+          if (ppm_dim.eq.2) then
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
+                for real
+                  field_n = buffer_n(1) + 1.0_mk/6.0_mk * dt * &
+                  &     (buffer_n(2) + 2.0_mk*buffer_n(3) + 2.0_mk*buffer_n(4) + change_n)
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
+                for real
+                  field_n(:) = buffer_n(1:bs) + 1.0_mk/6.0_mk * dt * &
+                  &     (buffer_n(bs+1:2*bs) + 2.0_mk*buffer_n(2*bs+1:3*bs) + &
+                  &      2.0_mk*buffer_n(3*bs+1:4*bs) + change_n(:))
+              end foreach
+            endif
+          else
+            if (field%lda.eq.1) then
+              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
+                for real
+                  field_n = buffer_n(1) + 1.0_mk/6.0_mk * dt * &
+                  &     (buffer_n(2) + 2.0_mk*buffer_n(3) + 2.0_mk*buffer_n(4) + change_n)
+              end foreach
+            else
+              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
+                for real
+                  field_n(:) = buffer_n(1:bs) + 1.0_mk/6.0_mk * dt * &
+                  &     (buffer_n(bs+1:2*bs) + 2.0_mk*buffer_n(2*bs+1:3*bs) + &
+                  &      2.0_mk*buffer_n(3*bs+1:4*bs) + change_n(:))
+              end foreach
+            endif
+          endif
+        end select
+      class is (ppm_t_particles_s)
+        !pset_s => field
+        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
+        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
+        !end foreach
+      class is (ppm_t_particles_d)
+        pset_d => field
+        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
+          x_p(:) = bfr_p(1:bs) + 1.0_mk/6.0_mk * dt * &
+          &     (bfr_p(bs+1:2*bs) + 2.0_mk*bfr_p(2*bs+1:3*bs) + &
+          &      2.0_mk*bfr_p(3*bs+1:4*bs) + dx_p(:))
+        end foreach
+      end select
+      field => this%fields%next()
+      change => this%changes%next()
+      buffer => this%buffers%next()
+      discr => this%discretizations%next()
+    end do
+    check_false("associated(change)","Fields and changes should have same length")
+    check_false("associated(discr)","Fields and discretizations should have same length")
+    check_false("associated(buffer)","Fields and buffers should have same length")
+
+  end select
+
+  t  = t  + dt
+
+  end_subroutine()
+end subroutine rk4_step
 
 
 

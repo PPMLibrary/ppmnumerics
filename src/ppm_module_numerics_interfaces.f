@@ -67,7 +67,7 @@ type,abstract :: ppm_t_integrator_
     class(ppm_v_discr_kind),          pointer         :: discretizations  => null()
     class(ppm_v_field_discr_pair),    pointer         :: rhs_fields_discr => null()
     class(ppm_v_field),               pointer         :: changes          => null()
-    class(ppm_v_field), dimension(:), pointer         :: buffers          => null() 
+    class(ppm_v_field),               pointer         :: buffers          => null() 
     contains
     procedure(integrator_create_),       deferred :: create
     procedure(integrator_destroy_),      deferred :: destroy
