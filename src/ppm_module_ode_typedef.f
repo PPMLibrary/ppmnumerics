@@ -61,6 +61,21 @@ subroutine ode_create(this,scheme,fields,rhsfunc,rhs_fields_discr,info,options,k
     allocate(ppm_t_sts::this%integrator,STAT=info)
     call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
     or_fail("Creating STS failed")
+  case(ppm_param_ode_scheme_tvdrk2)
+    ! allocate changes array
+    allocate(ppm_t_tvdrk2::this%integrator,STAT=info)
+    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    or_fail("Creating tvd RK2 failed")
+  case(ppm_param_ode_scheme_midrk2)
+    ! allocate changes array
+    allocate(ppm_t_midrk2::this%integrator,STAT=info)
+    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    or_fail("Creating mid RK2 failed")
+  case(ppm_param_ode_scheme_rk4)
+    ! allocate changes array
+    allocate(ppm_t_rk4::this%integrator,STAT=info)
+    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    or_fail("Creating RK4 failed")
   case default
     ppm_fail("Integrator not implemented")
   end select
@@ -86,6 +101,21 @@ subroutine ode_create(this,scheme,fields,rhsfunc,rhs_fields_discr,info,options,k
       allocate(ppm_t_sts::this%kickoff,STAT=info)
       call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
      or_fail("Creating STS failed")
+    case(ppm_param_ode_scheme_tvdrk2)
+      ! allocate changes array
+      allocate(ppm_t_tvdrk2::this%kickoff,STAT=info)
+      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      or_fail("Creating tvd RK2 failed")
+    case(ppm_param_ode_scheme_midrk2)
+      ! allocate changes array
+      allocate(ppm_t_midrk2::this%kickoff,STAT=info)
+      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      or_fail("Creating mid RK2 failed")
+    case(ppm_param_ode_scheme_rk4)
+      ! allocate changes array
+      allocate(ppm_t_rk4::this%kickoff,STAT=info)
+      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      or_fail("Creating RK4 failed")
     case default
       ppm_fail("Integrator not implemented")
     end select
