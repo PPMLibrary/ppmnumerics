@@ -23,8 +23,6 @@ type,extends(ppm_t_ode_) :: ppm_t_ode
   procedure :: create => ode_create
   procedure :: destroy => ode_destroy
   procedure :: step => ode_step
-  procedure :: map_push => ode_map_push
-  procedure :: map_pop => ode_map_pop
 end type ppm_t_ode
         
 
@@ -132,22 +130,5 @@ subroutine ode_step(this,t,dt,istage,info)
 
 end subroutine ode_step
 
-subroutine ode_map_push(this,info)
-  IMPLICIT NONE
-  class(ppm_t_ode)      :: this
-  integer,               intent(  out)   :: info
-  start_subroutine("ode_map_push")
-  
-  end_subroutine()
-end subroutine ode_map_push
-
-subroutine ode_map_pop(this,info)
-  IMPLICIT NONE
-  class(ppm_t_ode)      :: this
-  integer,               intent(  out)   :: info
-  start_subroutine("ode_map_pop")
-  
-  end_subroutine()
-end subroutine ode_map_pop
 
 end module ppm_module_ode_typedef

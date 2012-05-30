@@ -27,14 +27,3 @@ subroutine ode_step_(this,t,dt,istage,info)
   integer,               intent(  out)   :: info
 end subroutine
 
-subroutine ode_map_push_(this,info)
-  import ppm_t_ode_
-  class(ppm_t_ode_)                      :: this
-  integer,               intent(  out)   :: info
-end subroutine
-
-subroutine ode_map_pop_(this,info)
-  import ppm_t_ode_
-  class(ppm_t_ode_)                      :: this
-  integer,               intent(  out)   :: info
-end subroutine

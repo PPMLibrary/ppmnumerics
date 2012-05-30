@@ -103,8 +103,6 @@ type,abstract :: ppm_t_ode_
     procedure(ode_create_),        deferred :: create
     procedure(ode_destroy_),       deferred :: destroy
     procedure(ode_step_),          deferred :: step
-    procedure(ode_map_push_),      deferred :: map_push
-    procedure(ode_map_push_),      deferred :: map_pop
 end type ppm_t_ode_
 
 !----------------------------------------------------------------------
