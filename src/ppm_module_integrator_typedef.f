@@ -753,10 +753,10 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
     check_false("associated(buffer)","Fields and buffers should have same length")
-
+  
+    t  = t  + dt
   end select
 
-  t  = t  + dt
 
   end_subroutine()
 end subroutine tvdrk2_step
@@ -996,10 +996,11 @@ subroutine midrk2_step(this,t,dt,istage,info)
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
     check_false("associated(buffer)","Fields and buffers should have same length")
+  
+    t  = t  + dt
 
   end select
 
-  t  = t  + dt
 
   end_subroutine()
 end subroutine midrk2_step
@@ -1448,10 +1449,11 @@ subroutine rk4_step(this,t,dt,istage,info)
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
     check_false("associated(buffer)","Fields and buffers should have same length")
+  
+    t  = t  + dt
 
   end select
 
-  t  = t  + dt
 
   end_subroutine()
 end subroutine rk4_step
