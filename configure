@@ -6493,6 +6493,11 @@ if test "x${dev_compile}" = xyes; then
     fi
 fi
 
+if test "x${vendor}" = xgnu; then
+  FCFLAGS="$FCFLAGS -ffree-line-length-none"
+
+fi
+
 debug_compile=no
 # Check whether --enable-debug was given.
 if test "${enable_debug+set}" = set; then :
@@ -6518,7 +6523,6 @@ else
         FCFLAGS="$FCFLAGS -diag-disable 5462"
 
     fi
-
 fi
 
 # set src as the default srcdir

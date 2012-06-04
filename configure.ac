@@ -238,6 +238,10 @@ if test "x${dev_compile}" = xyes; then
     fi
 fi
 
+if test "x${vendor}" = xgnu; then
+  AC_SUBST(FCFLAGS,["$FCFLAGS -ffree-line-length-none"])
+fi
+
 debug_compile=no
 AC_ARG_ENABLE([debug],[AS_HELP_STRING([--enable-debug],
   [enable debug mode (default is no)])],[debug_compile=yes])
@@ -255,7 +259,6 @@ else
     if test "x${vendor}" = xintel; then
         AC_SUBST(FCFLAGS,["$FCFLAGS -diag-disable 5462"])
     fi
-
 fi
 
 # set src as the default srcdir
