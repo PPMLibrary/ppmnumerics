@@ -76,7 +76,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_integrator)                :: this
-  class(ppm_v_main_abstr), pointer       :: fields
+  class(ppm_v_main_abstr)                :: fields
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
@@ -84,7 +84,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !!! intended discretization in a ppm_t_pair object
   procedure(ppm_p_rhsfunc)               :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -209,7 +209,7 @@ subroutine eulerf_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_eulerf)                    :: this
-  class(ppm_v_main_abstr), pointer       :: fields
+  class(ppm_v_main_abstr)                :: fields
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
@@ -217,7 +217,7 @@ subroutine eulerf_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !!! intended discretization in a ppm_t_pair object
   procedure(ppm_p_rhsfunc)               :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -351,7 +351,7 @@ subroutine sts_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_sts)                       :: this
-  class(ppm_v_main_abstr), pointer       :: fields
+  class(ppm_v_main_abstr)                :: fields
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
@@ -359,7 +359,7 @@ subroutine sts_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !!! intended discretization in a ppm_t_pair object
   procedure(ppm_p_rhsfunc)               :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -516,7 +516,7 @@ subroutine tvdrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_tvdrk2)                    :: this
-  class(ppm_v_main_abstr), pointer       :: fields
+  class(ppm_v_main_abstr)                :: fields
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
@@ -524,7 +524,7 @@ subroutine tvdrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !!! intended discretization in a ppm_t_pair object
   procedure(ppm_p_rhsfunc)               :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -768,7 +768,7 @@ subroutine midrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_midrk2)                    :: this
-  class(ppm_v_main_abstr), pointer       :: fields
+  class(ppm_v_main_abstr)                :: fields
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
@@ -776,7 +776,7 @@ subroutine midrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !!! intended discretization in a ppm_t_pair object
   procedure(ppm_p_rhsfunc)               :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -1012,7 +1012,7 @@ subroutine rk4_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_rk4)                    :: this
-  class(ppm_v_main_abstr), pointer       :: fields
+  class(ppm_v_main_abstr)                :: fields
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
@@ -1020,7 +1020,7 @@ subroutine rk4_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !!! intended discretization in a ppm_t_pair object
   procedure(ppm_p_rhsfunc)               :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
