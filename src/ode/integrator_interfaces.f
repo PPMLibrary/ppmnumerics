@@ -4,9 +4,9 @@ subroutine integrator_create_(this,fields,rhsfunc,rhs_fields_discr,info,options)
   import ppm_v_main_abstr, ppm_v_field_discr_pair, ppm_t_options
   import ppm_t_integrator_, ppm_p_rhsfunc
   class(ppm_t_integrator_)                    :: this
-  class(ppm_v_main_abstr), pointer            :: fields
+  class(ppm_v_main_abstr)                     :: fields
   procedure(ppm_p_rhsfunc)                    :: rhsfunc
-  class(ppm_v_field_discr_pair), pointer      :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)               :: rhs_fields_discr
   integer,                      intent(  out) :: info
   class(ppm_t_options),target,optional,intent(in   ) :: options
 end subroutine

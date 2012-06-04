@@ -39,9 +39,9 @@ subroutine ode_create(this,scheme,fields,rhsfunc,rhs_fields_discr,info,options,k
 
   class(ppm_t_ode)                       :: this
   integer,          intent(in   )        :: scheme
-  class(ppm_v_main_abstr), pointer       :: fields
+  class(ppm_v_main_abstr)                :: fields
   procedure(ppm_p_rhsfunc)               :: rhsfunc
-  class(ppm_v_field_discr_pair), pointer :: rhs_fields_discr
+  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
   integer,          intent(  out)        :: info
   class(ppm_t_options),target,optional,intent(in   ) :: options
   integer,optional, intent(in   )        :: kickoff_scheme
