@@ -166,8 +166,37 @@ subroutine ode_map_push(this,info)
   IMPLICIT NONE
   class(ppm_t_ode)      :: this
   integer,               intent(  out)   :: info
+  class(ppm_t_field_), pointer           :: buffer => null()
+  class(ppm_t_discr_info_), pointer      :: di => null()
+  class(ppm_t_particles_d), pointer      :: pset => null()
   start_subroutine("ode_map_push")
   
+  if (this%state.EQ.ode_state_kickoff) then
+    buffer => this%kickoff%buffers%begin()
+    do while (associated(buffer))
+      di => buffer%discr_info%begin()
+      select type(disc => di%discr_ptr)
+        class is (ppm_t_particles_d)
+        pset => disc
+        call pset%map_ghost_push(info,buffer)
+      end select
+
+      buffer => this%kickoff%buffers%next()
+    end do
+  else
+    buffer => this%integrator%buffers%begin()
+    do while (associated(buffer))
+      di => buffer%discr_info%begin()
+      select type(disc => di%discr_ptr)
+        class is (ppm_t_particles_d)
+        pset => disc
+        call pset%map_ghost_push(info,buffer)
+      end select
+
+      buffer => this%integrator%buffers%next()
+    end do
+  end if
+
   end_subroutine()
 end subroutine ode_map_push
 
@@ -175,8 +204,39 @@ subroutine ode_map_pop(this,info)
   IMPLICIT NONE
   class(ppm_t_ode)      :: this
   integer,               intent(  out)   :: info
+  class(ppm_t_field_), pointer           :: buffer => null()
+  class(ppm_t_discr_info_), pointer      :: di => null()
+  class(ppm_t_particles_d), pointer      :: pset => null()
   start_subroutine("ode_map_pop")
-  
+    
+  if (this%state.EQ.ode_state_kickoff) then
+    ! traverse in reverse order!
+    buffer => this%kickoff%buffers%last()
+    do while (associated(buffer))
+      di => buffer%discr_info%begin()
+      select type(disc => di%discr_ptr)
+        class is (ppm_t_particles_d)
+        pset => disc
+        call pset%map_ghost_pop(info,buffer)
+      end select
+
+      buffer => this%kickoff%buffers%prev()
+    end do
+  else
+    ! traverse in reverse order!
+    buffer => this%integrator%buffers%last()
+    do while (associated(buffer))
+      di => buffer%discr_info%begin()
+      select type(disc => di%discr_ptr)
+        class is (ppm_t_particles_d)
+        pset => disc
+        call pset%map_ghost_pop(info,buffer)
+      end select
+
+      buffer => this%integrator%buffers%prev()
+    end do
+  end if
+
   end_subroutine()
 end subroutine ode_map_pop
 
