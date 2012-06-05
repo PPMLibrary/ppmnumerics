@@ -190,15 +190,21 @@ subroutine integrator_destroy(this,info)
   ! Variables
   !----------------------------------------------------------------------
   class(ppm_t_field_), pointer               :: change => null()
+  class(ppm_t_field_), pointer               :: buffer => null()
   start_subroutine("eulerf_destroy")
   
   change => this%changes%begin()
+  buffer => this%buffers%begin()
   do while (associated(change))
-    check_associated(change,"Fields and changes should have same length")
+    check_associated(buffer,"Buffers and changes should have same length")
     call change%destroy(info) 
      or_fail("Destroying change failed")
     change => this%changes%next()
+    call buffer%destroy(info) 
+     or_fail("Destroying buffer failed")
+    buffer => this%buffers%next()
   end do
+  deallocate(this%changes,this%buffers,stat=info)
  
   end_subroutine()
 end subroutine integrator_destroy

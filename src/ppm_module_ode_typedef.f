@@ -133,7 +133,16 @@ subroutine ode_destroy(this,info)
   class(ppm_t_ode)      :: this
   integer,               intent(  out)   :: info
   start_subroutine("ode_destroy")
-  
+
+  if (associated(this%kickoff)) then
+    call this%kickoff%destroy(info)
+    deallocate(this%kickoff,stat=info)
+    or_fail_dealloc("this%kickoff")
+  end if
+  call this%integrator%destroy(info)
+  deallocate(this%integrator,stat=info)
+  or_fail_dealloc("this%integrator")
+
   end_subroutine()
 end subroutine ode_destroy
 
