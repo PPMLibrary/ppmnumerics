@@ -242,6 +242,8 @@ end subroutine eulerf_create
 
 subroutine eulerf_step(this,t,dt,istage,info)
   implicit none
+  ! FIXME: must be templated
+  integer, parameter  :: mk = ppm_kind_double
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
@@ -401,6 +403,8 @@ end subroutine sts_create
 
 subroutine sts_step(this,t,dt,istage,info)
   implicit none
+  ! FIXME: must be templated
+  integer, parameter  :: mk = ppm_kind_double
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
@@ -549,6 +553,8 @@ end subroutine tvdrk2_create
 
 subroutine tvdrk2_step(this,t,dt,istage,info)
   implicit none
+  ! FIXME: must be templated
+  integer, parameter  :: mk = ppm_kind_double
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
@@ -803,6 +809,8 @@ end subroutine midrk2_create
 
 subroutine midrk2_step(this,t,dt,istage,info)
   implicit none
+  ! FIXME: must be templated
+  integer, parameter  :: mk = ppm_kind_double
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
@@ -1050,6 +1058,8 @@ end subroutine rk4_create
 
 subroutine rk4_step(this,t,dt,istage,info)
   implicit none
+  ! FIXME: must be templated
+  integer, parameter  :: mk = ppm_kind_double
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
