@@ -262,7 +262,7 @@ subroutine eulerf_step(this,t,dt,istage,info)
   class(ppm_t_equi_mesh), pointer            :: mesh => null()
   start_subroutine("eulerf_step")
 
-  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
+  rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
 
   field => this%fields%begin()
   change => this%changes%begin()
@@ -431,7 +431,7 @@ subroutine sts_step(this,t,dt,istage,info)
   &     cos((2.0_mk * real(istage,mk) - 1.0_mk)/real(this%nsts,mk) * M_PI * 0.5_mk) + &
   &     1.0_mk + this%stsnu(this%nsts))
 
-  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
+  rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
 
   field => this%fields%begin()
   change => this%changes%begin()
@@ -571,7 +571,6 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
   start_subroutine("tvdrk2_step")
            
 
-  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
 
   ! TODO check if buffers where mapped
   select case (istage)
@@ -580,6 +579,8 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
     ! STAGE 1: Store the current field in a secondary buffer and update it
     ! with dt*df
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
+
     field => this%fields%begin()
     change => this%changes%begin()
     discr => this%discretizations%begin()
@@ -668,6 +669,7 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 2: Do another update and interpolate with previously saved data
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+dt,this%changes)
     
     field => this%fields%begin()
     change => this%changes%begin()
@@ -823,15 +825,17 @@ subroutine midrk2_step(this,t,dt,istage,info)
   start_subroutine("midrk2_step")
            
 
-  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
 
   ! TODO check if buffers where mapped
   select case (istage)
   case (1)
     !----------------------------------------------------------------------
-    ! STAGE 1: Store the current field in a secondary buffer and update it
-    ! with dt*df
+    ! STAGE 1: Compute midpoint
+    ! Store the current field in a secondary buffer and update it
+    ! with 0.5*dt*df
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
+
     field => this%fields%begin()
     change => this%changes%begin()
     discr => this%discretizations%begin()
@@ -920,6 +924,7 @@ subroutine midrk2_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 2: Do another update and interpolate with previously saved data
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+0.5*dt,this%changes)
     
     field => this%fields%begin()
     change => this%changes%begin()
@@ -1068,15 +1073,15 @@ subroutine rk4_step(this,t,dt,istage,info)
   start_subroutine("rk4_step")
            
 
-  rhs_info = this%rhsfunc(this%rhs_fields_discr,this%changes)
 
   ! TODO check if buffers where mapped
   select case (istage)
   case (1)
     !----------------------------------------------------------------------
-    ! STAGE 1: Store the current field in a secondary buffer and update it
-    ! with dt*df
+    ! STAGE 1: x_n + 1/2 dt k1
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
+    
     field => this%fields%begin()
     change => this%changes%begin()
     discr => this%discretizations%begin()
@@ -1173,8 +1178,9 @@ subroutine rk4_step(this,t,dt,istage,info)
   
   case (2)
     !----------------------------------------------------------------------
-    ! STAGE 2: Do another update and interpolate with previously saved data
+    ! STAGE 2: x_n + 1/2 dt k2
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+0.5_mk*dt,this%changes)
     
     field => this%fields%begin()
     change => this%changes%begin()
@@ -1265,8 +1271,9 @@ subroutine rk4_step(this,t,dt,istage,info)
   
   case (3)
     !----------------------------------------------------------------------
-    ! STAGE 3: Third Runge-Kutta substep
+    ! STAGE 3: x_n + dt k3
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+0.5_mk*dt,this%changes)
     
     field => this%fields%begin()
     change => this%changes%begin()
@@ -1360,6 +1367,7 @@ subroutine rk4_step(this,t,dt,istage,info)
     ! STAGE 4: Final step, interpolating the previous results
     ! x_n + 1/6 dt (k1 + 2 k2 + 2k3 +k4)
     !----------------------------------------------------------------------
+    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+dt,this%changes)
     
     field => this%fields%begin()
     change => this%changes%begin()

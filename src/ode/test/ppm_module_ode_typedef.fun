@@ -17,6 +17,7 @@ integer,parameter               :: ndim=2
 integer                         :: decomp,assig,tolexp
 integer                         :: info,comm,rank,nproc,topoid
 integer                         :: np_global = 100
+integer                         :: ode_scheme
 real(mk)                        :: cutoff
 real(mk),dimension(:,:),pointer :: xp=>NULL()
 real(mk),dimension(:  ),pointer :: min_phys=>NULL(),max_phys=>NULL()
@@ -429,8 +430,9 @@ integer                                        :: nterms
 ! right hand sides
 !-------------------------------------------------------------
 
-integer function rhs_test1(fields_discr,changes)
+integer function rhs_test1(fields_discr,t,changes)
   class(ppm_v_field_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
   class(ppm_v_field),      pointer          :: changes
   class(ppm_t_main_abstr), pointer          :: m
   class(ppm_t_field_discr_pair), pointer    :: pair
@@ -458,8 +460,9 @@ integer function rhs_test1(fields_discr,changes)
   end_subroutine()
 end function rhs_test1
 
-integer function rhs_test2(fields_discr,changes)
+integer function rhs_test2(fields_discr,t,changes)
   class(ppm_v_field_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
   class(ppm_v_field),      pointer          :: changes
   class(ppm_t_main_abstr), pointer          :: m
   class(ppm_t_field_discr_pair), pointer    :: pair
@@ -487,8 +490,9 @@ integer function rhs_test2(fields_discr,changes)
   end_subroutine()
 end function rhs_test2
 
-integer function rhs_test3(fields_discr,changes)
+integer function rhs_test3(fields_discr,t,changes)
   class(ppm_v_field_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
   class(ppm_v_field),      pointer          :: changes
   class(ppm_t_main_abstr), pointer          :: m
   class(ppm_t_field_discr_pair), pointer    :: pair
@@ -526,6 +530,249 @@ integer function rhs_test3(fields_discr,changes)
   rhs_test3 = 0 
   end_subroutine()
 end function rhs_test3
+
+!-------------------------------------------------------------
+! ODE convergence tests
+!-------------------------------------------------------------
+    
+    test test_ode_const({ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_rk4]})
+        use ppm_module_io_vtk
+        type(ppm_t_particles_d), target :: Part1
+        class(ppm_t_field_), pointer    :: Field1
+        class(ppm_t_main_abstr), pointer :: el
+        type(ppm_t_ode)                 :: ode 
+        class(ppm_v_main_abstr),pointer :: fields
+        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        real(mk)                        :: t,dt
+        real(mk)         , parameter    :: ts = 3.0_mk
+        real(mk)         , parameter    :: te = 3.5_mk
+        integer                         :: istage
+        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+        class(ppm_t_field_discr_pair), pointer :: pair
+
+        !--------------------------
+        !Define Fields
+        !--------------------------
+        allocate(ppm_t_field::Field1,stat=info)
+        Assert_Equal(info,0)
+        call Field1%create(1,info,name="Concentration") !vector field
+
+        call Part1%initialize(np_global,info,topoid=topoid,name="Part1")
+        Assert_Equal(info,0)
+
+!  print particles to a VTK file
+!        CALL ppm_vtk_particles("part_test",Part1,info)
+!        Assert_Equal(info,0)
+
+        call Part1%set_cutoff(0.5_mk * Part1%h_avg,info)
+        Assert_Equal(info,0)
+
+        call Part1%map(info,global=.true.,topoid=topoid)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Field1%discretize_on(Part1,info)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Part1%get_field(Field1,wp_1r,info)
+        Assert_Equal(info,0)
+        wp_1r(:) = 1.1_mk
+
+        allocate(fields,stat=info)
+        Assert_Equal(info,0)
+        allocate(rhs_fields,stat=info)
+        Assert_Equal(info,0)
+        allocate(pair,stat=info)
+        Assert_Equal(info,0)
+        el => Field1
+        call fields%push(el,info)
+
+        rhsptr => const_ode
+        call ode%create(ode_scheme,fields,rhsptr,rhs_fields,info)
+        Assert_Equal(info,0)
+        t = ts
+        dt = 0.1_mk
+        do while (t.lt.te-dt/2._mk)
+          do istage=1,ode%integrator%scheme_nstages
+            call ode%step(t,dt,istage,info)
+          end do
+        end do
+        Assert_Equal(info,0)
+        
+        call Part1%get_field(Field1,wp_1r,info)
+        Assert_Equal(info,0)
+        Assert_True(((abs(minval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol).and.(abs(maxval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol)))
+        
+
+        call ode%destroy(info)
+        Assert_Equal(info,0)
+        call Part1%destroy(info)
+        Assert_Equal(info,0)
+        call Field1%destroy(info)
+        Assert_Equal(info,0)
+        deallocate(Field1,fields,rhs_fields,pair)
+    end test
+
+integer function const_ode(fields_discr,t,changes)
+  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
+  class(ppm_v_field),      pointer          :: changes
+  class(ppm_t_field_),     pointer          :: df
+  class(ppm_t_discr_info_), pointer      :: di => null()
+  class(ppm_t_particles_d), pointer         :: pset => null()
+  start_subroutine("const_ode")
+  
+  df => changes%at(1)
+  di => df%discr_info%begin()
+  select type(disc => di%discr_ptr)
+  class is (ppm_t_particles_d)
+    pset => disc
+  end select
+  
+  foreach p in particles(pset) with sca_fields(dw=df)
+    dw_p = 1.7_mk
+  end foreach
+
+  const_ode = 0 
+  end_subroutine()
+end function const_ode
+    
+     test test_ode_linear({ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_rk4]})
+        use ppm_module_io_vtk
+        type(ppm_t_particles_d), target :: Part1
+        class(ppm_t_field_), pointer    :: Field1
+        class(ppm_t_main_abstr), pointer :: el
+        type(ppm_t_ode)                 :: ode 
+        class(ppm_v_main_abstr),pointer :: fields
+        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        real(mk)                        :: t,dt
+        real(mk)         , parameter    :: ts = 0.0_mk
+        real(mk)         , parameter    :: te = 1.0_mk
+        integer                         :: istage
+        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+
+        !--------------------------
+        !Define Fields
+        !--------------------------
+        allocate(ppm_t_field::Field1,stat=info)
+        Assert_Equal(info,0)
+        call Field1%create(1,info,name="Concentration") !vector field
+
+        call Part1%initialize(np_global,info,topoid=topoid,name="Part1")
+        Assert_Equal(info,0)
+
+!  print particles to a VTK file
+!        CALL ppm_vtk_particles("part_test",Part1,info)
+!        Assert_Equal(info,0)
+
+        call Part1%set_cutoff(0.5_mk * Part1%h_avg,info)
+        Assert_Equal(info,0)
+
+        call Part1%map(info,global=.true.,topoid=topoid)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Field1%discretize_on(Part1,info)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Part1%get_field(Field1,wp_1r,info)
+        Assert_Equal(info,0)
+        wp_1r(:) = 0.0_mk
+
+        allocate(fields,stat=info)
+        Assert_Equal(info,0)
+        allocate(rhs_fields,stat=info)
+        Assert_Equal(info,0)
+        el => Field1
+        call fields%push(el,info)
+
+        rhsptr => linear_ode
+        call ode%create(ode_scheme,fields,rhsptr,rhs_fields,info)
+        Assert_Equal(info,0)
+        t = ts
+        dt = 0.1_mk
+        do while (t.lt.te-dt/2._mk)
+          do istage=1,ode%integrator%scheme_nstages
+            call ode%step(t,dt,istage,info)
+          end do
+          !call Part1%get_field(Field1,wp_1r,info)
+          !Assert_Equal(info,0)
+          !print *,t,wp_1r(1)
+        end do
+        Assert_Equal(info,0)
+        
+        call Part1%get_field(Field1,wp_1r,info)
+        Assert_Equal(info,0)
+        print *,wp_1r(1)
+        !Assert_True(((abs(minval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol).and.(abs(maxval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol)))
+        
+
+        call ode%destroy(info)
+        Assert_Equal(info,0)
+        call Part1%destroy(info)
+        Assert_Equal(info,0)
+        call Field1%destroy(info)
+        Assert_Equal(info,0)
+        deallocate(Field1,fields,rhs_fields)
+    end test
+
+integer function linear_ode(fields_discr,t,changes)
+  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
+  class(ppm_v_field),      pointer          :: changes
+  class(ppm_t_field_),     pointer          :: df
+  class(ppm_t_discr_info_), pointer         :: di => null()
+  class(ppm_t_particles_d), pointer         :: pset => null()
+  start_subroutine("linear_ode")
+ 
+  df => changes%at(1)
+  di => df%discr_info%begin()
+  select type(disc => di%discr_ptr)
+  class is (ppm_t_particles_d)
+    pset => disc
+  end select
+  
+  foreach p in particles(pset) with sca_fields(dw=df)
+    dw_p = t
+  end foreach
+
+  linear_ode = 0 
+  end_subroutine()
+end function linear_ode
+
+integer function exp_ode(fields_discr,t,changes)
+  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
+  class(ppm_v_field),      pointer          :: changes
+  class(ppm_t_field_),     pointer          :: df
+  class(ppm_t_discr_info_), pointer         :: di => null()
+  class(ppm_t_particles_d), pointer         :: pset => null()
+  start_subroutine("exp_ode")
+ 
+  df => changes%at(1)
+  di => df%discr_info%begin()
+  select type(disc => di%discr_ptr)
+  class is (ppm_t_particles_d)
+    pset => disc
+  end select
+  
+  foreach p in particles(pset) with sca_fields(dw=df)
+    dw_p = exp(t)
+  end foreach
+
+  exp_ode = 0 
+  end_subroutine()
+end function exp_ode
     
 
 end test_suite

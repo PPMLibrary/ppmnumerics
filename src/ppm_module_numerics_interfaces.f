@@ -111,10 +111,12 @@ end type ppm_t_ode_
 !  INTERFACES
 !----------------------------------------------------------------------
 abstract interface
-  integer function ppm_p_rhsfunc(fields_and_discr,changes)
+  integer function ppm_p_rhsfunc(fields_and_discr,time,changes)
   import ppm_v_field
+  import ppm_kind_double
   import ppm_v_field_discr_pair
   class(ppm_v_field_discr_pair), pointer    :: fields_and_discr
+  real(ppm_kind_double)                     :: time
   class(ppm_v_field),      pointer          :: changes
   end function ppm_p_rhsfunc
 end interface
