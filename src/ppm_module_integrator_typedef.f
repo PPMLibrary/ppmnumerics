@@ -790,7 +790,7 @@ subroutine midrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   this%scheme_order   = 2
   this%scheme_memsize = 1
   this%scheme_nstages = 2
-  this%scheme_kickoff = ppm_param_ode_scheme_tvdrk2
+  this%scheme_kickoff = ppm_param_ode_scheme_midrk2
  
   ! TODO allocate buffer   
   call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)

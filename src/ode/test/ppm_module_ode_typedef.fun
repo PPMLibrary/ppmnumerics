@@ -9,16 +9,18 @@ use ppm_module_ode_typedef
 #endif
 
 integer, parameter              :: debug = 0
-integer, parameter              :: mk = kind(1.0d0) !kind(1.0e0)
-real(mk),parameter              :: tol=epsilon(1._mk)*100
+integer, parameter              :: mk = ppm_kind_double 
+!integer, parameter              :: mk = kind(1.0d0) !kind(1.0e0)
+real(mk),parameter              :: tol=epsilon(1._mk)*1000._mk
 real(mk),parameter              :: pi = ACOS(-1._mk)
 real(mk),parameter              :: skin = 0._mk
 integer,parameter               :: ndim=2
 integer                         :: decomp,assig,tolexp
 integer                         :: info,comm,rank,nproc,topoid
-integer                         :: np_global = 100
+integer , parameter             :: np_global = 100
 integer                         :: ode_scheme
 real(mk)                        :: cutoff
+real(mk)                        :: dtime
 real(mk),dimension(:,:),pointer :: xp=>NULL()
 real(mk),dimension(:  ),pointer :: min_phys=>NULL(),max_phys=>NULL()
 real(mk),dimension(:  ),pointer :: len_phys=>NULL()
@@ -50,6 +52,7 @@ logical, dimension(:),   pointer               :: wp_1l => NULL()
 integer, dimension(:),allocatable              :: degree,order
 real(ppm_kind_double),dimension(:),allocatable :: coeffs
 integer                                        :: nterms
+real(mk)                      :: last_err
 
     init
 
@@ -126,6 +129,7 @@ integer                                        :: nterms
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
         type(ppm_t_ode)                 :: ode 
+        integer                         :: np
         CLASS(ppm_t_operator_discr),POINTER   :: DCop => NULL()
         CLASS(ppm_t_operator_discr),POINTER   :: PSEop => NULL()
         class(ppm_t_neighlist_d_),POINTER :: Nlist => NULL()
@@ -143,14 +147,15 @@ integer                                        :: nterms
         Assert_Equal(info,0)
         call Field1%create(1,info,name="Concentration") !vector field
 
-        call Part1%initialize(np_global,info,topoid=topoid,name="Part1")
+        np = np_global
+        call Part1%initialize(np,info,topoid=topoid,name="Part1")
         Assert_Equal(info,0)
 
 !  print particles to a VTK file
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(1._mk * Part1%h_avg,info)
+        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
         Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
@@ -209,6 +214,7 @@ integer                                        :: nterms
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
         type(ppm_t_ode)                 :: ode 
+        integer                         :: np
         CLASS(ppm_t_operator_discr),POINTER   :: DCop => NULL()
         CLASS(ppm_t_operator_discr),POINTER   :: PSEop => NULL()
         class(ppm_t_neighlist_d_),POINTER :: Nlist => NULL()
@@ -227,15 +233,15 @@ integer                                        :: nterms
         allocate(ppm_t_field::Field1,stat=info)
         Assert_Equal(info,0)
         call Field1%create(1,info,name="Concentration") !vector field
-
-        call Part1%initialize(np_global,info,topoid=topoid,name="Part1")
+        np = np_global
+        call Part1%initialize(np,info,topoid=topoid,name="Part1")
         Assert_Equal(info,0)
 
 !  print particles to a VTK file
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(1._mk * Part1%h_avg,info)
+        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
         Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
@@ -547,6 +553,7 @@ end function rhs_test3
         real(mk)         , parameter    :: ts = 3.0_mk
         real(mk)         , parameter    :: te = 3.5_mk
         integer                         :: istage
+        integer                         :: np
         procedure(ppm_p_rhsfunc),pointer :: rhsptr
         class(ppm_t_field_discr_pair), pointer :: pair
 
@@ -557,14 +564,15 @@ end function rhs_test3
         Assert_Equal(info,0)
         call Field1%create(1,info,name="Concentration") !vector field
 
-        call Part1%initialize(np_global,info,topoid=topoid,name="Part1")
+        np = np_global
+        call Part1%initialize(np,info,topoid=topoid,name="Part1")
         Assert_Equal(info,0)
 
 !  print particles to a VTK file
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(0.5_mk * Part1%h_avg,info)
+        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
         Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
@@ -642,7 +650,7 @@ integer function const_ode(fields_discr,t,changes)
   end_subroutine()
 end function const_ode
     
-     test test_ode_linear({ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_rk4]})
+     test test_ode_linear({dtime: [0.1_mk,0.01_mk,0.001_mk,0.0001_mk], ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_midrk2,ppm_param_ode_scheme_rk4]})
         use ppm_module_io_vtk
         type(ppm_t_particles_d), target :: Part1
         class(ppm_t_field_), pointer    :: Field1
@@ -654,6 +662,8 @@ end function const_ode
         real(mk)         , parameter    :: ts = 0.0_mk
         real(mk)         , parameter    :: te = 1.0_mk
         integer                         :: istage
+        integer                         :: np
+        real(mk)        , parameter     :: symres = 0.5_mk
         procedure(ppm_p_rhsfunc),pointer :: rhsptr
 
         !--------------------------
@@ -663,14 +673,15 @@ end function const_ode
         Assert_Equal(info,0)
         call Field1%create(1,info,name="Concentration") !vector field
 
-        call Part1%initialize(np_global,info,topoid=topoid,name="Part1")
+        np = np_global
+        call Part1%initialize(np,info,topoid=topoid,name="Part1")
         Assert_Equal(info,0)
 
 !  print particles to a VTK file
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(0.5_mk * Part1%h_avg,info)
+        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
         Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
@@ -700,7 +711,7 @@ end function const_ode
         call ode%create(ode_scheme,fields,rhsptr,rhs_fields,info)
         Assert_Equal(info,0)
         t = ts
-        dt = 0.1_mk
+        dt = dtime
         do while (t.lt.te-dt/2._mk)
           do istage=1,ode%integrator%scheme_nstages
             call ode%step(t,dt,istage,info)
@@ -713,7 +724,12 @@ end function const_ode
         
         call Part1%get_field(Field1,wp_1r,info)
         Assert_Equal(info,0)
-        print *,wp_1r(1)
+        if (ode%integrator%scheme_order.gt.1) then
+          Assert_True(abs(symres - maxval(wp_1r))/symres.lt.tol)
+        else
+          Assert_True((dtime.eq.0.1_mk).or.(log10(last_err / abs(symres - maxval(wp_1r))/symres).ge.1.0_mk))
+          last_err = abs(symres - maxval(wp_1r))/symres
+        end if
         !Assert_True(((abs(minval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol).and.(abs(maxval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol)))
         
 
@@ -749,6 +765,97 @@ integer function linear_ode(fields_discr,t,changes)
   linear_ode = 0 
   end_subroutine()
 end function linear_ode
+     
+     test test_ode_exp({dtime: [0.1_mk,0.01_mk,0.001_mk,0.0001_mk], ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_midrk2,ppm_param_ode_scheme_rk4]})
+        use ppm_module_io_vtk
+        type(ppm_t_particles_d), target :: Part1
+        class(ppm_t_field_), pointer    :: Field1
+        class(ppm_t_main_abstr), pointer :: el
+        type(ppm_t_ode)                 :: ode 
+        class(ppm_v_main_abstr),pointer :: fields
+        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        real(mk)                        :: t,dt
+        real(mk)         , parameter    :: ts = 0.0_mk
+        real(mk)         , parameter    :: te = 1.0_mk
+        integer                         :: istage
+        integer                         :: np
+        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+        real(mk)        , parameter     :: symres = exp(1.0_mk)-1.0_mk
+        real(mk)                        :: rel_max_err 
+
+        !--------------------------
+        !Define Fields
+        !--------------------------
+        allocate(ppm_t_field::Field1,stat=info)
+        Assert_Equal(info,0)
+        call Field1%create(1,info,name="Concentration") !vector field
+
+        np = np_global
+        call Part1%initialize(np,info,topoid=topoid,name="Part1")
+        Assert_Equal(info,0)
+
+!  print particles to a VTK file
+!        CALL ppm_vtk_particles("part_test",Part1,info)
+!        Assert_Equal(info,0)
+
+        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
+        Assert_Equal(info,0)
+
+        call Part1%map(info,global=.true.,topoid=topoid)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Field1%discretize_on(Part1,info)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Part1%get_field(Field1,wp_1r,info)
+        Assert_Equal(info,0)
+        wp_1r(:) = 0.0_mk
+
+        allocate(fields,stat=info)
+        Assert_Equal(info,0)
+        allocate(rhs_fields,stat=info)
+        Assert_Equal(info,0)
+        el => Field1
+        call fields%push(el,info)
+
+        rhsptr => exp_ode
+        call ode%create(ode_scheme,fields,rhsptr,rhs_fields,info)
+        Assert_Equal(info,0)
+        t = ts
+        dt = dtime
+        do while (t.lt.te-dt/2._mk)
+          do istage=1,ode%integrator%scheme_nstages
+            call ode%step(t,dt,istage,info)
+          end do
+          !call Part1%get_field(Field1,wp_1r,info)
+          !Assert_Equal(info,0)
+          !print *,t,wp_1r(1)
+        end do
+        Assert_Equal(info,0)
+        
+        call Part1%get_field(Field1,wp_1r,info)
+        Assert_Equal(info,0)
+        rel_max_err = abs(symres - maxval(wp_1r))/symres
+        ! the 0.01 is an additonal tolerance used to account for the asymptotic
+        ! convergence towards the order and numerical inaccuracies.
+        Assert_True((dtime.eq.0.1_mk).or.(rel_max_err.lt.tol).or.(abs(log10(last_err / rel_max_err)-real(ode%integrator%scheme_order,mk)).lt.0.01_mk))
+        last_err =rel_max_err 
+        
+
+        call ode%destroy(info)
+        Assert_Equal(info,0)
+        call Part1%destroy(info)
+        Assert_Equal(info,0)
+        call Field1%destroy(info)
+        Assert_Equal(info,0)
+        deallocate(Field1,fields,rhs_fields)
+    end test
 
 integer function exp_ode(fields_discr,t,changes)
   class(ppm_v_field_discr_pair), pointer    :: fields_discr
