@@ -304,10 +304,6 @@ real(mk)                      :: last_err
     test ode_mesh_step
         class(ppm_t_field_), POINTER        :: Field1,Field2
         class(ppm_t_equi_mesh),POINTER       :: Mesh1
-        !real(mk),dimension(:,:,:),  pointer :: Field1_data2d => NULL()
-        !real(mk),dimension(:,:),    pointer :: Field2_data2d => NULL()
-        !real(mk),dimension(:,:,:,:),pointer :: Field1_data3d => NULL()
-        !real(mk),dimension(:,:,:),  pointer :: Field2_data3d => NULL()
         type(ppm_t_ode)                     :: ode 
         integer                             :: p_idx, nb_errors
         CLASS(ppm_t_discr_info_),POINTER    :: dinfo => NULL()
@@ -521,13 +517,11 @@ integer function rhs_test3(fields_discr,t,changes)
   IF (ndim.EQ.2) THEN
     foreach n in equi_mesh(mesh) with sca_fields(field2,dfield) vec_fields(field1) indices(i,j)
       for real
-        !field1_n(:) = 1._mk
         dfield_n = 3._mk*field2_n
     end foreach
   ELSE
     foreach n in equi_mesh(mesh) with sca_fields(field2,dfield) vec_fields(field1) indices(i,j,k)
       for real
-        !field1_n(:) = 1._mk
         dfield_n = 3._mk*field2_n
     end foreach
   ENDIF
@@ -880,6 +874,171 @@ integer function exp_ode(fields_discr,t,changes)
   exp_ode = 0 
   end_subroutine()
 end function exp_ode
+
+!-------------------------------------------------------------
+! ODE convergence test for meshes
+!-------------------------------------------------------------
+     
+      test test_ode_mesh_exp({dtime: [0.1_mk,0.01_mk,0.001_mk,0.0001_mk], ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_midrk2,ppm_param_ode_scheme_rk4]})
+        use ppm_module_io_vtk
+        class(ppm_t_equi_mesh),pointer  :: Mesh1
+        class(ppm_t_field_), pointer    :: Field1
+        class(ppm_t_main_abstr), pointer:: el
+        type(ppm_t_ode)                 :: ode 
+        class(ppm_v_main_abstr),pointer :: fields
+        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        real(mk)                        :: t,dt
+        real(mk)         , parameter    :: ts = 0.0_mk
+        real(mk)         , parameter    :: te = 1.0_mk
+        real(mk),dimension(2*ndim)          :: my_patch
+        real(mk),dimension(ndim)            :: offset
+        integer                         :: istage
+        integer                         :: np
+        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+        real(mk)        , parameter     :: symres = exp(1.0_mk)-1.0_mk
+        real(mk)                        :: rel_max_err 
+  
+        start_subroutine("test_ode_mesh_exp")
+        Nm = 25
+        Nm(ndim) = 45
+
+        allocate(Mesh1,stat=info)
+        call Mesh1%create(topoid,offset,info,Nm=Nm,&
+            ghostsize=ighostsize,name='Test_Mesh_1')
+        Assert_Equal(info,0)
+
+        if (ndim.eq.2) then
+            my_patch(1:4) = (/0.15_mk,0.10_mk,0.99_mk,0.7_mk/)
+        else
+            my_patch(1:6) = (/0.15_mk,0.10_mk,0.51_mk,0.99_mk,0.7_mk,0.78_mk/)
+        endif
+
+        call Mesh1%def_patch(my_patch,info) 
+        Assert_Equal(info,0)
+        !--------------------------
+        !Define Fields
+        !--------------------------
+        allocate(ppm_t_field::Field1,stat=info)
+        Assert_Equal(info,0)
+        call Field1%create(1,info,name="Concentration") !vector field
+
+
+        call Field1%discretize_on(Mesh1,info)
+        Assert_Equal(info,0)
+        
+        IF (ndim.EQ.2) THEN
+        foreach n in equi_mesh(Mesh1) with sca_fields(Field1) indices(i,j)
+            for real
+                Field1_n    = 0._mk
+        end foreach
+        ELSE
+        foreach n in equi_mesh(Mesh1) with sca_fields(Field1) indices(i,j,k)
+            for real
+                Field1_n    = 0._mk
+        end foreach
+        ENDIF
+
+        !Do a ghost mapping
+        call Mesh1%map_ghost_get(info)
+            Assert_Equal(info,0)
+
+        call Field1%map_ghost_push(Mesh1,info)
+            Assert_Equal(info,0)
+
+        call Mesh1%map_send(info)
+            Assert_Equal(info,0)
+
+        call Field1%map_ghost_pop(Mesh1,info)
+            Assert_Equal(info,0)
+
+        allocate(fields,stat=info)
+        Assert_Equal(info,0)
+        allocate(rhs_fields,stat=info)
+        Assert_Equal(info,0)
+        el => Field1
+        call fields%push(el,info)
+
+        rhsptr => exp_mesh_ode
+        call ode%create(ode_scheme,fields,rhsptr,rhs_fields,info)
+        Assert_Equal(info,0)
+        t = ts
+        dt = dtime
+        do while (t.lt.te-dt/2._mk)
+          do istage=1,ode%integrator%scheme_nstages
+            call ode%step(t,dt,istage,info)
+          end do
+          !call Part1%get_field(Field1,wp_1r,info)
+          !Assert_Equal(info,0)
+          !print *,t,wp_1r(1)
+        end do
+        Assert_Equal(info,0)
+        
+        rel_max_err = 0.0_mk
+        IF (ndim.EQ.2) THEN
+        foreach n in equi_mesh(Mesh1) with sca_fields(Field1) indices(i,j)
+            for real
+              if (rel_max_err.lt.Field1_n) then
+                rel_max_err = Field1_n
+              end if
+        end foreach
+        ELSE
+        foreach n in equi_mesh(Mesh1) with sca_fields(Field1) indices(i,j,k)
+            for real
+              if (rel_max_err.lt.Field1_n) then
+                rel_max_err = Field1_n
+              end if
+        end foreach
+        ENDIF
+        rel_max_err = abs(symres - rel_max_err)/symres
+
+        ! the 0.01 is an additonal tolerance used to account for the asymptotic
+        ! convergence towards the order and numerical inaccuracies.
+        Assert_True((dtime.eq.0.1_mk).or.(rel_max_err.lt.tol).or.(abs(log10(last_err / rel_max_err)-real(ode%integrator%scheme_order,mk)).lt.0.01_mk))
+        last_err =rel_max_err 
+        
+
+        call ode%destroy(info)
+        Assert_Equal(info,0)
+        call Mesh1%destroy(info)
+        Assert_Equal(info,0)
+        call Field1%destroy(info)
+        Assert_Equal(info,0)
+        deallocate(Field1,fields,rhs_fields)
+
+        end_subroutine()
+    end test
+
+integer function exp_mesh_ode(fields_discr,t,changes)
+  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
+  class(ppm_v_field),      pointer          :: changes
+  class(ppm_t_field_),     pointer          :: df
+  class(ppm_t_discr_info_), pointer         :: di => null()
+  class(ppm_t_equi_mesh), pointer           :: mesh => null()
+  start_subroutine("exp_mesh_ode")
+ 
+  df => changes%at(1)
+  di => df%discr_info%begin()
+  select type(disc => di%discr_ptr)
+  class is (ppm_t_equi_mesh)
+    mesh => disc
+  end select
+  
+  IF (ndim.EQ.2) THEN
+  foreach n in equi_mesh(mesh) with sca_fields(df) indices(i,j)
+      for real
+        df_n = exp(t)
+  end foreach
+  ELSE
+  foreach n in equi_mesh(mesh) with sca_fields(df) indices(i,j,k)
+      for real
+        df_n = exp(t)
+  end foreach
+  ENDIF
+
+  exp_mesh_ode = 0 
+  end_subroutine()
+end function exp_mesh_ode
     
 
 end test_suite
