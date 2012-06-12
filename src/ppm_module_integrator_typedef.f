@@ -103,6 +103,9 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   class(ppm_t_discr_kind), pointer       :: d => null()
   class(ppm_t_field_discr_pair), pointer :: el_p => null()
   integer                                :: ibuf
+  integer                                :: ifield
+  character(len=16)                      :: bname
+  character(len=16)                      :: cname
 
   start_subroutine("integrator_create")
 
@@ -115,14 +118,18 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   allocate(this%discretizations,stat=info)
   or_fail_alloc("this%discretizations")
   el => fields%begin()
+  ifield = 0
   do while (associated(el))
+    ifield = ifield + 1
     allocate(ppm_t_field::c,stat=info)
     allocate(ppm_t_field::buf,stat=info)
+    write(cname,'(A,I0)') 'ode_change_',ifield
+    write(bname,'(A,I0)') 'ode_buffer_',ifield
     select type(el)
     class is (ppm_t_field_)
       el_f => el
       di => el_f%discr_info%begin()
-      call c%create(el_f%lda,info)
+      call c%create(el_f%lda,info,name=cname)
       call c%discretize_on(di%discr_ptr,info)
       or_fail("Discretizing change failed")
       call this%discretizations%push(di%discr_ptr,info)
@@ -130,11 +137,11 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      call buf%create(el_f%lda*this%scheme_memsize,info)
+      call buf%create(el_f%lda*this%scheme_memsize,info,name=bname)
       call buf%discretize_on(di%discr_ptr,info,with_ghosts=.false.)
     class is (ppm_t_discr_kind)
       d => el
-      call c%create(ppm_dim,info)
+      call c%create(ppm_dim,info,name=cname)
       call c%discretize_on(d,info)
       or_fail("Discretizing change failed")
       call this%discretizations%push(d,info)
@@ -142,11 +149,11 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => d
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      call buf%create(ppm_dim*this%scheme_memsize,info)
+      call buf%create(ppm_dim*this%scheme_memsize,info,name=bname)
       call buf%discretize_on(d,info,with_ghosts=.false.)
     class is (ppm_t_field_discr_pair)
       el_p => el
-      call c%create(el_p%field%lda,info)
+      call c%create(el_p%field%lda,info,name=cname)
       call c%discretize_on(el_p%discretization,info)
       or_fail("Discretizing change failed")
       call this%discretizations%push(el_p%discretization,info)
@@ -154,7 +161,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el_p%field
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      call buf%create(el_p%field%lda*this%scheme_memsize,info)
+      call buf%create(el_p%field%lda*this%scheme_memsize,info,name=bname)
       call buf%discretize_on(el_p%discretization,info,with_ghosts=.false.)
     class default
       fail("fields should only contain fields discrs and pairs",ppm_err_argument)
