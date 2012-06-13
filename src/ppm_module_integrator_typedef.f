@@ -137,8 +137,10 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      call buf%create(el_f%lda*this%scheme_memsize,info,name=bname)
-      call buf%discretize_on(di%discr_ptr,info,with_ghosts=.false.)
+      if (el_f%lda*this%scheme_memsize.ne.0) then
+        call buf%create(el_f%lda*this%scheme_memsize,info,name=bname)
+        call buf%discretize_on(di%discr_ptr,info,with_ghosts=.false.)
+      endif
     class is (ppm_t_discr_kind)
       d => el
       call c%create(ppm_dim,info,name=cname)
@@ -149,8 +151,10 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => d
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      call buf%create(ppm_dim*this%scheme_memsize,info,name=bname)
-      call buf%discretize_on(d,info,with_ghosts=.false.)
+      if (ppm_dim*this%scheme_memsize.ne.0) then
+        call buf%create(ppm_dim*this%scheme_memsize,info,name=bname)
+        call buf%discretize_on(d,info,with_ghosts=.false.)
+      endif
     class is (ppm_t_field_discr_pair)
       el_p => el
       call c%create(el_p%field%lda,info,name=cname)
@@ -161,8 +165,10 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el_p%field
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      call buf%create(el_p%field%lda*this%scheme_memsize,info,name=bname)
-      call buf%discretize_on(el_p%discretization,info,with_ghosts=.false.)
+      if (ppm_dim*this%scheme_memsize.ne.0) then
+        call buf%create(el_p%field%lda*this%scheme_memsize,info,name=bname)
+        call buf%discretize_on(el_p%discretization,info,with_ghosts=.false.)
+      endif
     class default
       fail("fields should only contain fields discrs and pairs",ppm_err_argument)
   end select
