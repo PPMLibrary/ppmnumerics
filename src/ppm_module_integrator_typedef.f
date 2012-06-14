@@ -106,13 +106,22 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   integer                                :: ifield
   character(len=16)                      :: bname
   character(len=16)                      :: cname
-
+  logical                                :: mkbuf = .true.
   start_subroutine("integrator_create")
+
+  nullify(this%buffers)
+  if (this%scheme_memsize.eq.0) then
+    mkbuf = .false.
+  else
+    mkbuf = .true.
+  end if
 
   allocate(this%fields,stat=info)
   or_fail_alloc("this%fields")
-  allocate(this%buffers,stat=info)
-  or_fail_alloc("this%buffers")
+  if (mkbuf) then
+    allocate(this%buffers,stat=info)
+    or_fail_alloc("this%buffers")
+  end if
   allocate(this%changes,stat=info)
   or_fail_alloc("this%changes")
   allocate(this%discretizations,stat=info)
@@ -122,9 +131,11 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   do while (associated(el))
     ifield = ifield + 1
     allocate(ppm_t_field::c,stat=info)
-    allocate(ppm_t_field::buf,stat=info)
     write(cname,'(A,I0)') 'ode_change_',ifield
-    write(bname,'(A,I0)') 'ode_buffer_',ifield
+    if (mkbuf) then
+      allocate(ppm_t_field::buf,stat=info)
+      write(bname,'(A,I0)') 'ode_buffer_',ifield
+    end if
     select type(el)
     class is (ppm_t_field_)
       el_f => el
@@ -137,7 +148,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      if (el_f%lda*this%scheme_memsize.ne.0) then
+      if (mkbuf) then
         call buf%create(el_f%lda*this%scheme_memsize,info,name=bname)
         call buf%discretize_on(di%discr_ptr,info,with_ghosts=.false.)
       endif
@@ -151,7 +162,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => d
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      if (ppm_dim*this%scheme_memsize.ne.0) then
+      if (mkbuf) then
         call buf%create(ppm_dim*this%scheme_memsize,info,name=bname)
         call buf%discretize_on(d,info,with_ghosts=.false.)
       endif
@@ -165,7 +176,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       temp => el_p%field
       call this%fields%push(temp,info)
       or_fail("Pushing field failed")
-      if (ppm_dim*this%scheme_memsize.ne.0) then
+      if (mkbuf) then
         call buf%create(el_p%field%lda*this%scheme_memsize,info,name=bname)
         call buf%discretize_on(el_p%discretization,info,with_ghosts=.false.)
       endif
@@ -173,7 +184,9 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
       fail("fields should only contain fields discrs and pairs",ppm_err_argument)
   end select
   call this%changes%push(c,info)
-  call this%buffers%push(buf,info)
+  if (mkbuf) then
+    call this%buffers%push(buf,info)
+  endif
   el => fields%next()
   end do
 
@@ -207,17 +220,20 @@ subroutine integrator_destroy(this,info)
   start_subroutine("eulerf_destroy")
   
   change => this%changes%begin()
-  buffer => this%buffers%begin()
   do while (associated(change))
-    check_associated(buffer,"Buffers and changes should have same length")
     call change%destroy(info) 
      or_fail("Destroying change failed")
     change => this%changes%next()
-    call buffer%destroy(info) 
-     or_fail("Destroying buffer failed")
-    buffer => this%buffers%next()
   end do
-  deallocate(this%changes,this%buffers,stat=info)
+  deallocate(this%changes,stat=info)
+  if (associated(this%buffers)) then
+    buffer => this%buffers%begin()
+    do while (associated(buffer))
+      call buffer%destroy(info) 
+       or_fail("Destroying buffer failed")
+      buffer => this%buffers%next()
+    end do
+  end if
  
   end_subroutine()
 end subroutine integrator_destroy
