@@ -6,63 +6,77 @@ module ppm_module_integrator_typedef
 !----------------------------------------------------------------------
 use ppm_module_core
 use ppm_module_numerics_interfaces
-
 implicit none
 
 !-----------------------------------------------------------------------
 ! Internal Parameters
 !-----------------------------------------------------------------------
 
-! TODO: replace this temporary hack by ppmcg templates
-  integer, parameter :: mk = ppm_kind_double
-
-  private mk
 !----------------------------------------------------------------------
 !  Types
 !----------------------------------------------------------------------
 
-type,abstract,extends(ppm_t_integrator_) :: ppm_t_integrator
+type,extends(ppm_t_integrator_) :: ppm_t_integrator
   contains
-  procedure :: create => integrator_create
-  procedure :: destroy => integrator_destroy
+  procedure :: create_s => integrator_create_s
+  procedure :: create_d => integrator_create_d
+  procedure :: destroy  => integrator_destroy
+  procedure :: step_s => integrator_step_s
+  procedure :: step_d => integrator_step_d
 end type ppm_t_integrator
 
 type,extends(ppm_t_integrator) :: ppm_t_eulerf
   contains
-  procedure :: create => eulerf_create
-  procedure :: step => eulerf_step
+  procedure :: create_s => eulerf_create_s
+  procedure :: create_d => eulerf_create_d
+  procedure :: step_s => eulerf_step_s
+  procedure :: step_d => eulerf_step_d
 end type ppm_t_eulerf
 
 type,extends(ppm_t_integrator) :: ppm_t_sts
-  real(mk), dimension(20)        :: stsnu  = 0.0_mk
-  integer                        :: nsts   = 1
+  real(ppm_kind_single), dimension(20) :: stsnu_s
+  real(ppm_kind_double), dimension(20) :: stsnu_d
+  integer                              :: nsts = 1
   contains
-  procedure :: create => sts_create
-  procedure :: step => sts_step
+  procedure :: create_s => sts_create_s
+  procedure :: create_d => sts_create_d
+  procedure :: step_s => sts_step_s
+  procedure :: step_d => sts_step_d
 end type ppm_t_sts
 
-type,extends(ppm_t_options) :: ppm_t_sts_options
-  integer       :: nsts = 1
-  real(mk)      :: nu   = 0.0_mk
-end type ppm_t_sts_options
+type,extends(ppm_t_options) :: ppm_t_sts_options_s
+  integer               :: nsts = 1
+  real(ppm_kind_single) :: nu   = 0.0_4
+end type ppm_t_sts_options_s
+
+type,extends(ppm_t_options) :: ppm_t_sts_options_d
+  integer               :: nsts = 1
+  real(ppm_kind_double) :: nu   = 0.0_8
+end type ppm_t_sts_options_d
 
 type,extends(ppm_t_integrator) :: ppm_t_tvdrk2
   contains
-  procedure :: create => tvdrk2_create
-  procedure :: step => tvdrk2_step
+  procedure :: create_s => tvdrk2_create_s
+  procedure :: create_d => tvdrk2_create_d
+  procedure :: step_s => tvdrk2_step_s
+  procedure :: step_d => tvdrk2_step_d
 end type ppm_t_tvdrk2
-
-type,extends(ppm_t_integrator) :: ppm_t_rk4
-  contains
-  procedure :: create => rk4_create
-  procedure :: step => rk4_step
-end type ppm_t_rk4
 
 type,extends(ppm_t_integrator) :: ppm_t_midrk2
   contains
-  procedure :: create => midrk2_create
-  procedure :: step => midrk2_step
+  procedure :: create_s => midrk2_create_s
+  procedure :: create_d => midrk2_create_d
+  procedure :: step_s => midrk2_step_s
+  procedure :: step_d => midrk2_step_d
 end type ppm_t_midrk2
+
+type,extends(ppm_t_integrator) :: ppm_t_rk4
+  contains
+  procedure :: create_s => rk4_create_s
+  procedure :: create_d => rk4_create_d
+  procedure :: step_s => rk4_step_s
+  procedure :: step_d => rk4_step_d
+end type ppm_t_rk4
 
 !----------------------------------------------------------------------
 !  Type-bound procedures
@@ -70,25 +84,28 @@ end type ppm_t_midrk2
 contains
 
 
-subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+template <RHST:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d],RHSV:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+subroutine integrator_create(this,variables,rhsfunc,rhs_variables,info,options)
   implicit none
   !----------------------------------------------------------------------
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_integrator)                :: this
-  class(ppm_v_main_abstr)                :: fields
+  class(ppm_v_main_abstr)                :: variables
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
   !!! fields must either have one discretization or wrapped together with the
   !!! intended discretization in a ppm_t_pair object
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  procedure(RHST)                      :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
-  !!! The fields to be passed to the right hand side function.
+  class(ppm_v_var_discr_pair)          :: rhs_variables
+  !!! The fields or particle properties (discr_data) to be passed to the right 
+  !!! hand side function.
   !!!
-  !!! The elements of the container can be fields, or pairs continaing a field
-  !!! and its intended discretization.
+  !!! The elements of the container are (var,discr) pairs where var can be
+  !!! either a field or a discr_data and discr is the corresponding
+  !!! discretization.
   integer,                 intent(  out) :: info
   class(ppm_t_options),target,optional,intent(in   ) :: options
   !----------------------------------------------------------------------
@@ -96,12 +113,17 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !----------------------------------------------------------------------
   class(ppm_t_main_abstr), pointer       :: el => null()
   class(ppm_t_main_abstr), pointer       :: temp => null()
-  class(ppm_t_field_), pointer           :: c => null()
+  class(ppm_t_field_), pointer           :: cfield => null()
+  class(ppm_t_field_), pointer           :: pfield => null()
+  class(ppm_t_part_prop_s_), pointer     :: cprop_s => null()
+  class(ppm_t_part_prop_d_), pointer     :: cprop_d => null()
   class(ppm_t_field_), pointer           :: buf => null()
   class(ppm_t_field_), pointer           :: el_f => null()
+  class(ppm_t_discr_data), pointer       :: prop => null()
   class(ppm_t_discr_info_), pointer      :: di => null()
   class(ppm_t_discr_kind), pointer       :: d => null()
   class(ppm_t_field_discr_pair), pointer :: el_p => null()
+  class(ppm_t_var_discr_pair), pointer   :: el_vp => null()
   integer                                :: ibuf
   integer                                :: ifield
   character(len=16)                      :: bname
@@ -116,7 +138,7 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
     mkbuf = .true.
   end if
 
-  allocate(this%fields,stat=info)
+  allocate(this%variables,stat=info)
   or_fail_alloc("this%fields")
   if (mkbuf) then
     allocate(this%buffers,stat=info)
@@ -126,11 +148,10 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   or_fail_alloc("this%changes")
   allocate(this%discretizations,stat=info)
   or_fail_alloc("this%discretizations")
-  el => fields%begin()
+  el => variables%begin()
   ifield = 0
   do while (associated(el))
     ifield = ifield + 1
-    allocate(ppm_t_field::c,stat=info)
     write(cname,'(A,I0)') 'ode_change_',ifield
     if (mkbuf) then
       allocate(ppm_t_field::buf,stat=info)
@@ -140,70 +161,115 @@ subroutine integrator_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
     class is (ppm_t_field_)
       el_f => el
       di => el_f%discr_info%begin()
-      call c%create(el_f%lda,info,name=cname)
-      call c%discretize_on(di%discr_ptr,info)
+      allocate(ppm_t_field::cfield,stat=info)
+      call cfield%create(el_f%lda,info,name=cname)
+      call cfield%discretize_on(di%discr_ptr,info)
       or_fail("Discretizing change failed")
+      temp => cfield
+      call this%changes%push(temp,info)
+      or_fail("Pushing change failed")
       call this%discretizations%push(di%discr_ptr,info)
       or_fail("Pushing change discretization failed")
       temp => el
-      call this%fields%push(temp,info)
+      call this%variables%push(temp,info)
       or_fail("Pushing field failed")
       if (mkbuf) then
         call buf%create(el_f%lda*this%scheme_memsize,info,name=bname)
         call buf%discretize_on(di%discr_ptr,info,with_ghosts=.false.)
       endif
+    class is (ppm_t_discr_data)
+      prop => el
+      select type (parts => prop%discr)
+      class is (ppm_t_particles_s)
+        call parts%create_prop(info,name=cname,lda=prop%lda,part_prop=cprop_s)
+        or_fail("creating change property")
+        temp => cprop_s
+        call this%changes%push(temp,info)
+      class is (ppm_t_particles_d)
+        call parts%create_prop(info,name=cname,lda=prop%lda,part_prop=cprop_d)
+        or_fail("creating change property")
+        temp => cprop_d
+        call this%changes%push(temp,info)
+      class default
+        fail("Only particle properties allowed",ppm_err_argument)
+      end select
+      or_fail("Pushing change failed")
+      call this%discretizations%push(prop%discr,info)
+      or_fail("Pushing change discretization failed")
+      temp => el
+      call this%variables%push(temp,info)
+      or_fail("Pushing field failed")
+      !if (mkbuf) then
+      !  call buf%create(el_f%lda*this%scheme_memsize,info,name=bname)
+      !  call buf%discretize_on(di%discr_ptr,info,with_ghosts=.false.)
+      !endif
     class is (ppm_t_discr_kind)
       d => el
-      call c%create(ppm_dim,info,name=cname)
-      call c%discretize_on(d,info)
-      or_fail("Discretizing change failed")
+      select type (parts => d)
+      class is (ppm_t_particles_s)
+        call parts%create_prop(info,name=cname,lda=ppm_dim,part_prop=cprop_s)
+        or_fail("creating change property")
+        temp => cprop_s
+        call this%changes%push(temp,info)
+      class is (ppm_t_particles_d)
+        call parts%create_prop(info,name=cname,lda=ppm_dim,part_prop=cprop_d)
+        or_fail("creating change property")
+        temp => cprop_d
+        call this%changes%push(temp,info)
+      class default
+        fail("Only particles allowed",ppm_err_argument)
+      end select
+      or_fail("Pushing change failed")
       call this%discretizations%push(d,info)
       or_fail("Pushing change discretization failed")
       temp => d
-      call this%fields%push(temp,info)
-      or_fail("Pushing field failed")
+      call this%variables%push(temp,info)
+      or_fail("Pushing positions failed")
       if (mkbuf) then
         call buf%create(ppm_dim*this%scheme_memsize,info,name=bname)
         call buf%discretize_on(d,info,with_ghosts=.false.)
       endif
     class is (ppm_t_field_discr_pair)
       el_p => el
-      call c%create(el_p%field%lda,info,name=cname)
-      call c%discretize_on(el_p%discretization,info)
+      allocate(ppm_t_field::cfield,stat=info)
+      call cfield%create(el_p%field%lda,info,name=cname)
+      call cfield%discretize_on(el_p%discr,info)
       or_fail("Discretizing change failed")
-      call this%discretizations%push(el_p%discretization,info)
+      temp => cfield
+      call this%changes%push(temp,info)
+      or_fail("Pushing change failed")
+      call this%discretizations%push(el_p%discr,info)
       or_fail("Pushing change discretization failed")
       temp => el_p%field
-      call this%fields%push(temp,info)
+      call this%variables%push(temp,info)
       or_fail("Pushing field failed")
       if (mkbuf) then
         call buf%create(el_p%field%lda*this%scheme_memsize,info,name=bname)
-        call buf%discretize_on(el_p%discretization,info,with_ghosts=.false.)
+        call buf%discretize_on(el_p%discr,info,with_ghosts=.false.)
       endif
     class default
-      fail("fields should only contain fields discrs and pairs",ppm_err_argument)
+      fail("variables should only contain fields, props, discrs and pairs",ppm_err_argument)
   end select
-  call this%changes%push(c,info)
   if (mkbuf) then
     call this%buffers%push(buf,info)
   endif
-  el => fields%next()
+  el => variables%next()
   end do
 
-  ! copy the rhs_fields_discr vector
-  allocate(this%rhs_fields_discr,stat=info)
-  or_fail_alloc("this%rhs_fields_discr")
-  el_p => rhs_fields_discr%begin()
-  do while (associated(el_p))
-    call this%rhs_fields_discr%push(el_p,info)
-    el_p => rhs_fields_discr%next()
+  ! copy the rhs_variables vector
+  allocate(this%rhs_variables,stat=info)
+  or_fail_alloc("this%rhs_variables")
+  el_vp => rhs_variables%begin()
+  do while (associated(el_vp))
+    call this%rhs_variables%push(el_vp,info)
+    el_vp => rhs_variables%next()
   end do
  
   ! set the right hand side function
-  this%rhsfunc => rhsfunc
+  this%RHSV => rhsfunc
  
   end_subroutine()
-end subroutine integrator_create
+end subroutine
 
 subroutine integrator_destroy(this,info)
   implicit none
@@ -215,22 +281,22 @@ subroutine integrator_destroy(this,info)
   !----------------------------------------------------------------------
   ! Variables
   !----------------------------------------------------------------------
-  class(ppm_t_field_), pointer               :: change => null()
-  class(ppm_t_field_), pointer               :: buffer => null()
+  class(ppm_t_main_abstr), pointer               :: change => null()
+  class(ppm_t_main_abstr), pointer               :: buffer => null()
   start_subroutine("eulerf_destroy")
   
   change => this%changes%begin()
   do while (associated(change))
-    call change%destroy(info) 
-     or_fail("Destroying change failed")
+    !call change%destroy(info)  !FIXME
+    ! or_fail("Destroying change failed")
     change => this%changes%next()
   end do
   deallocate(this%changes,stat=info)
   if (associated(this%buffers)) then
     buffer => this%buffers%begin()
     do while (associated(buffer))
-      call buffer%destroy(info) 
-       or_fail("Destroying buffer failed")
+      !call buffer%destroy(info) !FIXME
+      ! or_fail("Destroying buffer failed")
       buffer => this%buffers%next()
     end do
   end if
@@ -238,21 +304,47 @@ subroutine integrator_destroy(this,info)
   end_subroutine()
 end subroutine integrator_destroy
 
-subroutine eulerf_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],RHSV:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+subroutine integrator_step(this,t,dt,istage,info)
+  implicit none
+  !----------------------------------------------------------------------
+  ! Arguments 
+  !----------------------------------------------------------------------
+  class(ppm_t_integrator)                            :: this
+  real(MK)                         ,intent(inout)    :: t
+  real(MK)                         ,intent(in   )    :: dt
+  integer                          ,intent(in   )    :: istage
+  integer                          ,intent(  out)    :: info
+  !----------------------------------------------------------------------
+  ! Variables
+  !----------------------------------------------------------------------
+  real(MK)                                   :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: var => null()
+  class(ppm_t_main_abstr), pointer           :: change => null()
+  class(ppm_t_discr_kind), pointer           :: discr  => null()
+  start_subroutine("integrator_step")
+
+  ! nothing happening here
+
+  end_subroutine()
+end subroutine integrator_step
+
+template <RHST:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
+subroutine eulerf_create(this,variables,rhsfunc,rhs_variables,info,options)
   implicit none
   !----------------------------------------------------------------------
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_eulerf)                    :: this
-  class(ppm_v_main_abstr)                :: fields
+  class(ppm_v_main_abstr)                :: variables
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
   !!! fields must either have one discretization or wrapped together with the
   !!! intended discretization in a ppm_t_pair object
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  procedure(RHST)                      :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
+  class(ppm_v_var_discr_pair)          :: rhs_variables
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -267,106 +359,51 @@ subroutine eulerf_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   this%scheme_nstages = 1
   this%scheme_kickoff = ppm_param_ode_scheme_eulerf
   
-  
-  call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)
-
+  call this%ppm_t_integrator%create(variables,rhsfunc,rhs_variables,info)
 
   end_subroutine()
 
 end subroutine eulerf_create
 
+template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],RHSV:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
 subroutine eulerf_step(this,t,dt,istage,info)
   implicit none
-  ! FIXME: must be templated
-  integer, parameter  :: mk = ppm_kind_double
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
-  class(ppm_t_eulerf)                        :: this
-  real(ppm_kind_double)            ,intent(inout)    :: t
-  real(ppm_kind_double)            ,intent(in   )    :: dt
+  class(ppm_t_eulerf)                                :: this
+  real(MK)                         ,intent(inout)    :: t
+  real(MK)                         ,intent(in   )    :: dt
   integer                          ,intent(in   )    :: istage
   integer                          ,intent(  out)    :: info
   !----------------------------------------------------------------------
   ! Variables
   !----------------------------------------------------------------------
-  integer                                    :: rhs_info
-  class(ppm_t_main_abstr), pointer           :: field => null()
-  class(ppm_t_field_), pointer               :: change => null()
+  real(MK)                                   :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: var => null()
+  class(ppm_t_main_abstr), pointer           :: change => null()
   class(ppm_t_discr_kind), pointer           :: discr  => null()
-  class(ppm_t_particles_d), pointer          :: pset_d => null()
-  class(ppm_t_particles_s), pointer          :: pset_s => null()
-  class(ppm_t_equi_mesh), pointer            :: mesh => null()
   start_subroutine("eulerf_step")
 
-  rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
+  rhs_info = this%RHSV(this%rhs_variables,t,this%changes)
 
-  field => this%fields%begin()
+  var => this%variables%begin()
   change => this%changes%begin()
   discr => this%discretizations%begin()
-  do while (associated(field))
+  do while (associated(var))
     check_associated(change,"Fields and changes should have same length")
     check_associated(discr,"Fields and discretizations should have same length")
 
-    select type (field)
-    class is (ppm_t_field)
-      select type (discr)
-      class is (ppm_t_particles_s)
-        !pset_s => discr
-        !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-        !  f_p = f_p + dt*df_p
-        !end foreach
-      class is (ppm_t_particles_d)
-        pset_d => discr
-        if (field%lda.eq.1) then
-          foreach p in particles(pset_d) with sca_fields(f=field,df=change)
-            f_p = f_p + dt*df_p
-          end foreach
-        else
-          foreach p in particles(pset_d) with vec_fields(f=field,df=change)
-            f_p(:) = f_p(:) + dt*df_p(:)
-          end foreach
-        endif
-      class is (ppm_t_equi_mesh)
-        mesh => discr
-        if (ppm_dim.eq.2) then
-          if (field%lda.eq.1) then
-            foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j)
-              for real
-                field_n = field_n + dt*change_n
-            end foreach
-          else
-            foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j)
-              for real
-                field_n(:) = field_n(:) + dt*change_n(:)
-            end foreach
-          endif
-        else
-          if (field%lda.eq.1) then
-            foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j,k)
-              for real
-                field_n = field_n + dt*change_n
-            end foreach
-          else
-            foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j,k)
-              for real
-                field_n(:) = field_n(:) + dt*change_n(:)
-            end foreach
-          endif
-        endif
-      end select
-    class is (ppm_t_particles_s)
-      !pset_s => field
-      !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-      !  x_p(:) = x_p(:) + dt*dx_p(:)
-      !end foreach
-    class is (ppm_t_particles_d)
-      pset_d => field
-      foreach p in particles(pset_d) with positions(x) vec_fields(dx=change)
-        x_p(:) = x_p(:) + dt*dx_p(:)
-      end foreach
-    end select
-    field => this%fields%next()
+    foreach e in discrp(discr) with vars([u=>var],[du=>change]) prec(MK) part_type(part_type) prop_type(prop_type)
+      for sca
+        u_e = u_e + dt*du_e
+      for vec
+        u_e(:) = u_e(:) + dt*du_e(:)
+      for pos
+        u_e(:) = u_e(:) + dt*du_e(:)
+    end foreach
+
+    var => this%variables%next()
     change => this%changes%next()
     discr => this%discretizations%next()
   end do
@@ -382,21 +419,23 @@ subroutine eulerf_step(this,t,dt,istage,info)
 end subroutine eulerf_step
 
 
-subroutine sts_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+template <stsnu:[stsnu_s,stsnu_d],MK:[ppm_kind_single,ppm_kind_double],RHST:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
+subroutine sts_create(this,variables,rhsfunc,rhs_variables,info,options)
   implicit none
+  parameter(mk,integer,MK)
   !----------------------------------------------------------------------
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_sts)                       :: this
-  class(ppm_v_main_abstr)                :: fields
+  class(ppm_v_main_abstr)                :: variables
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
   !!! fields must either have one discretization or wrapped together with the
   !!! intended discretization in a ppm_t_pair object
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  procedure(RHST)                        :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
+  class(ppm_v_var_discr_pair)          :: rhs_variables
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -406,7 +445,8 @@ subroutine sts_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   !----------------------------------------------------------------------
   ! Variables
   !----------------------------------------------------------------------
-  class(ppm_t_sts_options), pointer           :: sts_options
+  class(ppm_t_sts_options_s), pointer           :: sts_options_s
+  class(ppm_t_sts_options_d), pointer           :: sts_options_d
   start_subroutine("sts_create")
   
   this%scheme_order   = 1
@@ -422,13 +462,17 @@ subroutine sts_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   this%stsnu(20) = 0.006_mk
  
   select type(options)
-  class is (ppm_t_sts_options)
-  sts_options => options
-  this%nsts      = sts_options%nsts
-  this%stsnu(this%nsts) = sts_options%nu
+  class is (ppm_t_sts_options_s)
+  sts_options_s => options
+  this%nsts      = sts_options_s%nsts
+  this%stsnu(this%nsts) = sts_options_s%nu
+  class is (ppm_t_sts_options_d)
+  sts_options_d => options
+  this%nsts      = sts_options_d%nsts
+  this%stsnu(this%nsts) = sts_options_d%nu
   end select
   
-  call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)
+  call this%ppm_t_integrator%create(variables,rhsfunc,rhs_variables,info)
 
 
   end_subroutine()
@@ -436,108 +480,62 @@ subroutine sts_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
 end subroutine sts_create
 
 
+template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],RHSV:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
 subroutine sts_step(this,t,dt,istage,info)
   implicit none
-  ! FIXME: must be templated
-  integer, parameter  :: mk = ppm_kind_double
+  parameter(mk,integer,MK)
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_sts)                                   :: this
-  real(ppm_kind_double)            ,intent(inout)    :: t
-  real(ppm_kind_double)            ,intent(in   )    :: dt
+  real(mk)                         ,intent(inout)    :: t
+  real(mk)                         ,intent(in   )    :: dt
   integer                          ,intent(in   )    :: istage
   integer                          ,intent(  out)    :: info
   !----------------------------------------------------------------------
   ! Variables
   !----------------------------------------------------------------------
-  integer                                    :: rhs_info
-  class(ppm_t_main_abstr), pointer           :: field => null()
-  class(ppm_t_field_), pointer               :: change => null()
+  real(mk)                                   :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: var => null()
+  class(ppm_t_main_abstr), pointer           :: change => null()
   class(ppm_t_discr_kind), pointer           :: discr  => null()
-  class(ppm_t_particles_d), pointer          :: pset_d => null()
-  class(ppm_t_particles_s), pointer          :: pset_s => null()
-  class(ppm_t_equi_mesh), pointer            :: mesh => null()
   real(mk)                                   :: tau
   real(mk)                                   :: m_pi
   start_subroutine("sts_step")
            
-  m_pi = ACOS(-1.0_MK)
+  m_pi = ACOS(-1.0_mk)
   !-----------------------------------------------------
   !  compute the new dt
   !-----------------------------------------------------
-  tau = dt/((this%stsnu(this%nsts) - 1.0_mk) * &
-  &     cos((2.0_mk * real(istage,mk) - 1.0_mk)/real(this%nsts,mk) * M_PI * 0.5_mk) + &
-  &     1.0_mk + this%stsnu(this%nsts))
-
-  rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
-
-  field => this%fields%begin()
+  if (mk.eq.ppm_kind_single) then
+    tau = dt/((this%stsnu_s(this%nsts) - 1.0_mk) * &
+    &     cos((2.0_mk * real(istage,mk) - 1.0_mk)/real(this%nsts,mk) * M_PI * 0.5_mk) + &
+    &     1.0_mk + this%stsnu_s(this%nsts))
+  else
+    tau = dt/((this%stsnu_d(this%nsts) - 1.0_mk) * &
+    &     cos((2.0_mk * real(istage,mk) - 1.0_mk)/real(this%nsts,mk) * M_PI * 0.5_mk) + &
+    &     1.0_mk + this%stsnu_d(this%nsts))
+  end if
+  
+  rhs_info = this%RHSV(this%rhs_variables,t,this%changes)
+  
+  var => this%variables%begin()
   change => this%changes%begin()
   discr => this%discretizations%begin()
-  do while (associated(field))
+  do while (associated(var))
     check_associated(change,"Fields and changes should have same length")
     check_associated(discr,"Fields and discretizations should have same length")
 
-    select type (field)
-    class is (ppm_t_field)
-      select type (discr)
-      class is (ppm_t_particles_s)
-        !pset_s => discr
-        !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-        !  f_p = f_p + tau*df_p
-        !end foreach
-      class is (ppm_t_particles_d)
-        pset_d => discr
-        if (field%lda.eq.1) then
-          foreach p in particles(pset_d) with sca_fields(f=field,df=change)
-            f_p = f_p + tau*df_p
-          end foreach
-        else
-          foreach p in particles(pset_d) with vec_fields(f=field,df=change)
-            f_p(:) = f_p(:) + tau*df_p(:)
-          end foreach
-        endif
-      class is (ppm_t_equi_mesh)
-        mesh => discr
-        if (ppm_dim.eq.2) then
-          if (field%lda.eq.1) then
-            foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j)
-              for real
-                field_n = field_n + tau*change_n
-            end foreach
-          else
-            foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j)
-              for real
-                field_n(:) = field_n(:) + tau*change_n(:)
-            end foreach
-          endif
-        else
-          if (field%lda.eq.1) then
-            foreach n in equi_mesh(mesh) with sca_fields(field,change) indices(i,j,k)
-              for real
-                field_n = field_n + tau*change_n
-            end foreach
-          else
-            foreach n in equi_mesh(mesh) with vec_fields(field,change) indices(i,j,k)
-              for real
-                field_n(:) = field_n(:) + tau*change_n(:)
-            end foreach
-          endif
-        endif
-      end select
-    class is (ppm_t_particles_s)
-      !pset_s => field
-      !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-      !  x_p(:) = x_p(:) + tau*dx_p(:)
-      !end foreach
-    class is (ppm_t_particles_d)
-      pset_d => field
-      foreach p in particles(pset_d) with positions(x) vec_fields(dx=change)
-        x_p(:) = x_p(:) + tau*dx_p(:)
-      end foreach
-    end select
-    field => this%fields%next()
+    foreach e in discrp(discr) with vars([u=>var],[du=>change]) prec(MK) part_type(part_type) prop_type(prop_type)
+      for sca
+        u_e = u_e + tau*du_e
+      for vec
+        u_e(:) = u_e(:) + tau*du_e(:)
+      for pos
+        u_e(:) = u_e(:) + tau*du_e(:)
+    end foreach
+
+    var => this%variables%next()
     change => this%changes%next()
     discr => this%discretizations%next()
   end do
@@ -549,21 +547,22 @@ subroutine sts_step(this,t,dt,istage,info)
   end_subroutine()
 end subroutine sts_step
 
-subroutine tvdrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+template <RHST:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
+subroutine tvdrk2_create(this,variables,rhsfunc,rhs_variables,info,options)
   implicit none
   !----------------------------------------------------------------------
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_tvdrk2)                    :: this
-  class(ppm_v_main_abstr)                :: fields
+  class(ppm_v_main_abstr)                :: variables
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
   !!! fields must either have one discretization or wrapped together with the
   !!! intended discretization in a ppm_t_pair object
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  procedure(RHST)                        :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
+  class(ppm_v_var_discr_pair)          :: rhs_variables
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -578,7 +577,7 @@ subroutine tvdrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   this%scheme_kickoff = ppm_param_ode_scheme_tvdrk2
  
   ! TODO allocate buffer   
-  call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)
+  call this%ppm_t_integrator%create(variables,rhsfunc,rhs_variables,info)
 
 
   end_subroutine()
@@ -586,29 +585,26 @@ subroutine tvdrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
 end subroutine tvdrk2_create
 
 
+template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],RHSV:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
 subroutine tvdrk2_step(this,t,dt,istage,info)
   implicit none
-  ! FIXME: must be templated
-  integer, parameter  :: mk = ppm_kind_double
+  parameter(mk,integer,MK)
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_tvdrk2)                                :: this
-  real(ppm_kind_double)            ,intent(inout)    :: t
-  real(ppm_kind_double)            ,intent(in   )    :: dt
+  real(mk)                         ,intent(inout)    :: t
+  real(mk)                         ,intent(in   )    :: dt
   integer                          ,intent(in   )    :: istage
   integer                          ,intent(  out)    :: info
   !----------------------------------------------------------------------
   ! Variables
   !----------------------------------------------------------------------
-  integer                                    :: rhs_info
-  class(ppm_t_main_abstr), pointer           :: field => null()
-  class(ppm_t_field_), pointer               :: change => null()
+  real(MK)                                   :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: var => null()
+  class(ppm_t_main_abstr), pointer           :: change => null()
   class(ppm_t_field_), pointer               :: buffer => null()
   class(ppm_t_discr_kind), pointer           :: discr  => null()
-  class(ppm_t_particles_d), pointer          :: pset_d => null()
-  class(ppm_t_particles_s), pointer          :: pset_s => null()
-  class(ppm_t_equi_mesh), pointer            :: mesh => null()
   start_subroutine("tvdrk2_step")
            
 
@@ -618,89 +614,34 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
   case (1)
     !----------------------------------------------------------------------
     ! STAGE 1: Store the current field in a secondary buffer and update it
-    ! with dt*df
+    ! with dt*du
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
-
-    field => this%fields%begin()
+    rhs_info = this%RHSV(this%rhs_variables,t,this%changes)
+    
+    var => this%variables%begin()
     change => this%changes%begin()
     discr => this%discretizations%begin()
     buffer => this%buffers%begin()
-    do while (associated(field))
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !  f_p = f_p + tau*df_p
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change,bfr=buffer)
-              bfr_p = f_p
-              f_p = f_p + dt*df_p
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              bfr_p(:) = f_p(:)
-              f_p(:) = f_p(:) + dt*df_p(:)
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
-                for real
-                  buffer_n = field_n
-                  field_n = field_n + dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  buffer_n(:) = field_n(:)
-                  field_n(:) = field_n(:) + dt*change_n(:)
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  buffer_n = field_n
-                  field_n = field_n + dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  buffer_n(:) = field_n(:)
-                  field_n(:) = field_n(:) + dt*change_n(:)
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  buffer_p(:) = x_p(:)
-        !  x_p(:) = x_p(:) + dt*dx_p(:)
-        !end foreach
-      class is (ppm_t_particles_d)
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          bfr_p(:) = x_p(:)
-          x_p(:) = x_p(:) + dt*dx_p(:)
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer]) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          bfr_e = u_e
+          u_e = u_e + dt*du_e
+        for vec
+          bfr_e(:) = u_e(:)
+          u_e(:) = u_e(:) + dt*du_e(:)
+        for pos
+          bfr_e(:) = u_e(:)
+          u_e(:) = u_e(:) + dt*du_e(:)
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
@@ -710,88 +651,32 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 2: Do another update and interpolate with previously saved data
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+dt,this%changes)
+    rhs_info = this%RHSV(this%rhs_variables,t+dt,this%changes)
     
-    field => this%fields%begin()
+    var => this%variables%begin()
     change => this%changes%begin()
-    buffer => this%buffers%begin()
     discr => this%discretizations%begin()
-    do while (associated(field))
+    buffer => this%buffers%begin()
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !  f_p = f_p + dt*df_p
-          !  f_p  = 0.5_mk * (f_p + buffer_p)
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change,bfr=buffer)
-              f_p = f_p + dt*df_p
-              f_p  = 0.5_mk * (f_p + bfr_p)
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              f_p(:) = f_p(:) + dt*df_p(:)
-              f_p(:)  = 0.5_mk * (f_p(:) + bfr_p(:))
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
-                for real
-                  field_n = field_n + dt*change_n
-                  field_n  = 0.5_mk * (field_n + buffer_n)
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  field_n(:) = field_n(:) + dt*change_n(:)
-                  field_n(:)  = 0.5_mk * (field_n(:) + buffer_n(:))
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  field_n = field_n + dt*change_n
-                  field_n  = 0.5_mk * (field_n + buffer_n)
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  field_n(:) = field_n(:) + dt*change_n(:)
-                  field_n(:)  = 0.5_mk * (field_n(:) + buffer_n(:))
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  x_p(:) = x_p(:) + dt*dx_p(:)
-        !  x_p(:)  = 0.5_mk * (x_p(:) + buffer_p(:))
-        !end foreach
-      class is (ppm_t_particles_d)
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          x_p(:) = x_p(:) + dt*dx_p(:)
-          x_p(:)  = 0.5_mk * (x_p(:) + bfr_p(:))
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer]) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          u_e = u_e + dt*du_e
+          u_e  = 0.5_mk * (u_e + bfr_e)
+        for vec
+          u_e(:) = u_e(:) + dt*du_e(:)
+          u_e(:)  = 0.5_mk * (u_e(:) + bfr_e(:))
+        for pos
+          u_e(:) = u_e(:) + dt*du_e(:)
+          u_e(:)  = 0.5_mk * (u_e(:) + bfr_e(:))
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
@@ -805,21 +690,22 @@ subroutine tvdrk2_step(this,t,dt,istage,info)
 end subroutine tvdrk2_step
 
 
-subroutine midrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+template <RHST:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
+subroutine midrk2_create(this,variables,rhsfunc,rhs_variables,info,options)
   implicit none
   !----------------------------------------------------------------------
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_midrk2)                    :: this
-  class(ppm_v_main_abstr)                :: fields
+  class(ppm_v_main_abstr)                :: variables
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
   !!! fields must either have one discretization or wrapped together with the
   !!! intended discretization in a ppm_t_pair object
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  procedure(RHST)                        :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
+  class(ppm_v_var_discr_pair)          :: rhs_variables
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -834,7 +720,7 @@ subroutine midrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   this%scheme_kickoff = ppm_param_ode_scheme_midrk2
  
   ! TODO allocate buffer   
-  call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)
+  call this%ppm_t_integrator%create(variables,rhsfunc,rhs_variables,info)
 
 
   end_subroutine()
@@ -842,29 +728,26 @@ subroutine midrk2_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
 end subroutine midrk2_create
 
 
+template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],RHSV:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
 subroutine midrk2_step(this,t,dt,istage,info)
   implicit none
-  ! FIXME: must be templated
-  integer, parameter  :: mk = ppm_kind_double
+  parameter(mk,integer,MK)
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_midrk2)                                :: this
-  real(ppm_kind_double)            ,intent(inout)    :: t
-  real(ppm_kind_double)            ,intent(in   )    :: dt
+  real(mk)                         ,intent(inout)    :: t
+  real(mk)                         ,intent(in   )    :: dt
   integer                          ,intent(in   )    :: istage
   integer                          ,intent(  out)    :: info
   !----------------------------------------------------------------------
   ! Variables
   !----------------------------------------------------------------------
-  integer                                    :: rhs_info
-  class(ppm_t_main_abstr), pointer           :: field => null()
-  class(ppm_t_field_), pointer               :: change => null()
+  real(MK)                                   :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: var => null()
+  class(ppm_t_main_abstr), pointer           :: change => null()
   class(ppm_t_field_), pointer               :: buffer => null()
   class(ppm_t_discr_kind), pointer           :: discr  => null()
-  class(ppm_t_particles_d), pointer          :: pset_d => null()
-  class(ppm_t_particles_s), pointer          :: pset_s => null()
-  class(ppm_t_equi_mesh), pointer            :: mesh => null()
   start_subroutine("midrk2_step")
            
 
@@ -875,89 +758,34 @@ subroutine midrk2_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 1: Compute midpoint
     ! Store the current field in a secondary buffer and update it
-    ! with 0.5*dt*df
+    ! with 0.5*dt*du
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
-
-    field => this%fields%begin()
+    rhs_info = this%RHSV(this%rhs_variables,t,this%changes)
+    
+    var => this%variables%begin()
     change => this%changes%begin()
     discr => this%discretizations%begin()
     buffer => this%buffers%begin()
-    do while (associated(field))
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !  f_p = f_p + tau*df_p
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change,bfr=buffer)
-              bfr_p = f_p
-              f_p = f_p + 0.5_mk*dt*df_p
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              bfr_p(:) = f_p(:)
-              f_p(:) = f_p(:) + 0.5_mk*dt*df_p(:)
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
-                for real
-                  buffer_n = field_n
-                  field_n = field_n + 0.5_mk*dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  buffer_n(:) = field_n(:)
-                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  buffer_n = field_n
-                  field_n = field_n + 0.5_mk*dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  buffer_n(:) = field_n(:)
-                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  bfr_p(:) = x_p(:)
-        !  x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
-        !end foreach
-      class is (ppm_t_particles_d)
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          bfr_p(:) = x_p(:)
-          x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer]) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          bfr_e = u_e
+          u_e = u_e + 0.5_mk*dt*du_e
+        for vec
+          bfr_e(:) = u_e(:)
+          u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+        for pos
+          bfr_e(:) = u_e(:)
+          u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
@@ -967,79 +795,29 @@ subroutine midrk2_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 2: Do another update and interpolate with previously saved data
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+0.5*dt,this%changes)
+    rhs_info = this%RHSV(this%rhs_variables,t+0.5_mk*dt,this%changes)
     
-    field => this%fields%begin()
+    var => this%variables%begin()
     change => this%changes%begin()
-    buffer => this%buffers%begin()
     discr => this%discretizations%begin()
-    do while (associated(field))
+    buffer => this%buffers%begin()
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !  f_p = bfr_p + dt*df_p
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change,bfr=buffer)
-              f_p = bfr_p + dt*df_p
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              f_p(:) = bfr_p(:) + dt*df_p(:)
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j)
-                for real
-                  field_n = buffer_n + dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  field_n(:) = buffer_n(:) + dt*change_n(:)
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  field_n = buffer_n + dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  field_n(:) = buffer_n(:) + dt*change_n(:)
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
-        !end foreach
-      class is (ppm_t_particles_d)
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          x_p(:) = bfr_p(:) + dt*dx_p(:)
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer]) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          u_e = bfr_e + dt*du_e
+        for vec
+          u_e(:) = bfr_e(:) + dt*du_e(:)
+        for pos
+          u_e(:) = bfr_e(:) + dt*du_e(:)
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
@@ -1054,21 +832,22 @@ subroutine midrk2_step(this,t,dt,istage,info)
 end subroutine midrk2_step
 
 
-subroutine rk4_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
+template <RHST:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
+subroutine rk4_create(this,variables,rhsfunc,rhs_variables,info,options)
   implicit none
   !----------------------------------------------------------------------
   !  Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_rk4)                    :: this
-  class(ppm_v_main_abstr)                :: fields
+  class(ppm_v_main_abstr)                :: variables
   !!! This vector holds all entities to be updated by the integrator the
   !!! elements may be fields or particle discretizations.
   !!!
   !!! fields must either have one discretization or wrapped together with the
   !!! intended discretization in a ppm_t_pair object
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
+  procedure(RHST)                        :: rhsfunc
   !!! The right hand side function to be executed by the eulerf::step function
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
+  class(ppm_v_var_discr_pair)          :: rhs_variables
   !!! The fields to be passed to the right hand side function.
   !!!
   !!! The elements of the container can be fields, or pairs continaing a field
@@ -1083,7 +862,7 @@ subroutine rk4_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
   this%scheme_kickoff = ppm_param_ode_scheme_rk4
  
   ! TODO allocate buffer   
-  call integrator_create(this,fields,rhsfunc,rhs_fields_discr,info)
+  call this%ppm_t_integrator%create(variables,rhsfunc,rhs_variables,info)
 
 
   end_subroutine()
@@ -1091,29 +870,26 @@ subroutine rk4_create(this,fields,rhsfunc,rhs_fields_discr,info,options)
 end subroutine rk4_create
 
 
+template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],RHSV:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
 subroutine rk4_step(this,t,dt,istage,info)
   implicit none
-  ! FIXME: must be templated
-  integer, parameter  :: mk = ppm_kind_double
+  parameter(mk,integer,MK)
   !----------------------------------------------------------------------
   ! Arguments 
   !----------------------------------------------------------------------
   class(ppm_t_rk4)                                :: this
-  real(ppm_kind_double)            ,intent(inout)    :: t
-  real(ppm_kind_double)            ,intent(in   )    :: dt
+  real(mk)                         ,intent(inout)    :: t
+  real(mk)                         ,intent(in   )    :: dt
   integer                          ,intent(in   )    :: istage
   integer                          ,intent(  out)    :: info
   !----------------------------------------------------------------------
   ! Variables
   !----------------------------------------------------------------------
-  integer                                    :: rhs_info
-  class(ppm_t_main_abstr), pointer           :: field => null()
-  class(ppm_t_field_), pointer               :: change => null()
+  real(MK)                                   :: rhs_info
+  class(ppm_t_main_abstr), pointer           :: var => null()
+  class(ppm_t_main_abstr), pointer           :: change => null()
   class(ppm_t_field_), pointer               :: buffer => null()
   class(ppm_t_discr_kind), pointer           :: discr  => null()
-  class(ppm_t_particles_d), pointer          :: pset_d => null()
-  class(ppm_t_particles_s), pointer          :: pset_s => null()
-  class(ppm_t_equi_mesh), pointer            :: mesh => null()
   integer                                    :: bs
   start_subroutine("rk4_step")
            
@@ -1125,97 +901,35 @@ subroutine rk4_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 1: x_n + 1/2 dt k1
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t,this%changes)
+    rhs_info = this%RHSV(this%rhs_variables,t,this%changes)
     
-    field => this%fields%begin()
+    var => this%variables%begin()
     change => this%changes%begin()
     discr => this%discretizations%begin()
     buffer => this%buffers%begin()
-    do while (associated(field))
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        bs = field%lda
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !  f_p = f_p + tau*df_p
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
-              bfr_p(1) = f_p
-              bfr_p(2) = df_p
-              f_p = f_p + 0.5_mk*dt*df_p
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              bfr_p(1:bs) = f_p(:)
-              bfr_p(bs+1:2*bs) = df_p(:)
-              f_p(:) = f_p(:) + 0.5_mk*dt*df_p(:)
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
-                for real
-                  buffer_n(1) = field_n
-                  buffer_n(2) = change_n
-                  field_n = field_n + 0.5_mk*dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  buffer_n(1:bs) = field_n(:)
-                  buffer_n(bs+1:2*bs) = change_n(:)
-                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
-                for real
-                  buffer_n(1) = field_n
-                  buffer_n(2) = change_n
-                  field_n = field_n + 0.5_mk*dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  buffer_n(1:bs) = field_n(:)
-                  buffer_n(bs+1:2*bs) = change_n(:)
-                  field_n(:) = field_n(:) + 0.5_mk*dt*change_n(:)
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        bs = ppm_dim
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  bfr_p(:) = x_p(:)
-        !  x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
-        !end foreach
-      class is (ppm_t_particles_d)
-        bs = ppm_dim
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          bfr_p(1:bs) = x_p(:)
-          bfr_p(bs+1:2*bs) = dx_p(:)
-          x_p(:) = x_p(:) + 0.5_mk*dt*dx_p(:)
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer],vecbuf=true) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          bfr_e(1) = u_e
+          bfr_e(2) = du_e
+          u_e = u_e + 0.5_mk*dt*du_e
+        for vec
+          bfr_e(1:ulda) = u_e(:)
+          bfr_e(ulda+1:2*ulda) = du_e(:)
+          u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+        for pos
+          bfr_e(1:ulda) = u_e(:)
+          bfr_e(ulda+1:2*ulda) = du_e(:)
+          u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
@@ -1225,90 +939,32 @@ subroutine rk4_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 2: x_n + 1/2 dt k2
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+0.5_mk*dt,this%changes)
+    rhs_info = this%RHSV(this%rhs_variables,t+0.5_mk*dt,this%changes)
     
-    field => this%fields%begin()
+    var => this%variables%begin()
     change => this%changes%begin()
-    buffer => this%buffers%begin()
     discr => this%discretizations%begin()
-    do while (associated(field))
+    buffer => this%buffers%begin()
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        bs = field%lda
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !   bfr_p(2) = df_p
-          !  f_p = bfr_p + dt*df_p
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
-              bfr_p(3) = df_p
-              f_p = bfr_p(1) + 0.5_mk*dt*df_p
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              bfr_p(2*bs+1:3*bs) = df_p(:)
-              f_p(:) = bfr_p(1:bs) + 0.5_mk*dt*df_p(:)
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
-                for real
-                  buffer_n(3) = change_n
-                  field_n = buffer_n(1) + 0.5_mk*dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  buffer_n(2*bs+1:3*bs) = change_n(:)
-                  field_n(:) = buffer_n(1:bs) + 0.5_mk*dt*change_n(:)
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
-                for real
-                  buffer_n(3) = change_n
-                  field_n = buffer_n(1) + 0.5_mk*dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  buffer_n(2*bs+1:3*bs) = change_n(:)
-                  field_n(:) = buffer_n(1:bs) + 0.5_mk*dt*change_n(:)
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        bs = ppm_dim
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
-        !end foreach
-      class is (ppm_t_particles_d)
-        bs = ppm_dim
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          bfr_p(2*bs+1:3*bs) = dx_p(:)
-          x_p(:) = bfr_p(1:bs) + 0.5_mk*dt*dx_p(:)
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer],vecbuf=true) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          bfr_e(3) = du_e
+          u_e = bfr_e(1) + 0.5_mk*dt*du_e
+        for vec
+          bfr_e(2*ulda+1:3*ulda) = du_e(:)
+          u_e(:) = bfr_e(1:ulda) + 0.5_mk*dt*du_e(:)
+        for pos
+          bfr_e(2*ulda+1:3*ulda) = du_e(:)
+          u_e(:) = bfr_e(1:ulda) + 0.5_mk*dt*du_e(:)
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
@@ -1318,90 +974,32 @@ subroutine rk4_step(this,t,dt,istage,info)
     !----------------------------------------------------------------------
     ! STAGE 3: x_n + dt k3
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+0.5_mk*dt,this%changes)
+    rhs_info = this%RHSV(this%rhs_variables,t+0.5_mk*dt,this%changes)
     
-    field => this%fields%begin()
+    var => this%variables%begin()
     change => this%changes%begin()
-    buffer => this%buffers%begin()
     discr => this%discretizations%begin()
-    do while (associated(field))
+    buffer => this%buffers%begin()
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        bs = field%lda
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !   bfr_p(2) = df_p
-          !  f_p = bfr_p + dt*df_p
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
-              bfr_p(4) = df_p
-              f_p = bfr_p(1) + dt*df_p
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              bfr_p(3*bs+1:4*bs) = df_p(:)
-              f_p(:) = bfr_p(1:bs) + dt*df_p(:)
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
-                for real
-                  buffer_n(4) = change_n
-                  field_n = buffer_n(1) + dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  buffer_n(3*bs+1:4*bs) = change_n(:)
-                  field_n(:) = buffer_n(1:bs) + dt*change_n(:)
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
-                for real
-                  buffer_n(4) = change_n
-                  field_n = buffer_n(1) + dt*change_n
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  buffer_n(3*bs+1:4*bs) = change_n(:)
-                  field_n(:) = buffer_n(1:bs) + dt*change_n(:)
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        bs = ppm_dim
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
-        !end foreach
-      class is (ppm_t_particles_d)
-        bs = ppm_dim
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          bfr_p(3*bs+1:4*bs) = dx_p(:)
-          x_p(:) = bfr_p(1:bs) + dt*dx_p(:)
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer],vecbuf=true) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          bfr_e(4) = du_e
+          u_e = bfr_e(1) + dt*du_e
+        for vec
+          bfr_e(3*ulda+1:4*ulda) = du_e(:)
+          u_e(:) = bfr_e(1:ulda) + dt*du_e(:)
+        for pos
+          bfr_e(3*ulda+1:4*ulda) = du_e(:)
+          u_e(:) = bfr_e(1:ulda) + dt*du_e(:)
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")
@@ -1412,92 +1010,34 @@ subroutine rk4_step(this,t,dt,istage,info)
     ! STAGE 4: Final step, interpolating the previous results
     ! x_n + 1/6 dt (k1 + 2 k2 + 2k3 +k4)
     !----------------------------------------------------------------------
-    rhs_info = this%rhsfunc(this%rhs_fields_discr,t+dt,this%changes)
+    rhs_info = this%RHSV(this%rhs_variables,t+dt,this%changes)
     
-    field => this%fields%begin()
+    var => this%variables%begin()
     change => this%changes%begin()
-    buffer => this%buffers%begin()
     discr => this%discretizations%begin()
-    do while (associated(field))
+    buffer => this%buffers%begin()
+    do while (associated(var))
       check_associated(change,"Fields and changes should have same length")
       check_associated(discr,"Fields and discretizations should have same length")
-      check_associated(buffer,"Fields and buffers should have same length")
 
-      select type (field)
-      class is (ppm_t_field)
-        bs = field%lda
-        select type (discr)
-        class is (ppm_t_particles_s)
-          !pset_s => discr
-          !foreach p in particles(pset_s) with fields(f=field,df=change) types(f=scalar,df=scalar)
-          !   bfr_p(2) = df_p
-          !  f_p = bfr_p + dt*df_p
-          !end foreach
-        class is (ppm_t_particles_d)
-          pset_d => discr
-          if (field%lda.eq.1) then
-            foreach p in particles(pset_d) with sca_fields(f=field,df=change) vec_fields(bfr=buffer)
-              f_p = bfr_p(1) + 1.0_mk/6.0_mk * dt * &
-              &     (bfr_p(2) + 2.0_mk*bfr_p(3) + 2.0_mk*bfr_p(4) + df_p)
-            end foreach
-          else
-            foreach p in particles(pset_d) with vec_fields(f=field,df=change,bfr=buffer)
-              f_p(:) = bfr_p(1:bs) + 1.0_mk/6.0_mk * dt * &
-              &     (bfr_p(bs+1:2*bs) + 2.0_mk*bfr_p(2*bs+1:3*bs) + &
-              &      2.0_mk*bfr_p(3*bs+1:4*bs) + df_p(:))
-            end foreach
-          endif
-        class is (ppm_t_equi_mesh)
-          mesh => discr
-          if (ppm_dim.eq.2) then
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j)
-                for real
-                  field_n = buffer_n(1) + 1.0_mk/6.0_mk * dt * &
-                  &     (buffer_n(2) + 2.0_mk*buffer_n(3) + 2.0_mk*buffer_n(4) + change_n)
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j)
-                for real
-                  field_n(:) = buffer_n(1:bs) + 1.0_mk/6.0_mk * dt * &
-                  &     (buffer_n(bs+1:2*bs) + 2.0_mk*buffer_n(2*bs+1:3*bs) + &
-                  &      2.0_mk*buffer_n(3*bs+1:4*bs) + change_n(:))
-              end foreach
-            endif
-          else
-            if (field%lda.eq.1) then
-              foreach n in equi_mesh(mesh) with sca_fields(field,change) vec_fields(buffer) indices(i,j,k)
-                for real
-                  field_n = buffer_n(1) + 1.0_mk/6.0_mk * dt * &
-                  &     (buffer_n(2) + 2.0_mk*buffer_n(3) + 2.0_mk*buffer_n(4) + change_n)
-              end foreach
-            else
-              foreach n in equi_mesh(mesh) with vec_fields(field,change,buffer) indices(i,j,k)
-                for real
-                  field_n(:) = buffer_n(1:bs) + 1.0_mk/6.0_mk * dt * &
-                  &     (buffer_n(bs+1:2*bs) + 2.0_mk*buffer_n(2*bs+1:3*bs) + &
-                  &      2.0_mk*buffer_n(3*bs+1:4*bs) + change_n(:))
-              end foreach
-            endif
-          endif
-        end select
-      class is (ppm_t_particles_s)
-        !pset_s => field
-        !foreach p in particles(pset_s) with positions(x) fields(dx=change) types(dx=vector)
-        !  x_p(:) = bfr_p(:) + dt*dx_p(:)
-        !end foreach
-      class is (ppm_t_particles_d)
-        pset_d => field
-        foreach p in particles(pset_d) with positions(x) vec_fields(dx=change,bfr=buffer)
-          x_p(:) = bfr_p(1:bs) + 1.0_mk/6.0_mk * dt * &
-          &     (bfr_p(bs+1:2*bs) + 2.0_mk*bfr_p(2*bs+1:3*bs) + &
-          &      2.0_mk*bfr_p(3*bs+1:4*bs) + dx_p(:))
-        end foreach
-      end select
-      field => this%fields%next()
+      foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer],vecbuf=true) prec(MK) part_type(part_type) prop_type(prop_type)
+        for sca
+          u_e = bfr_e(1) + 1.0_mk/6.0_mk * dt * &
+          &     (bfr_e(2) + 2.0_mk*bfr_e(3) + 2.0_mk*bfr_e(4) + du_e)
+        for vec
+          u_e(:) = bfr_e(1:ulda) + 1.0_mk/6.0_mk * dt * &
+          &     (bfr_e(ulda+1:2*ulda) + 2.0_mk*bfr_e(2*ulda+1:3*ulda) + &
+          &      2.0_mk*bfr_e(3*ulda+1:4*ulda) + du_e(:))
+        for pos
+          u_e(:) = bfr_e(1:ulda) + 1.0_mk/6.0_mk * dt * &
+          &     (bfr_e(ulda+1:2*ulda) + 2.0_mk*bfr_e(2*ulda+1:3*ulda) + &
+          &      2.0_mk*bfr_e(3*ulda+1:4*ulda) + du_e(:))
+      end foreach
+
+      var => this%variables%next()
       change => this%changes%next()
-      buffer => this%buffers%next()
       discr => this%discretizations%next()
+      buffer => this%buffers%next()
     end do
     check_false("associated(change)","Fields and changes should have same length")
     check_false("associated(discr)","Fields and discretizations should have same length")

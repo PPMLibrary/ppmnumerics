@@ -20,7 +20,8 @@ integer, parameter :: ode_state_finished  = 3
 !----------------------------------------------------------------------
 type,extends(ppm_t_ode_) :: ppm_t_ode
   contains
-  procedure :: create => ode_create
+  procedure :: create_s => ode_create_s
+  procedure :: create_d => ode_create_d
   procedure :: destroy => ode_destroy
   procedure :: step => ode_step
   procedure :: map_push => ode_map_push
@@ -33,15 +34,16 @@ end type ppm_t_ode
 !----------------------------------------------------------------------
 contains
 
-subroutine ode_create(this,scheme,fields,rhsfunc,rhs_fields_discr,info,options,kickoff_scheme)
+template <P:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
+subroutine ode_create(this,scheme,variables,rhsfunc,rhs_variables,info,options,kickoff_scheme)
   use ppm_module_integrator_typedef
   implicit none
 
   class(ppm_t_ode)                       :: this
   integer,          intent(in   )        :: scheme
-  class(ppm_v_main_abstr)                :: fields
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
+  class(ppm_v_main_abstr)                :: variables
+  procedure(P)                           :: rhsfunc
+  class(ppm_v_var_discr_pair)            :: rhs_variables
   integer,          intent(  out)        :: info
   class(ppm_t_options),target,optional,intent(in   ) :: options
   integer,optional, intent(in   )        :: kickoff_scheme
@@ -56,27 +58,27 @@ subroutine ode_create(this,scheme,fields,rhsfunc,rhs_fields_discr,info,options,k
   case(ppm_param_ode_scheme_eulerf)
     ! allocate changes array
     allocate(ppm_t_eulerf::this%integrator,STAT=info)
-    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    call this%integrator%create(variables,rhsfunc,rhs_variables,info,options)
     or_fail("Creating eulerf failed")
   case(ppm_param_ode_scheme_sts)
     ! allocate changes array
     allocate(ppm_t_sts::this%integrator,STAT=info)
-    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    call this%integrator%create(variables,rhsfunc,rhs_variables,info,options)
     or_fail("Creating STS failed")
   case(ppm_param_ode_scheme_tvdrk2)
     ! allocate changes array
     allocate(ppm_t_tvdrk2::this%integrator,STAT=info)
-    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    call this%integrator%create(variables,rhsfunc,rhs_variables,info,options)
     or_fail("Creating tvd RK2 failed")
   case(ppm_param_ode_scheme_midrk2)
     ! allocate changes array
     allocate(ppm_t_midrk2::this%integrator,STAT=info)
-    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    call this%integrator%create(variables,rhsfunc,rhs_variables,info,options)
     or_fail("Creating mid RK2 failed")
   case(ppm_param_ode_scheme_rk4)
     ! allocate changes array
     allocate(ppm_t_rk4::this%integrator,STAT=info)
-    call this%integrator%create(fields,rhsfunc,rhs_fields_discr,info,options)
+    call this%integrator%create(variables,rhsfunc,rhs_variables,info,options)
     or_fail("Creating RK4 failed")
   case default
     ppm_fail("Integrator not implemented")
@@ -96,27 +98,27 @@ subroutine ode_create(this,scheme,fields,rhsfunc,rhs_fields_discr,info,options,k
     case(ppm_param_ode_scheme_eulerf)
       ! allocate changes array
       allocate(ppm_t_eulerf::this%kickoff,STAT=info)
-      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      call this%kickoff%create(variables,rhsfunc,rhs_variables,info,options)
      or_fail("Creating eulerf failed")
     case(ppm_param_ode_scheme_sts)
       ! allocate changes array
       allocate(ppm_t_sts::this%kickoff,STAT=info)
-      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      call this%kickoff%create(variables,rhsfunc,rhs_variables,info,options)
      or_fail("Creating STS failed")
     case(ppm_param_ode_scheme_tvdrk2)
       ! allocate changes array
       allocate(ppm_t_tvdrk2::this%kickoff,STAT=info)
-      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      call this%kickoff%create(variables,rhsfunc,rhs_variables,info,options)
       or_fail("Creating tvd RK2 failed")
     case(ppm_param_ode_scheme_midrk2)
       ! allocate changes array
       allocate(ppm_t_midrk2::this%kickoff,STAT=info)
-      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      call this%kickoff%create(variables,rhsfunc,rhs_variables,info,options)
       or_fail("Creating mid RK2 failed")
     case(ppm_param_ode_scheme_rk4)
       ! allocate changes array
       allocate(ppm_t_rk4::this%kickoff,STAT=info)
-      call this%kickoff%create(fields,rhsfunc,rhs_fields_discr,info,options)
+      call this%kickoff%create(variables,rhsfunc,rhs_variables,info,options)
       or_fail("Creating RK4 failed")
     case default
       ppm_fail("Integrator not implemented")
@@ -187,7 +189,7 @@ subroutine ode_map_push(this,info)
       select type(disc => di%discr_ptr)
         class is (ppm_t_particles_d)
         pset => disc
-        call pset%map_ghost_push(info,buffer)
+        call pset%map_push(info,buffer)
       end select
 
       buffer => this%kickoff%buffers%next()
@@ -199,7 +201,7 @@ subroutine ode_map_push(this,info)
       select type(disc => di%discr_ptr)
         class is (ppm_t_particles_d)
         pset => disc
-        call pset%map_ghost_push(info,buffer)
+        call pset%map_push(info,buffer)
       end select
 
       buffer => this%integrator%buffers%next()
@@ -226,7 +228,7 @@ subroutine ode_map_pop(this,info)
       select type(disc => di%discr_ptr)
         class is (ppm_t_particles_d)
         pset => disc
-        call pset%map_ghost_pop(info,buffer)
+        call pset%map_pop(info,buffer)
       end select
 
       buffer => this%kickoff%buffers%prev()
@@ -239,7 +241,7 @@ subroutine ode_map_pop(this,info)
       select type(disc => di%discr_ptr)
         class is (ppm_t_particles_d)
         pset => disc
-        call pset%map_ghost_pop(info,buffer)
+        call pset%map_pop(info,buffer)
       end select
 
       buffer => this%integrator%buffers%prev()

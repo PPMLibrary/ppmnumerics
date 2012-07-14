@@ -1,12 +1,25 @@
 
-subroutine ode_create_(this,scheme,fields,rhsfunc,rhs_fields_discr,info,options,kickoff_scheme)
-  import ppm_v_main_abstr, ppm_v_field_discr_pair, ppm_t_options
-  import ppm_t_ode_, ppm_p_rhsfunc
+subroutine ode_create_s_(this,scheme,variables,rhsfunc,rhs_variables,info,options,kickoff_scheme)
+  import ppm_v_main_abstr, ppm_v_var_discr_pair, ppm_t_options
+  import ppm_t_ode_, ppm_p_rhsfunc_s
   class(ppm_t_ode_)                      :: this
   integer,          intent(in   )        :: scheme
-  class(ppm_v_main_abstr)                :: fields
-  procedure(ppm_p_rhsfunc)               :: rhsfunc
-  class(ppm_v_field_discr_pair)          :: rhs_fields_discr
+  class(ppm_v_main_abstr)                :: variables
+  procedure(ppm_p_rhsfunc_s)             :: rhsfunc
+  class(ppm_v_var_discr_pair)            :: rhs_variables
+  integer,          intent(  out)        :: info
+  class(ppm_t_options),target,optional,intent(in   ) :: options
+  integer,optional, intent(in   )        :: kickoff_scheme
+end subroutine
+
+subroutine ode_create_d_(this,scheme,variables,rhsfunc,rhs_variables,info,options,kickoff_scheme)
+  import ppm_v_main_abstr, ppm_v_var_discr_pair, ppm_t_options
+  import ppm_t_ode_, ppm_p_rhsfunc_d
+  class(ppm_t_ode_)                      :: this
+  integer,          intent(in   )        :: scheme
+  class(ppm_v_main_abstr)                :: variables
+  procedure(ppm_p_rhsfunc_d)             :: rhsfunc
+  class(ppm_v_var_discr_pair)            :: rhs_variables
   integer,          intent(  out)        :: info
   class(ppm_t_options),target,optional,intent(in   ) :: options
   integer,optional, intent(in   )        :: kickoff_scheme

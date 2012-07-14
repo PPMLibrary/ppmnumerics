@@ -135,10 +135,10 @@ real(mk)                      :: last_err
         class(ppm_t_neighlist_d_),POINTER :: Nlist => NULL()
         class(ppm_t_discr_data),POINTER :: prop => NULL()
         class(ppm_v_main_abstr),pointer :: fields
-        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
-        procedure(ppm_p_rhsfunc),pointer :: rhsptr
-        class(ppm_t_field_discr_pair), pointer :: pair
+        procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
+        class(ppm_t_var_discr_pair), pointer :: pair
 
         !--------------------------
         !Define Fields
@@ -182,8 +182,8 @@ real(mk)                      :: last_err
         Assert_Equal(info,0)
         el => Field1
         call fields%push(el,info)
-        pair%field => Field1
-        pair%discretization => Part1
+        pair%var => Field1
+        pair%discr => Part1
         call rhs_fields%push(pair,info)
 
         rhsptr => rhs_test1
@@ -220,10 +220,10 @@ real(mk)                      :: last_err
         class(ppm_t_neighlist_d_),POINTER :: Nlist => NULL()
         class(ppm_t_discr_data),POINTER :: prop => NULL()
         class(ppm_v_main_abstr),pointer :: fields
-        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
-        procedure(ppm_p_rhsfunc),pointer :: rhsptr
-        class(ppm_t_field_discr_pair), pointer :: pair
+        procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
+        class(ppm_t_var_discr_pair), pointer :: pair
         real(mk),dimension(:,:),pointer :: moved_xp=>NULL()
 
         start_subroutine("ode_xp_step")
@@ -272,8 +272,8 @@ real(mk)                      :: last_err
         Assert_Equal(info,0)
         el => Part1
         call fields%push(el,info)
-        pair%field => Field1
-        pair%discretization => Part1
+        pair%var => Field1
+        pair%discr => Part1
         call rhs_fields%push(pair,info)
 
         rhsptr => rhs_test2
@@ -311,11 +311,11 @@ real(mk)                      :: last_err
         real(mk),dimension(2*ndim)          :: my_patch
         real(mk),dimension(ndim)            :: offset
         real(mk)                            :: t,dt
-        procedure(ppm_p_rhsfunc),pointer    :: rhsptr
+        procedure(ppm_p_rhsfunc_d),pointer    :: rhsptr
         class(ppm_v_main_abstr),pointer     :: fields
-        class(ppm_v_field_discr_pair),pointer :: rhs_fields
-        class(ppm_t_field_discr_pair),pointer :: fpair1
-        class(ppm_t_field_discr_pair),pointer :: fpair2
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
+        class(ppm_t_var_discr_pair),pointer :: fpair1
+        class(ppm_t_var_discr_pair),pointer :: fpair2
         class(ppm_t_main_abstr), pointer :: el
 
         start_subroutine("ode_mesh_step")
@@ -389,13 +389,13 @@ real(mk)                      :: last_err
         call fields%push(el,info)
         allocate(fpair1,stat=info)
         Assert_Equal(info,0)
-        fpair1%field => Field1
-        fpair1%discretization => Mesh1
+        fpair1%var => Field1
+        fpair1%discr => Mesh1
         call rhs_fields%push(fpair1,info)
         allocate(fpair2,stat=info)
         Assert_Equal(info,0)
-        fpair2%field => Field2
-        fpair2%discretization => Mesh1
+        fpair2%var => Field2
+        fpair2%discr => Mesh1
         call rhs_fields%push(fpair2,info)
 
         rhsptr => rhs_test3
@@ -432,29 +432,37 @@ real(mk)                      :: last_err
 ! right hand sides
 !-------------------------------------------------------------
 
-integer function rhs_test1(fields_discr,t,changes)
-  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+real(mk) function rhs_test1(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair),   pointer    :: fields_discr
   real(ppm_kind_double)                     :: t
-  class(ppm_v_field),      pointer          :: changes
-  class(ppm_t_main_abstr), pointer          :: m
-  class(ppm_t_field_discr_pair), pointer    :: pair
-  real(mk), dimension(:), pointer           :: wp => null()
-  real(mk), dimension(:), pointer           :: dwp => null()
-  class(ppm_t_field_),     pointer          :: df
-  class(ppm_t_particles_d), pointer         :: pset => null()
+  class(ppm_v_main_abstr),       pointer    :: changes
+  class(ppm_t_main_abstr),       pointer    :: c
+  class(ppm_t_var_discr_pair),   pointer    :: pair
+  real(mk), dimension(:),        pointer    :: wp => null()
+  real(mk), dimension(:),        pointer    :: dwp => null()
+  class(ppm_t_field_),           pointer    :: field
+  class(ppm_t_field_),           pointer    :: df
+  class(ppm_t_particles_d),      pointer    :: pset => null()
   start_subroutine("rhs_test1")
   
   pair => fields_discr%at(1)
-  select type(d => pair%discretization)
+  select type(d => pair%discr)
   class is (ppm_t_particles_d)
     pset => d
   end select
+  select type(f => pair%var)
+  class is (ppm_t_field_)
+    field => f
+  end select
 
   check_associated(pset,"type mismatch")
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_field_)
+    df => c
+  end select
   
-  df => changes%at(1)
-  
-  foreach p in particles(pset) with sca_fields(w=pair%field,dw=df)
+  foreach p in particles(pset) with sca_fields(w=field,dw=df)
     dw_p = 2.0_mk*w_p
   end foreach
 
@@ -462,29 +470,38 @@ integer function rhs_test1(fields_discr,t,changes)
   end_subroutine()
 end function rhs_test1
 
-integer function rhs_test2(fields_discr,t,changes)
-  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+real(mk) function rhs_test2(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair), pointer    :: fields_discr
   real(ppm_kind_double)                     :: t
-  class(ppm_v_field),      pointer          :: changes
-  class(ppm_t_main_abstr), pointer          :: m
-  class(ppm_t_field_discr_pair), pointer    :: pair
+  class(ppm_v_main_abstr),      pointer          :: changes
+  class(ppm_t_main_abstr), pointer          :: c
+  class(ppm_t_var_discr_pair), pointer      :: pair
   real(mk), dimension(:), pointer           :: wp => null()
   real(mk), dimension(:,:), pointer         :: dxp => null()
-  class(ppm_t_field_),     pointer          :: df
+  class(ppm_t_field_),     pointer          :: field
+  class(ppm_t_part_prop_d_),     pointer          :: df
   class(ppm_t_discr_info_), pointer         :: di => null()
   class(ppm_t_particles_d), pointer         :: pset => null()
   start_subroutine("rhs_test2")
   
   pair => fields_discr%at(1)
-  select type(d => pair%discretization)
+  select type(d => pair%discr)
   class is (ppm_t_particles_d)
     pset => d
   end select
+  select type(f => pair%var)
+  class is (ppm_t_field_)
+    field => f
+  end select
 
   check_associated(pset,"type mismatch")
-  
-  df => changes%at(1)
-  foreach p in particles(pset) with sca_fields(w=pair%field) vec_fields(dx=df)
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_part_prop_d_)
+    df => c
+  end select
+
+  foreach p in particles(pset) with sca_fields(w=field) vec_props(dx=df)
     dx_p(:) = 2.0_mk*w_p
   end foreach
 
@@ -492,27 +509,36 @@ integer function rhs_test2(fields_discr,t,changes)
   end_subroutine()
 end function rhs_test2
 
-integer function rhs_test3(fields_discr,t,changes)
-  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+real(mk) function rhs_test3(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair), pointer    :: fields_discr
   real(ppm_kind_double)                     :: t
-  class(ppm_v_field),      pointer          :: changes
-  class(ppm_t_main_abstr), pointer          :: m
-  class(ppm_t_field_discr_pair), pointer    :: pair
+  class(ppm_v_main_abstr),      pointer          :: changes
+  class(ppm_t_main_abstr), pointer          :: c
+  class(ppm_t_var_discr_pair), pointer    :: pair
   class(ppm_t_field_),     pointer          :: field1,field2,dfield
   class(ppm_t_equi_mesh), pointer           :: mesh => null()
   start_subroutine("rhs_test3")
   
   pair => fields_discr%at(1)
-  field1 => pair%field
-  select type(d => pair%discretization)
+  select type(f => pair%var)
+  class is (ppm_t_field_)
+    field1 => f
+  end select
+  select type(d => pair%discr)
   class is (ppm_t_equi_mesh)
     mesh => d
   end select
   check_associated(mesh,"type mismatch")
   pair => fields_discr%at(2)
-  field2 => pair%field
-  
-  dfield => changes%at(1)
+  select type(f => pair%var)
+  class is (ppm_t_field_)
+    field2 => f
+  end select
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_field_)
+    dfield => c
+  end select
         
   IF (ndim.EQ.2) THEN
     foreach n in equi_mesh(mesh) with sca_fields(field2,dfield) vec_fields(field1) indices(i,j)
@@ -542,13 +568,13 @@ end function rhs_test3
         class(ppm_t_main_abstr), pointer :: el
         type(ppm_t_ode)                 :: ode 
         class(ppm_v_main_abstr),pointer :: fields
-        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
         real(mk)         , parameter    :: ts = 3.0_mk
         real(mk)         , parameter    :: te = 3.5_mk
         integer                         :: istage
         integer                         :: np
-        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+        procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
         class(ppm_t_field_discr_pair), pointer :: pair
 
         !--------------------------
@@ -620,16 +646,21 @@ end function rhs_test3
         deallocate(Field1,fields,rhs_fields,pair)
     end test
 
-integer function const_ode(fields_discr,t,changes)
-  class(ppm_v_field_discr_pair), pointer    :: fields_discr
-  real(ppm_kind_double)                     :: t
-  class(ppm_v_field),      pointer          :: changes
-  class(ppm_t_field_),     pointer          :: df
-  class(ppm_t_discr_info_), pointer      :: di => null()
-  class(ppm_t_particles_d), pointer         :: pset => null()
+real(mk) function const_ode(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                   :: t
+  class(ppm_v_main_abstr),     pointer    :: changes
+  class(ppm_t_field_),         pointer    :: df
+  class(ppm_t_main_abstr), pointer          :: c
+  class(ppm_t_discr_info_),    pointer    :: di => null()
+  class(ppm_t_particles_d),    pointer    :: pset => null()
   start_subroutine("const_ode")
-  
-  df => changes%at(1)
+
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_field_)
+    df => c
+  end select
   di => df%discr_info%begin()
   select type(disc => di%discr_ptr)
   class is (ppm_t_particles_d)
@@ -651,14 +682,14 @@ end function const_ode
         class(ppm_t_main_abstr), pointer :: el
         type(ppm_t_ode)                 :: ode 
         class(ppm_v_main_abstr),pointer :: fields
-        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
         real(mk)         , parameter    :: ts = 0.0_mk
         real(mk)         , parameter    :: te = 1.0_mk
         integer                         :: istage
         integer                         :: np
         real(mk)        , parameter     :: symres = 0.5_mk
-        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+        procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
 
         !--------------------------
         !Define Fields
@@ -736,16 +767,21 @@ end function const_ode
         deallocate(Field1,fields,rhs_fields)
     end test
 
-integer function linear_ode(fields_discr,t,changes)
-  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+real(mk) function linear_ode(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair),   pointer    :: fields_discr
   real(ppm_kind_double)                     :: t
-  class(ppm_v_field),      pointer          :: changes
-  class(ppm_t_field_),     pointer          :: df
-  class(ppm_t_discr_info_), pointer         :: di => null()
-  class(ppm_t_particles_d), pointer         :: pset => null()
+  class(ppm_v_main_abstr),       pointer    :: changes
+  class(ppm_t_field_),           pointer    :: df
+  class(ppm_t_main_abstr), pointer          :: c
+  class(ppm_t_discr_info_),      pointer    :: di => null()
+  class(ppm_t_particles_d),      pointer    :: pset => null()
   start_subroutine("linear_ode")
- 
-  df => changes%at(1)
+
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_field_)
+    df => c
+  end select
   di => df%discr_info%begin()
   select type(disc => di%discr_ptr)
   class is (ppm_t_particles_d)
@@ -767,13 +803,13 @@ end function linear_ode
         class(ppm_t_main_abstr), pointer :: el
         type(ppm_t_ode)                 :: ode 
         class(ppm_v_main_abstr),pointer :: fields
-        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
         real(mk)         , parameter    :: ts = 0.0_mk
         real(mk)         , parameter    :: te = 1.0_mk
         integer                         :: istage
         integer                         :: np
-        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+        procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
         real(mk)        , parameter     :: symres = exp(1.0_mk)-1.0_mk
         real(mk)                        :: rel_max_err 
 
@@ -851,16 +887,21 @@ end function linear_ode
         deallocate(Field1,fields,rhs_fields)
     end test
 
-integer function exp_ode(fields_discr,t,changes)
-  class(ppm_v_field_discr_pair), pointer    :: fields_discr
+real(mk) function exp_ode(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair),   pointer    :: fields_discr
   real(ppm_kind_double)                     :: t
-  class(ppm_v_field),      pointer          :: changes
-  class(ppm_t_field_),     pointer          :: df
-  class(ppm_t_discr_info_), pointer         :: di => null()
-  class(ppm_t_particles_d), pointer         :: pset => null()
+  class(ppm_v_main_abstr),      pointer     :: changes
+  class(ppm_t_field_),          pointer     :: df
+  class(ppm_t_main_abstr), pointer          :: c
+  class(ppm_t_discr_info_),     pointer     :: di => null()
+  class(ppm_t_particles_d),     pointer     :: pset => null()
   start_subroutine("exp_ode")
- 
-  df => changes%at(1)
+
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_field_)
+    df => c
+  end select
   di => df%discr_info%begin()
   select type(disc => di%discr_ptr)
   class is (ppm_t_particles_d)
@@ -886,7 +927,7 @@ end function exp_ode
         class(ppm_t_main_abstr), pointer:: el
         type(ppm_t_ode)                 :: ode 
         class(ppm_v_main_abstr),pointer :: fields
-        class(ppm_v_field_discr_pair),pointer :: rhs_fields
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
         real(mk)         , parameter    :: ts = 0.0_mk
         real(mk)         , parameter    :: te = 1.0_mk
@@ -894,7 +935,7 @@ end function exp_ode
         real(mk),dimension(ndim)            :: offset
         integer                         :: istage
         integer                         :: np
-        procedure(ppm_p_rhsfunc),pointer :: rhsptr
+        procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
         real(mk)        , parameter     :: symres = exp(1.0_mk)-1.0_mk
         real(mk)                        :: rel_max_err 
   
@@ -1008,16 +1049,21 @@ end function exp_ode
         end_subroutine()
     end test
 
-integer function exp_mesh_ode(fields_discr,t,changes)
-  class(ppm_v_field_discr_pair), pointer    :: fields_discr
-  real(ppm_kind_double)                     :: t
-  class(ppm_v_field),      pointer          :: changes
-  class(ppm_t_field_),     pointer          :: df
-  class(ppm_t_discr_info_), pointer         :: di => null()
-  class(ppm_t_equi_mesh), pointer           :: mesh => null()
+real(mk) function exp_mesh_ode(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                   :: t
+  class(ppm_v_main_abstr),     pointer    :: changes
+  class(ppm_t_field_),         pointer    :: df
+  class(ppm_t_main_abstr), pointer          :: c
+  class(ppm_t_discr_info_),    pointer    :: di => null()
+  class(ppm_t_equi_mesh),      pointer    :: mesh => null()
   start_subroutine("exp_mesh_ode")
- 
-  df => changes%at(1)
+
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_field_)
+    df => c
+  end select
   di => df%discr_info%begin()
   select type(disc => di%discr_ptr)
   class is (ppm_t_equi_mesh)

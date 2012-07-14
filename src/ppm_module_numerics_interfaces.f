@@ -44,6 +44,7 @@ include 'ppm_numerics.h'
 !----------------------------------------------------------------------
 ! Type declaration
 !----------------------------------------------------------------------
+  
 
 type,abstract :: ppm_t_integrator_
     !!! Data structure for time integrators
@@ -62,16 +63,22 @@ type,abstract :: ppm_t_integrator_
     integer                     :: scheme_kickoff
     !!! suitable kick off scheme
     
-    procedure(ppm_p_rhsfunc),         pointer, nopass :: rhsfunc          => null()
-    class(ppm_v_main_abstr),          pointer         :: fields           => null()
+    procedure(ppm_p_rhsfunc_s),       pointer, nopass :: rhsfunc_s        => null()
+    procedure(ppm_p_rhsfunc_d),       pointer, nopass :: rhsfunc_d        => null()
+
+    class(ppm_v_main_abstr),          pointer         :: variables        => null()
     class(ppm_v_discr_kind),          pointer         :: discretizations  => null()
-    class(ppm_v_field_discr_pair),    pointer         :: rhs_fields_discr => null()
-    class(ppm_v_field),               pointer         :: changes          => null()
+    class(ppm_v_var_discr_pair),      pointer         :: rhs_variables    => null()
+    class(ppm_v_main_abstr),          pointer         :: changes          => null()
     class(ppm_v_field),               pointer         :: buffers          => null() 
     contains
-    procedure(integrator_create_),       deferred :: create
+    procedure(integrator_create_s_),     deferred :: create_s
+    procedure(integrator_create_d_),     deferred :: create_d
+    generic :: create => create_s, create_d
     procedure(integrator_destroy_),      deferred :: destroy
-    procedure(integrator_step_),         deferred :: step
+    procedure(integrator_step_s_),       deferred :: step_s
+    procedure(integrator_step_d_),       deferred :: step_d
+    generic :: step => step_s, step_d
 end type ppm_t_integrator_
 !minclude ppm_create_collection(integrator,integrator_,generate="abstract")
 !minclude ppm_create_collection(integrator,integrator_,generate="abstract",vec=true,def_ptr=false)
@@ -100,7 +107,9 @@ type,abstract :: ppm_t_ode_
     class(ppm_t_integrator_), pointer       :: kickoff => null()
 
     contains
-    procedure(ode_create_),        deferred :: create
+    procedure(ode_create_s_),      deferred :: create_s
+    procedure(ode_create_d_),      deferred :: create_d
+    generic :: create => create_s, create_d
     procedure(ode_destroy_),       deferred :: destroy
     procedure(ode_step_),          deferred :: step
     procedure(ode_map_push_),      deferred :: map_push
@@ -111,14 +120,25 @@ end type ppm_t_ode_
 !  INTERFACES
 !----------------------------------------------------------------------
 abstract interface
-  integer function ppm_p_rhsfunc(fields_and_discr,time,changes)
-  import ppm_v_field
+
+
+  real(ppm_kind_single) function ppm_p_rhsfunc_s(vars_and_discr,time,changes)
+  import ppm_v_main_abstr
+  import ppm_kind_single
+  import ppm_v_var_discr_pair
+  class(ppm_v_var_discr_pair), pointer      :: vars_and_discr
+  real(ppm_kind_single)                     :: time
+  class(ppm_v_main_abstr),    pointer       :: changes
+  end function ppm_p_rhsfunc_s
+  
+  real(ppm_kind_double) function ppm_p_rhsfunc_d(vars_and_discr,time,changes)
+  import ppm_v_main_abstr
   import ppm_kind_double
-  import ppm_v_field_discr_pair
-  class(ppm_v_field_discr_pair), pointer    :: fields_and_discr
+  import ppm_v_var_discr_pair
+  class(ppm_v_var_discr_pair), pointer      :: vars_and_discr
   real(ppm_kind_double)                     :: time
-  class(ppm_v_field),      pointer          :: changes
-  end function ppm_p_rhsfunc
+  class(ppm_v_main_abstr),    pointer       :: changes
+  end function ppm_p_rhsfunc_d
 end interface
 
 
@@ -127,9 +147,6 @@ interface
 #include "ode/integrator_interfaces.f"
 
 #include "ode/ode_interfaces.f"
-
-!minclude ppm_create_collection_interfaces(integrator,integrator_)
-!minclude ppm_create_collection_interfaces(integrator,integrator_,vec=true)
 
 end interface
 

@@ -1,0 +1,151 @@
+foreach macro discrp(discr)
+modifier vars(variable,change_var)
+modifier buffer(buffer,vecbuf=:false)
+modifier prec(precision)
+modifier part_type(part_type)
+modifier prop_type(prop_type)
+% #         variable,     change,      discr
+% types = [[:ppm_t_field,:ppm_t_field,:ppm_t_particles],
+%          [:ppm_t_field,:ppm_t_field,:ppm_t_equi_mesh],
+%          [:ppm_t_part_prop,:ppm_t_part_prop,:ppm_t_particles],
+%          [:ppm_t_particles,:ppm_t_part_prop,:ppm_t_particles]]
+% 
+% bfr_str = ''
+% vb = nil
+% if buffer != :required
+%   if vecbuf.to_s.to_sym == :true
+%     vb = true
+%   else
+%     vb = false
+%   end
+%   bfr_str = "#{buffer[0][0]}=#{buffer[0][1]}"
+% end
+% var = variable[0]
+% change = change_var[0]
+% types.each do |typetuple|
+%   t = []
+%   typetuple.each_with_index do |type,i|
+%     if type == :ppm_t_part_prop
+%       t << prop_type.to_s
+%     elsif type == :ppm_t_particles
+%       t << part_type.to_s
+%     else
+%       t << type.to_s
+%     end
+%   end
+% scope.var "#{var[0]}lda".to_sym, "integer"
+select type(<%= var[1] %>)
+class is(<%= t[0] %>)
+  select type(<%= change[1] %>)
+  class is(<%= t[1] %>)
+    select type(<%= discr %>)
+    class is(<%= t[2] %>)
+% if t[2] == 'part_type'
+%   if t[0] == 'ppm_t_field'
+    <%= "#{var[0]}lda" %> = <%= var[1]%>%lda
+    if (<%= var[1] %>%lda.eq.1) then
+% if vb.nil?
+      foreach <%= iter %> in particles(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision  %>)
+% elsif !vb
+      foreach <%= iter %> in particles(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision  %>)
+% else
+      foreach <%= iter %> in particles(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision  %>)
+% end
+        <%= bodies.sca.indent 6 -%>
+      end foreach
+    else
+% if vb.nil?
+      foreach <%= iter %> in particles(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+% else
+      foreach <%= iter %> in particles(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>)
+% end
+        <%= bodies.vec.indent 6 -%>
+      end foreach
+    endif
+%   elsif t[0] == 'prop_type'
+    <%= "#{var[0]}lda" %> = <%= var[1]%>%lda
+    if (<%= var[1] %>%lda.eq.1) then
+% if vb.nil?
+      foreach <%= iter %> in particles(<%= discr %>) with sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+% elsif !vb
+      foreach <%= iter %> in particles(<%= discr %>) with sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) sca_fields(<%= bfr_str %>) prec(<%= precision %>)
+% else
+      foreach <%= iter %> in particles(<%= discr %>) with sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
+% end
+        <%= bodies.sca.indent 6 -%>
+      end foreach
+    else
+% if vb.nil?
+      foreach <%= iter %> in particles(<%= discr %>) with vec_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+% else
+      foreach <%= iter %> in particles(<%= discr %>) with vec_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
+% end
+        <%= bodies.vec.indent 6 -%>
+      end foreach
+    endif
+%   elsif t[0] == 'part_type'
+      <%= "#{var[0]}lda" %> = ppm_dim 
+% if vb.nil?
+      foreach <%= iter %> in particles(<%= var[1]  %>) with positions(<%= var[0] %>,writex=true) vec_props(<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+% else
+      foreach <%= iter %> in particles(<%= var[1]  %>) with positions(<%= var[0] %>,writex=true) vec_props(<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
+% end
+        <%= bodies.pos.indent 6 -%>
+      end foreach
+%   end
+% elsif t[2] == 'ppm_t_equi_mesh'
+    <%= "#{var[0]}lda" %> = <%= var[1]%>%lda
+    if (ppm_dim.eq.2) then
+      if (<%= var[1] %>%lda.eq.1) then
+% if vb.nil?
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>) indices(i,j)
+% elsif !vb
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>) indices(i,j)
+% else
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>) indices(i,j)
+% end
+          for real
+            <%= bodies.sca.indent 6 -%>
+        end foreach
+      else
+% if vb.nil?
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>) indices(i,j)
+% else
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>) indices(i,j)
+% end
+          for real
+            <%= bodies.vec.indent 6 -%>
+        end foreach
+      endif
+    else
+      if (<%= var[1] %>%lda.eq.1) then
+% if vb.nil?
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>) indices(i,j,k)
+% elsif !vb
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>) indices(i,j,k)
+% else
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>) indices(i,j,k)
+% end
+          for real
+            <%= bodies.sca.indent 6 -%>
+        end foreach
+      else
+% if vb.nil?
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>) indices(i,j,k)
+% else
+        foreach <%= iter %> in equi_mesh(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>) indices(i,j,k)
+% end
+          for real
+            <%= bodies.vec.indent 6 -%>
+        end foreach
+      endif
+    endif
+% end
+    end select
+  end select
+end select
+% end
+
+
+
+end macro
