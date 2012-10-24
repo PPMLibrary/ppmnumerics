@@ -45,19 +45,19 @@ class is(<%= t[0] %>)
     <%= "#{var[0]}lda" %> = <%= var[1]%>%lda
     if (<%= var[1] %>%lda.eq.1) then
 % if vb.nil?
-      foreach <%= iter %> in particles(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision  %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision  %>)
 % elsif !vb
-      foreach <%= iter %> in particles(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision  %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision  %>)
 % else
-      foreach <%= iter %> in particles(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision  %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision  %>)
 % end
         <%= bodies.sca.indent 6 -%>
       end foreach
     else
 % if vb.nil?
-      foreach <%= iter %> in particles(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
 % else
-      foreach <%= iter %> in particles(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>)
 % end
         <%= bodies.vec.indent 6 -%>
       end foreach
@@ -66,19 +66,19 @@ class is(<%= t[0] %>)
     <%= "#{var[0]}lda" %> = <%= var[1]%>%lda
     if (<%= var[1] %>%lda.eq.1) then
 % if vb.nil?
-      foreach <%= iter %> in particles(<%= discr %>) with sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
 % elsif !vb
-      foreach <%= iter %> in particles(<%= discr %>) with sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) sca_fields(<%= bfr_str %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) sca_fields(<%= bfr_str %>) prec(<%= precision %>)
 % else
-      foreach <%= iter %> in particles(<%= discr %>) with sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
 % end
         <%= bodies.sca.indent 6 -%>
       end foreach
     else
 % if vb.nil?
-      foreach <%= iter %> in particles(<%= discr %>) with vec_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) vec_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
 % else
-      foreach <%= iter %> in particles(<%= discr %>) with vec_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) vec_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
 % end
         <%= bodies.vec.indent 6 -%>
       end foreach
@@ -86,9 +86,9 @@ class is(<%= t[0] %>)
 %   elsif t[0] == 'part_type'
       <%= "#{var[0]}lda" %> = ppm_dim 
 % if vb.nil?
-      foreach <%= iter %> in particles(<%= var[1]  %>) with positions(<%= var[0] %>,writex=true) vec_props(<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= var[1]  %>) with skip_checks(true) positions(<%= var[0] %>,writex=true) vec_props(<%= change[0] %>=<%= change[1] %>) prec(<%= precision %>)
 % else
-      foreach <%= iter %> in particles(<%= var[1]  %>) with positions(<%= var[0] %>,writex=true) vec_props(<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
+      foreach <%= iter %> in particles(<%= var[1]  %>) with skip_checks(true) positions(<%= var[0] %>,writex=true) vec_props(<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
 % end
         <%= bodies.pos.indent 6 -%>
       end foreach

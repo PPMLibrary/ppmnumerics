@@ -94,11 +94,10 @@ real(mk)                      :: last_err
 
         topoid = 0
         if (ndim.eq.2) then
-            cutoff = 0.15_mk
+            cutoff = 0.3_mk
         else
-            cutoff = 0.25_mk
+            cutoff = 0.35_mk
         endif
-
         call ppm_mktopo(topoid,decomp,assig,min_phys,max_phys,bcdef,cutoff,cost,info)
     end init
 
@@ -155,8 +154,8 @@ real(mk)                      :: last_err
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
-        Assert_Equal(info,0)
+        !call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
+        !Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
         Assert_Equal(info,0)
@@ -241,8 +240,8 @@ real(mk)                      :: last_err
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
-        Assert_Equal(info,0)
+        !call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
+        !Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
         Assert_Equal(info,0)
@@ -277,6 +276,104 @@ real(mk)                      :: last_err
         call rhs_fields%push(pair,info)
 
         rhsptr => rhs_test2
+        call ode%create(ppm_param_ode_scheme_eulerf,fields,rhsptr,rhs_fields,info)
+        Assert_Equal(info,0)
+        t = 0.0_mk
+        dt = 0.1_mk
+        call ode%step(t,dt,1,info)
+        Assert_Equal(info,0)
+       
+        call Part1%get_xp(moved_xp,info)
+        do i=1,Part1%Npart
+          xp(:,i) = moved_xp(:,i) - xp(:,i)
+        enddo
+        Assert_True(((abs(minval(xp(:,1:Part1%Npart))-0.2_mk).le.tol).and.(abs(maxval(xp(:,1:Part1%Npart))-0.2_mk).le.tol)))
+
+        call ode%destroy(info)
+        Assert_Equal(info,0)
+        call Part1%destroy(info)
+        Assert_Equal(info,0)
+        call Field1%destroy(info)
+        Assert_Equal(info,0)
+        deallocate(Field1,fields,rhs_fields,pair,xp)
+
+        end_subroutine()
+    end test
+    
+    test ode_wp_xp_step
+        use ppm_module_io_vtk
+        type(ppm_t_particles_d), target :: Part1
+        class(ppm_t_field_), pointer    :: Field1
+        class(ppm_t_main_abstr), pointer :: el
+        type(ppm_t_ode)                 :: ode 
+        integer                         :: np
+        CLASS(ppm_t_operator_discr),POINTER   :: DCop => NULL()
+        CLASS(ppm_t_operator_discr),POINTER   :: PSEop => NULL()
+        class(ppm_t_neighlist_d_),POINTER :: Nlist => NULL()
+        class(ppm_t_discr_data),POINTER :: prop => NULL()
+        class(ppm_v_main_abstr),pointer :: fields
+        class(ppm_v_var_discr_pair),pointer :: rhs_fields
+        real(mk)                        :: t,dt
+        procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
+        class(ppm_t_var_discr_pair), pointer :: pair
+        real(mk),dimension(:,:),pointer :: moved_xp=>NULL()
+
+        start_subroutine("ode_xp_wp,step")
+        !--------------------------
+        ! Define Fields
+        !--------------------------
+        allocate(ppm_t_field::Field1,stat=info)
+        Assert_Equal(info,0)
+        call Field1%create(1,info,name="Concentration") !vector field
+        np = np_global
+        call Part1%initialize(np,info,topoid=topoid,name="Part1")
+        Assert_Equal(info,0)
+
+!  print particles to a VTK file
+!        CALL ppm_vtk_particles("part_test",Part1,info)
+!        Assert_Equal(info,0)
+
+        !call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
+        !Assert_Equal(info,0)
+
+        call Part1%map(info,global=.true.,topoid=topoid)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Field1%discretize_on(Part1,info)
+        Assert_Equal(info,0)
+
+        call Part1%map_ghosts(info)
+        Assert_Equal(info,0)
+
+        call Part1%get_field(Field1,wp_1r,info)
+        Assert_Equal(info,0)
+        wp_1r(:) = 1.0_mk
+
+        call Part1%get_xp(moved_xp,info)
+        allocate(xp(ppm_dim,Part1%Npart))
+        xp(:,:) = moved_xp(:,:)
+        
+        allocate(fields,stat=info)
+        Assert_Equal(info,0)
+        allocate(rhs_fields,stat=info)
+        Assert_Equal(info,0)
+        allocate(pair,stat=info)
+        Assert_Equal(info,0)
+        el => Part1
+        call fields%push(el,info)
+        Assert_Equal(info,0)
+        el => Field1
+        call fields%push(el,info)
+        Assert_Equal(info,0)
+        pair%var => Field1
+        pair%discr => Part1
+        call rhs_fields%push(pair,info)
+        Assert_Equal(info,0)
+
+        rhsptr => rhs_test_xp_wp
         call ode%create(ppm_param_ode_scheme_eulerf,fields,rhsptr,rhs_fields,info)
         Assert_Equal(info,0)
         t = 0.0_mk
@@ -479,7 +576,7 @@ real(mk) function rhs_test2(fields_discr,t,changes)
   real(mk), dimension(:), pointer           :: wp => null()
   real(mk), dimension(:,:), pointer         :: dxp => null()
   class(ppm_t_field_),     pointer          :: field
-  class(ppm_t_part_prop_d_),     pointer          :: df
+  class(ppm_t_part_prop_d_),     pointer    :: df
   class(ppm_t_discr_info_), pointer         :: di => null()
   class(ppm_t_particles_d), pointer         :: pset => null()
   start_subroutine("rhs_test2")
@@ -508,6 +605,55 @@ real(mk) function rhs_test2(fields_discr,t,changes)
   rhs_test2 = 0 
   end_subroutine()
 end function rhs_test2
+
+real(mk) function rhs_test_xp_wp(fields_discr,t,changes)
+  class(ppm_v_var_discr_pair), pointer    :: fields_discr
+  real(ppm_kind_double)                     :: t
+  class(ppm_v_main_abstr),      pointer          :: changes
+  class(ppm_t_main_abstr), pointer          :: c
+  class(ppm_t_var_discr_pair), pointer      :: pair
+  real(mk), dimension(:), pointer           :: wp => null()
+  real(mk), dimension(:,:), pointer         :: dxp => null()
+  class(ppm_t_field_),     pointer          :: field
+  class(ppm_t_part_prop_d_),     pointer    :: dxi
+  class(ppm_t_field_),     pointer          :: df
+  class(ppm_t_discr_info_), pointer         :: di => null()
+  class(ppm_t_particles_d), pointer         :: pset => null()
+  start_subroutine("rhs_test_xp_wp")
+  
+  pair => fields_discr%at(1)
+  select type(d => pair%discr)
+  class is (ppm_t_particles_d)
+    pset => d
+  end select
+  select type(f => pair%var)
+  class is (ppm_t_field_)
+    field => f
+  end select
+  check_associated(pset,"type mismatch")
+
+  c => changes%at(1)
+  select type(c)
+  class is (ppm_t_part_prop_d_)
+    dxi => c
+  end select
+  c => changes%at(2)
+  select type(c)
+  class is (ppm_t_field_)
+    df => c
+  end select
+  
+  foreach p in particles(pset) with sca_fields(w=field) vec_props(dx=dxi)
+    dx_p(:) = 2.0_mk*w_p
+  end foreach
+  
+  foreach p in particles(pset) with sca_fields(dw=df)
+    dw_p = 1.2_mk
+  end foreach
+
+  rhs_test_xp_wp = 0 
+  end_subroutine()
+end function rhs_test_xp_wp
 
 real(mk) function rhs_test3(fields_discr,t,changes)
   class(ppm_v_var_discr_pair), pointer    :: fields_discr
@@ -592,8 +738,8 @@ end function rhs_test3
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
-        Assert_Equal(info,0)
+        !call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
+        !Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
         Assert_Equal(info,0)
@@ -706,8 +852,8 @@ end function const_ode
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
-        Assert_Equal(info,0)
+        !call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
+        !Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
         Assert_Equal(info,0)
@@ -828,8 +974,8 @@ end function linear_ode
 !        CALL ppm_vtk_particles("part_test",Part1,info)
 !        Assert_Equal(info,0)
 
-        call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
-        Assert_Equal(info,0)
+        !call Part1%set_cutoff(1.0_mk * Part1%h_avg,info)
+        !Assert_Equal(info,0)
 
         call Part1%map(info,global=.true.,topoid=topoid)
         Assert_Equal(info,0)
