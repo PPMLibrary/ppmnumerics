@@ -9,7 +9,7 @@ use ppm_module_ode_typedef
 #endif
 
 integer, parameter              :: debug = 0
-integer, parameter              :: mk = ppm_kind_double 
+integer, parameter              :: mk = ppm_kind_double
 !integer, parameter              :: mk = kind(1.0d0) !kind(1.0e0)
 real(mk),parameter              :: tol=epsilon(1._mk)*1000._mk
 real(mk),parameter              :: pi = ACOS(-1._mk)
@@ -58,15 +58,15 @@ real(mk)                      :: last_err
 
         use ppm_module_init
         use ppm_module_mktopo
-        
+
         allocate(ighostsize(ndim),nm(ndim),min_phys(ndim),max_phys(ndim),len_phys(ndim),stat=info)
-        
+
         min_phys(1:ndim) = 0.0_mk
         max_phys(1:ndim) = 1.0_mk
         max_phys(ndim) = 1.4_mk
         len_phys(1:ndim) = max_phys-min_phys
         bcdef(1:6) = ppm_param_bcdef_periodic
-        ighostsize(1:ndim) = 2 
+        ighostsize(1:ndim) = 2
 #ifdef __MPI
         comm = mpi_comm_world
         call mpi_comm_rank(comm,rank,info)
@@ -116,10 +116,10 @@ real(mk)                      :: last_err
 
 
     end setup
-        
+
 
     teardown
-        
+
     end teardown
 
     test ode_wp_step
@@ -127,7 +127,7 @@ real(mk)                      :: last_err
         type(ppm_t_particles_d), target :: Part1
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
-        type(ppm_t_ode)                 :: ode 
+        type(ppm_t_ode)                 :: ode
         integer                         :: np
         CLASS(ppm_t_operator_discr),POINTER   :: DCop => NULL()
         CLASS(ppm_t_operator_discr),POINTER   :: PSEop => NULL()
@@ -192,11 +192,11 @@ real(mk)                      :: last_err
         dt = 0.1_mk
         call ode%step(t,dt,1,info)
         Assert_Equal(info,0)
-        
+
         call Part1%get_field(Field1,wp_1r,info)
         Assert_Equal(info,0)
         Assert_True(((minval(wp_1r).eq.1.2_mk).and.(maxval(wp_1r).eq.1.2_mk)))
-        
+
 
         call ode%destroy(info)
         Assert_Equal(info,0)
@@ -206,13 +206,13 @@ real(mk)                      :: last_err
         Assert_Equal(info,0)
         deallocate(Field1,fields,rhs_fields,pair)
     end test
-    
+
     test ode_xp_step
         use ppm_module_io_vtk
         type(ppm_t_particles_d), target :: Part1
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
-        type(ppm_t_ode)                 :: ode 
+        type(ppm_t_ode)                 :: ode
         integer                         :: np
         CLASS(ppm_t_operator_discr),POINTER   :: DCop => NULL()
         CLASS(ppm_t_operator_discr),POINTER   :: PSEop => NULL()
@@ -262,7 +262,7 @@ real(mk)                      :: last_err
         call Part1%get_xp(moved_xp,info)
         allocate(xp(ppm_dim,Part1%Npart))
         xp(:,:) = moved_xp(:,:)
-        
+
         allocate(fields,stat=info)
         Assert_Equal(info,0)
         allocate(rhs_fields,stat=info)
@@ -282,7 +282,7 @@ real(mk)                      :: last_err
         dt = 0.1_mk
         call ode%step(t,dt,1,info)
         Assert_Equal(info,0)
-       
+
         call Part1%get_xp(moved_xp,info)
         do i=1,Part1%Npart
           xp(:,i) = moved_xp(:,i) - xp(:,i)
@@ -299,13 +299,13 @@ real(mk)                      :: last_err
 
         end_subroutine()
     end test
-    
+
     test ode_wp_xp_step
         use ppm_module_io_vtk
         type(ppm_t_particles_d), target :: Part1
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
-        type(ppm_t_ode)                 :: ode 
+        type(ppm_t_ode)                 :: ode
         integer                         :: np
         CLASS(ppm_t_operator_discr),POINTER   :: DCop => NULL()
         CLASS(ppm_t_operator_discr),POINTER   :: PSEop => NULL()
@@ -355,7 +355,7 @@ real(mk)                      :: last_err
         call Part1%get_xp(moved_xp,info)
         allocate(xp(ppm_dim,Part1%Npart))
         xp(:,:) = moved_xp(:,:)
-        
+
         allocate(fields,stat=info)
         Assert_Equal(info,0)
         allocate(rhs_fields,stat=info)
@@ -380,7 +380,7 @@ real(mk)                      :: last_err
         dt = 0.1_mk
         call ode%step(t,dt,1,info)
         Assert_Equal(info,0)
-       
+
         call Part1%get_xp(moved_xp,info)
         do i=1,Part1%Npart
           xp(:,i) = moved_xp(:,i) - xp(:,i)
@@ -397,11 +397,11 @@ real(mk)                      :: last_err
 
         end_subroutine()
     end test
-    
+
     test ode_mesh_step
         class(ppm_t_field_), POINTER        :: Field1,Field2
         class(ppm_t_equi_mesh),POINTER       :: Mesh1
-        type(ppm_t_ode)                     :: ode 
+        type(ppm_t_ode)                     :: ode
         integer                             :: p_idx, nb_errors
         CLASS(ppm_t_discr_info_),POINTER    :: dinfo => NULL()
         logical                             :: assoc
@@ -425,24 +425,21 @@ real(mk)                      :: last_err
             ghostsize=ighostsize,name='Test_Mesh_1')
         Assert_Equal(info,0)
 
-        if (ndim.eq.2) then
-            my_patch(1:4) = (/0.15_mk,0.10_mk,0.99_mk,0.7_mk/)
-        else
-            my_patch(1:6) = (/0.15_mk,0.10_mk,0.51_mk,0.99_mk,0.7_mk,0.78_mk/)
-        endif
+        my_patch(1:2*ndim) = (/0.15_mk,0.10_mk,0.99_mk,0.7_mk/)
+        !my_patch(1:2*ndim) = (/0.15_mk,0.10_mk,0.51_mk,0.99_mk,0.7_mk,0.78_mk/)
 
-        call Mesh1%def_patch(my_patch,info) 
+        call Mesh1%def_patch(my_patch,info)
         Assert_Equal(info,0)
 
         allocate(ppm_t_field::Field1,stat=info)
         Assert_Equal(info,0)
         allocate(ppm_t_field::Field2,stat=info)
         Assert_Equal(info,0)
-        call Field1%create(2,info,name='vecField') 
+        call Field1%create(2,info,name='vecField')
             Assert_Equal(info,0)
         call Field1%discretize_on(Mesh1,info)
             Assert_Equal(info,0)
-        call Field2%create(1,info,name='scaField') 
+        call Field2%create(1,info,name='scaField')
             Assert_Equal(info,0)
         call Field2%discretize_on(Mesh1,info)
             Assert_Equal(info,0)
@@ -477,7 +474,7 @@ real(mk)                      :: last_err
             Assert_Equal(info,0)
         call Field1%map_ghost_pop(Mesh1,info)
             Assert_Equal(info,0)
-        
+
         allocate(fields,stat=info)
         Assert_Equal(info,0)
         allocate(rhs_fields,stat=info)
@@ -502,7 +499,7 @@ real(mk)                      :: last_err
         dt = 0.1_mk
         call ode%step(t,dt,1,info)
         Assert_Equal(info,0)
-        
+
         IF (ndim.EQ.2) THEN
         foreach n in equi_mesh(Mesh1) with sca_fields(Field2) vec_fields(Field1) indices(i,j)
             for real
@@ -541,7 +538,7 @@ real(mk) function rhs_test1(fields_discr,t,changes)
   class(ppm_t_field_),           pointer    :: df
   class(ppm_t_particles_d),      pointer    :: pset => null()
   start_subroutine("rhs_test1")
-  
+
   pair => fields_discr%at(1)
   select type(d => pair%discr)
   class is (ppm_t_particles_d)
@@ -558,12 +555,12 @@ real(mk) function rhs_test1(fields_discr,t,changes)
   class is (ppm_t_field_)
     df => c
   end select
-  
+
   foreach p in particles(pset) with sca_fields(w=field,dw=df)
     dw_p = 2.0_mk*w_p
   end foreach
 
-  rhs_test1 = 0 
+  rhs_test1 = 0
   end_subroutine()
 end function rhs_test1
 
@@ -580,7 +577,7 @@ real(mk) function rhs_test2(fields_discr,t,changes)
   class(ppm_t_discr_info_), pointer         :: di => null()
   class(ppm_t_particles_d), pointer         :: pset => null()
   start_subroutine("rhs_test2")
-  
+
   pair => fields_discr%at(1)
   select type(d => pair%discr)
   class is (ppm_t_particles_d)
@@ -602,7 +599,7 @@ real(mk) function rhs_test2(fields_discr,t,changes)
     dx_p(:) = 2.0_mk*w_p
   end foreach
 
-  rhs_test2 = 0 
+  rhs_test2 = 0
   end_subroutine()
 end function rhs_test2
 
@@ -620,7 +617,7 @@ real(mk) function rhs_test_xp_wp(fields_discr,t,changes)
   class(ppm_t_discr_info_), pointer         :: di => null()
   class(ppm_t_particles_d), pointer         :: pset => null()
   start_subroutine("rhs_test_xp_wp")
-  
+
   pair => fields_discr%at(1)
   select type(d => pair%discr)
   class is (ppm_t_particles_d)
@@ -642,16 +639,16 @@ real(mk) function rhs_test_xp_wp(fields_discr,t,changes)
   class is (ppm_t_field_)
     df => c
   end select
-  
+
   foreach p in particles(pset) with sca_fields(w=field) vec_props(dx=dxi)
     dx_p(:) = 2.0_mk*w_p
   end foreach
-  
+
   foreach p in particles(pset) with sca_fields(dw=df)
     dw_p = 1.2_mk
   end foreach
 
-  rhs_test_xp_wp = 0 
+  rhs_test_xp_wp = 0
   end_subroutine()
 end function rhs_test_xp_wp
 
@@ -664,7 +661,7 @@ real(mk) function rhs_test3(fields_discr,t,changes)
   class(ppm_t_field_),     pointer          :: field1,field2,dfield
   class(ppm_t_equi_mesh), pointer           :: mesh => null()
   start_subroutine("rhs_test3")
-  
+
   pair => fields_discr%at(1)
   select type(f => pair%var)
   class is (ppm_t_field_)
@@ -685,7 +682,7 @@ real(mk) function rhs_test3(fields_discr,t,changes)
   class is (ppm_t_field_)
     dfield => c
   end select
-        
+
   IF (ndim.EQ.2) THEN
     foreach n in equi_mesh(mesh) with sca_fields(field2,dfield) vec_fields(field1) indices(i,j)
       for real
@@ -697,22 +694,22 @@ real(mk) function rhs_test3(fields_discr,t,changes)
         dfield_n = 3._mk*field2_n
     end foreach
   ENDIF
-  
 
-  rhs_test3 = 0 
+
+  rhs_test3 = 0
   end_subroutine()
 end function rhs_test3
 
 !-------------------------------------------------------------
 ! ODE convergence tests
 !-------------------------------------------------------------
-    
+
     test test_ode_const({ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_rk4]})
         use ppm_module_io_vtk
         type(ppm_t_particles_d), target :: Part1
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
-        type(ppm_t_ode)                 :: ode 
+        type(ppm_t_ode)                 :: ode
         class(ppm_v_main_abstr),pointer :: fields
         class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
@@ -777,11 +774,11 @@ end function rhs_test3
           end do
         end do
         Assert_Equal(info,0)
-        
+
         call Part1%get_field(Field1,wp_1r,info)
         Assert_Equal(info,0)
         Assert_True(((abs(minval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol).and.(abs(maxval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol)))
-        
+
 
         call ode%destroy(info)
         Assert_Equal(info,0)
@@ -812,21 +809,21 @@ real(mk) function const_ode(fields_discr,t,changes)
   class is (ppm_t_particles_d)
     pset => disc
   end select
-  
+
   foreach p in particles(pset) with sca_fields(dw=df)
     dw_p = 1.7_mk
   end foreach
 
-  const_ode = 0 
+  const_ode = 0
   end_subroutine()
 end function const_ode
-    
+
      test test_ode_linear({dtime: [0.1_mk,0.01_mk,0.001_mk,0.0001_mk], ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_midrk2,ppm_param_ode_scheme_rk4]})
         use ppm_module_io_vtk
         type(ppm_t_particles_d), target :: Part1
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
-        type(ppm_t_ode)                 :: ode 
+        type(ppm_t_ode)                 :: ode
         class(ppm_v_main_abstr),pointer :: fields
         class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
@@ -892,7 +889,7 @@ end function const_ode
           !print *,t,wp_1r(1)
         end do
         Assert_Equal(info,0)
-        
+
         call Part1%get_field(Field1,wp_1r,info)
         Assert_Equal(info,0)
         if (ode%integrator%scheme_order.gt.1) then
@@ -902,7 +899,7 @@ end function const_ode
           last_err = abs(symres - maxval(wp_1r))/symres
         end if
         !Assert_True(((abs(minval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol).and.(abs(maxval(wp_1r)-(1.7_mk*0.5_mk + 1.1_mk)).lt.tol)))
-        
+
 
         call ode%destroy(info)
         Assert_Equal(info,0)
@@ -933,21 +930,21 @@ real(mk) function linear_ode(fields_discr,t,changes)
   class is (ppm_t_particles_d)
     pset => disc
   end select
-  
+
   foreach p in particles(pset) with sca_fields(dw=df)
     dw_p = t
   end foreach
 
-  linear_ode = 0 
+  linear_ode = 0
   end_subroutine()
 end function linear_ode
-     
+
      test test_ode_exp({dtime: [0.1_mk,0.01_mk,0.001_mk,0.0001_mk], ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_midrk2,ppm_param_ode_scheme_rk4]})
         use ppm_module_io_vtk
         type(ppm_t_particles_d), target :: Part1
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer :: el
-        type(ppm_t_ode)                 :: ode 
+        type(ppm_t_ode)                 :: ode
         class(ppm_v_main_abstr),pointer :: fields
         class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
@@ -957,7 +954,7 @@ end function linear_ode
         integer                         :: np
         procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
         real(mk)        , parameter     :: symres = exp(1.0_mk)-1.0_mk
-        real(mk)                        :: rel_max_err 
+        real(mk)                        :: rel_max_err
 
         !--------------------------
         !Define Fields
@@ -1014,15 +1011,15 @@ end function linear_ode
           !print *,t,wp_1r(1)
         end do
         Assert_Equal(info,0)
-        
+
         call Part1%get_field(Field1,wp_1r,info)
         Assert_Equal(info,0)
         rel_max_err = abs(symres - maxval(wp_1r))/symres
         ! the 0.01 is an additonal tolerance used to account for the asymptotic
         ! convergence towards the order and numerical inaccuracies.
         Assert_True((dtime.eq.0.1_mk).or.(rel_max_err.lt.tol).or.(abs(log10(last_err / rel_max_err)-real(ode%integrator%scheme_order,mk)).lt.0.01_mk))
-        last_err =rel_max_err 
-        
+        last_err =rel_max_err
+
 
         call ode%destroy(info)
         Assert_Equal(info,0)
@@ -1053,25 +1050,25 @@ real(mk) function exp_ode(fields_discr,t,changes)
   class is (ppm_t_particles_d)
     pset => disc
   end select
-  
+
   foreach p in particles(pset) with sca_fields(dw=df)
     dw_p = exp(t)
   end foreach
 
-  exp_ode = 0 
+  exp_ode = 0
   end_subroutine()
 end function exp_ode
 
 !-------------------------------------------------------------
 ! ODE convergence test for meshes
 !-------------------------------------------------------------
-     
+
       test test_ode_mesh_exp({dtime: [0.1_mk,0.01_mk,0.001_mk,0.0001_mk], ode_scheme: [ppm_param_ode_scheme_eulerf,ppm_param_ode_scheme_tvdrk2,ppm_param_ode_scheme_midrk2,ppm_param_ode_scheme_rk4]})
         use ppm_module_io_vtk
         class(ppm_t_equi_mesh),pointer  :: Mesh1
         class(ppm_t_field_), pointer    :: Field1
         class(ppm_t_main_abstr), pointer:: el
-        type(ppm_t_ode)                 :: ode 
+        type(ppm_t_ode)                 :: ode
         class(ppm_v_main_abstr),pointer :: fields
         class(ppm_v_var_discr_pair),pointer :: rhs_fields
         real(mk)                        :: t,dt
@@ -1083,8 +1080,8 @@ end function exp_ode
         integer                         :: np
         procedure(ppm_p_rhsfunc_d),pointer :: rhsptr
         real(mk)        , parameter     :: symres = exp(1.0_mk)-1.0_mk
-        real(mk)                        :: rel_max_err 
-  
+        real(mk)                        :: rel_max_err
+
         start_subroutine("test_ode_mesh_exp")
         Nm = 25
         Nm(ndim) = 45
@@ -1094,13 +1091,10 @@ end function exp_ode
             ghostsize=ighostsize,name='Test_Mesh_1')
         Assert_Equal(info,0)
 
-        if (ndim.eq.2) then
-            my_patch(1:4) = (/0.15_mk,0.10_mk,0.99_mk,0.7_mk/)
-        else
-            my_patch(1:6) = (/0.15_mk,0.10_mk,0.51_mk,0.99_mk,0.7_mk,0.78_mk/)
-        endif
+        my_patch(1:4) = (/0.15_mk,0.10_mk,0.99_mk,0.7_mk/)
+        !my_patch(1:6) = (/0.15_mk,0.10_mk,0.51_mk,0.99_mk,0.7_mk,0.78_mk/)
 
-        call Mesh1%def_patch(my_patch,info) 
+        call Mesh1%def_patch(my_patch,info)
         Assert_Equal(info,0)
         !--------------------------
         !Define Fields
@@ -1112,7 +1106,7 @@ end function exp_ode
 
         call Field1%discretize_on(Mesh1,info)
         Assert_Equal(info,0)
-        
+
         IF (ndim.EQ.2) THEN
         foreach n in equi_mesh(Mesh1) with sca_fields(Field1) indices(i,j)
             for real
@@ -1159,7 +1153,7 @@ end function exp_ode
           !print *,t,wp_1r(1)
         end do
         Assert_Equal(info,0)
-        
+
         rel_max_err = 0.0_mk
         IF (ndim.EQ.2) THEN
         foreach n in equi_mesh(Mesh1) with sca_fields(Field1) indices(i,j)
@@ -1181,8 +1175,8 @@ end function exp_ode
         ! the 0.01 is an additonal tolerance used to account for the asymptotic
         ! convergence towards the order and numerical inaccuracies.
         Assert_True((dtime.eq.0.1_mk).or.(rel_max_err.lt.tol).or.(abs(log10(last_err / rel_max_err)-real(ode%integrator%scheme_order,mk)).lt.0.01_mk))
-        last_err =rel_max_err 
-        
+        last_err =rel_max_err
+
 
         call ode%destroy(info)
         Assert_Equal(info,0)
@@ -1215,7 +1209,7 @@ real(mk) function exp_mesh_ode(fields_discr,t,changes)
   class is (ppm_t_equi_mesh)
     mesh => disc
   end select
-  
+
   IF (ndim.EQ.2) THEN
   foreach n in equi_mesh(mesh) with sca_fields(df) indices(i,j)
       for real
@@ -1228,9 +1222,9 @@ real(mk) function exp_mesh_ode(fields_discr,t,changes)
   end foreach
   ENDIF
 
-  exp_mesh_ode = 0 
+  exp_mesh_ode = 0
   end_subroutine()
 end function exp_mesh_ode
-    
+
 
 end test_suite
