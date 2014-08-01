@@ -35,15 +35,15 @@
       INTEGER, PARAMETER :: ppm_param_solver_mg           = 0
       INTEGER, PARAMETER :: ppm_param_solver_sor          = 1
       INTEGER, PARAMETER :: ppm_param_solver_fft          = 2
-      
+
       !------------------------------------------------------------------------
-      !  Define equation ppm solvers 
+      !  Define equation ppm solvers
       !------------------------------------------------------------------------
-      INTEGER, PARAMETER :: ppm_param_eq_poisson          = 1 
+      INTEGER, PARAMETER :: ppm_param_eq_poisson          = 1
 
       !------------------------------------------------------------------------
       !  Define order for finite difference
-      !------------------------------------------------------------------------ 
+      !------------------------------------------------------------------------
       INTEGER, PARAMETER :: ppm_param_order_1             = 1
       INTEGER, PARAMETER :: ppm_param_order_2             = 2
       INTEGER, PARAMETER :: ppm_param_order_3             = 3
@@ -52,7 +52,7 @@
       !------------------------------------------------------------------------
       !  Define smoother
       !------------------------------------------------------------------------
-      INTEGER, PARAMETER :: ppm_param_smooth_rbsor        = 1 
+      INTEGER, PARAMETER :: ppm_param_smooth_rbsor        = 1
 
       !-------------------------------------------------------------------------
       !  ODE parameters
@@ -65,4 +65,4 @@
       !INTEGER, PARAMETER :: ppm_param_ode_scheme_tvdrk3   = 6
       INTEGER, PARAMETER :: ppm_param_ode_scheme_sts      = 7
 
-      
+

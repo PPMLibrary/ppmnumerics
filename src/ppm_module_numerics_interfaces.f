@@ -1,14 +1,14 @@
 !minclude ppm_header(ppm_module_interfaces)
 
-#define __REAL 3 
-#define __COMPLEX 4 
-#define __integer 5 
-#define __LONGINT 6 
-#define __LOGICAL 7 
-#define __CHAR 8 
+#define __REAL 3
+#define __COMPLEX 4
+#define __integer 5
+#define __LONGINT 6
+#define __LOGICAL 7
+#define __CHAR 8
 
 module ppm_module_numerics_interfaces
-!!! Declares all data types 
+!!! Declares all data types
 !!! The derived types are declared as abstract. They contain all the
 !!! different fields as well as the interfaces to the type-bound
 !!! procedures.
@@ -22,8 +22,11 @@ module ppm_module_numerics_interfaces
 !----------------------------------------------------------------------
 !  Modules
 !----------------------------------------------------------------------
-use ppm_module_core
-
+USE ppm_module_core
+USE ppm_module_interfaces, ONLY : ppm_v_main_abstr,ppm_v_var_discr_pair,  &
+&   ppm_v_discr_kind,ppm_t_options,ppm_t_part_prop_s_,ppm_t_part_prop_d_, &
+&   ppm_t_field_discr_pair,ppm_t_var_discr_pair
+USE ppm_module_field_typedef, ONLY : ppm_v_field
 
 implicit none
 
@@ -34,24 +37,24 @@ implicit none
 include 'ppm_numerics.h'
 
 !----------------------------------------------------------------------
-! Global variables 
+! Global variables
 !----------------------------------------------------------------------
 
 !----------------------------------------------------------------------
-! Module variables 
+! Module variables
 !----------------------------------------------------------------------
 
 !----------------------------------------------------------------------
 ! Type declaration
 !----------------------------------------------------------------------
-  
+
 
 type,abstract :: ppm_t_integrator_
     !!! Data structure for time integrators
     !!! The time integrator implements a specific integration scheme.
 
     integer                                         :: ID = 0
-    !!! global identifier 
+    !!! global identifier
     character(len=ppm_char)                         :: name
     !!! string description
     integer                     :: scheme_order
@@ -62,7 +65,7 @@ type,abstract :: ppm_t_integrator_
     !!! number of stages for multistage time integration schemes
     integer                     :: scheme_kickoff
     !!! suitable kick off scheme
-    
+
     procedure(ppm_p_rhsfunc_s),       pointer, nopass :: rhsfunc_s        => null()
     procedure(ppm_p_rhsfunc_d),       pointer, nopass :: rhsfunc_d        => null()
 
@@ -70,7 +73,7 @@ type,abstract :: ppm_t_integrator_
     class(ppm_v_discr_kind),          pointer         :: discretizations  => null()
     class(ppm_v_var_discr_pair),      pointer         :: rhs_variables    => null()
     class(ppm_v_main_abstr),          pointer         :: changes          => null()
-    class(ppm_v_field),               pointer         :: buffers          => null() 
+    class(ppm_v_field),               pointer         :: buffers          => null()
     contains
     procedure(integrator_create_s_),     deferred :: create_s
     procedure(integrator_create_d_),     deferred :: create_d
@@ -90,19 +93,19 @@ type,abstract :: ppm_t_ode_
     !!! schemes.
 
     integer                                         :: ID = 0
-    !!! global identifier 
-    
+    !!! global identifier
+
     integer                     :: state
     !!! state of time ODE
     !!!
     !!! One of:
-    !!! * ode_state_init 
+    !!! * ode_state_init
     !!! * ode_state_kickoff
     !!! * ode_state_running
     !!! * ode_state_finished
-    !!! 
+    !!!
     !!! WARNING: This is internal.
-    
+
     class(ppm_t_integrator_), pointer       :: integrator => null()
     class(ppm_t_integrator_), pointer       :: kickoff => null()
 
@@ -130,7 +133,7 @@ abstract interface
   real(ppm_kind_single)                     :: time
   class(ppm_v_main_abstr),    pointer       :: changes
   end function ppm_p_rhsfunc_s
-  
+
   real(ppm_kind_double) function ppm_p_rhsfunc_d(vars_and_discr,time,changes)
   import ppm_v_main_abstr
   import ppm_kind_double

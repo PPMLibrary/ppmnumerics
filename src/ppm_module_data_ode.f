@@ -1,16 +1,16 @@
       !-------------------------------------------------------------------------
       !  Module       :                 ppm_module_data_ode
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -32,13 +32,11 @@
         !  Includes
         !-----------------------------------------------------------------------
 
-
         !-----------------------------------------------------------------------
         !  Time
         !-----------------------------------------------------------------------
         REAL(KIND(1.0D0)) :: t0
 
-        
         !-----------------------------------------------------------------------
         ! scheme stuff
         ! _o : order
@@ -58,8 +56,8 @@
         ! suggest: DATA ppm_ode_scheme_memsize /0,1,1,4,0/
         ! suggest: DATA ppm_ode_scheme_nstages /1,2,2,4,999999/
         ! suggest DATA ppm_ode_scheme_kickoff  /1,2,2,4,7/
-        
-        
+
+
         !-----------------------------------------------------------------------
         ! what scheme for which mode
         !-----------------------------------------------------------------------
@@ -89,7 +87,7 @@
         ! id lists
         !-----------------------------------------------------------------------
         INTEGER, DIMENSION(:), POINTER :: ppm_ode_mode_id => NULL()
-        
+
 
         !-----------------------------------------------------------------------
         ! some stages for ppm_ode_state
@@ -98,8 +96,8 @@
         INTEGER, PARAMETER :: ppm_ode_state_kickoff   = 2
         INTEGER, PARAMETER :: ppm_ode_state_running   = 1
         INTEGER, PARAMETER :: ppm_ode_state_inited    = 0
-        
-        
+
+
         !-----------------------------------------------------------------------
         ! number of modes
         !-----------------------------------------------------------------------
@@ -111,5 +109,5 @@
         !-----------------------------------------------------------------------
         INTEGER            :: ppm_ode_topoid
 
-      
+
       END MODULE ppm_module_data_ode

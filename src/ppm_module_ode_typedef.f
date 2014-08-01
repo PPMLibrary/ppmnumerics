@@ -27,7 +27,7 @@ type,extends(ppm_t_ode_) :: ppm_t_ode
   procedure :: map_push => ode_map_push
   procedure :: map_pop => ode_map_pop
 end type ppm_t_ode
-        
+
 
 !----------------------------------------------------------------------
 !  Type-bound procedures
@@ -83,7 +83,7 @@ subroutine ode_create(this,scheme,variables,rhsfunc,rhs_variables,info,options,k
   case default
     ppm_fail("Integrator not implemented")
   end select
-  
+
   ! use default or user kickoff scheme
   if(PRESENT(kickoff_scheme)) then
     kickoff = kickoff_scheme
@@ -125,7 +125,7 @@ subroutine ode_create(this,scheme,variables,rhsfunc,rhs_variables,info,options,k
     end select
     this%state = ode_state_kickoff
   end if
-  
+
 
   end_subroutine()
 end subroutine ode_create
@@ -168,7 +168,7 @@ subroutine ode_step(this,t,dt,istage,info)
   else if(this%state.EQ.ode_state_running) then
     call this%integrator%step(t,dt,istage,info)
   end if
-  
+
   end_subroutine()
 
 end subroutine ode_step
@@ -181,7 +181,7 @@ subroutine ode_map_push(this,info)
   class(ppm_t_discr_info_), pointer      :: di => null()
   class(ppm_t_particles_d), pointer      :: pset => null()
   start_subroutine("ode_map_push")
-  
+
   if (this%state.EQ.ode_state_kickoff) then
     buffer => this%kickoff%buffers%begin()
     do while (associated(buffer))
@@ -219,7 +219,7 @@ subroutine ode_map_pop(this,info)
   class(ppm_t_discr_info_), pointer      :: di => null()
   class(ppm_t_particles_d), pointer      :: pset => null()
   start_subroutine("ode_map_pop")
-    
+
   if (this%state.EQ.ode_state_kickoff) then
     ! traverse in reverse order!
     buffer => this%kickoff%buffers%last()
