@@ -28,13 +28,13 @@ USE ppm_module_interfaces, ONLY : ppm_v_main_abstr,ppm_v_var_discr_pair,  &
 &   ppm_t_field_discr_pair,ppm_t_var_discr_pair
 USE ppm_module_field_typedef, ONLY : ppm_v_field
 
-implicit none
+IMPLICIT NONE
 
 !----------------------------------------------------------------------
 ! Global parameters
 !----------------------------------------------------------------------
 
-include 'ppm_numerics.h'
+INCLUDE 'ppm_numerics.h'
 
 !----------------------------------------------------------------------
 ! Global variables
