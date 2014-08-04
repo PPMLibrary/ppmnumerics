@@ -49,7 +49,7 @@ INCLUDE 'ppm_numerics.h'
 !----------------------------------------------------------------------
 
 
-type,abstract :: ppm_t_integrator_
+TYPE,ABSTRACT :: ppm_t_integrator_
     !!! Data structure for time integrators
     !!! The time integrator implements a specific integration scheme.
 
@@ -82,7 +82,7 @@ type,abstract :: ppm_t_integrator_
     procedure(integrator_step_s_),       deferred :: step_s
     procedure(integrator_step_d_),       deferred :: step_d
     generic :: step => step_s, step_d
-end type ppm_t_integrator_
+ END TYPE ppm_t_integrator_
 !minclude ppm_create_collection(integrator,integrator_,generate="abstract")
 !minclude ppm_create_collection(integrator,integrator_,generate="abstract",vec=true,def_ptr=false)
 
