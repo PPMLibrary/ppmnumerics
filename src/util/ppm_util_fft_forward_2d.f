@@ -3,18 +3,18 @@
       !-------------------------------------------------------------------------
       !
       !  Purpose      : This routine performs Fast Fourier Transform using
-      !                 FFTW in the first (x) dimension 
+      !                 FFTW in the first (x) dimension
       !
       !  Input        : data_in(:,:)   (F) data to be transformed
       !
-      !  Input/output : lda(:)         (I) size of data              
-      !                                
+      !  Input/output : lda(:)         (I) size of data
+      !
       !
       !  Output       : data_out(:,:)  (F) transformed data
       !                 info           (I) return status. =0 if no error.
       !
-      !  Remarks      : 
-      !                                                  
+      !  Remarks      :
+      !
       !  References   :
       !
       !  Revisions    :
@@ -63,21 +63,21 @@
       !  Bugfix: arguments are now checked BEFORE they are assigned to Nx_in...
       !
       !  Revision 1.2  2004/02/11 10:13:23  hiebers
-      !  changed arguments, included test on info , included ppm_define.h, 
-      !  shortened lines to 80 characters, excluded module_mesh, 
+      !  changed arguments, included test on info , included ppm_define.h,
+      !  shortened lines to 80 characters, excluded module_mesh,
       !  included fftw3.f
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -116,9 +116,9 @@
       USE ppm_module_error
       USE ppm_module_alloc
       IMPLICIT NONE
-#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
+#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX 
+#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
@@ -128,7 +128,7 @@
       INCLUDE "fftw3.f"
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       ! input data
 #if   __KIND == __SINGLE_PRECISION | __KIND == __DOUBLE_PRECISION
@@ -142,15 +142,15 @@
       COMPLEX(MK), DIMENSION(:,:)   , POINTER       :: data_out
       INTEGER                       , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! timer
       REAL(MK)                                :: t0
       ! counters
       INTEGER                                 :: i,j,iopt
-      ! size of the data_in 
+      ! size of the data_in
       INTEGER                                 :: Nx_in, Ny_in
-      ! size of the data_out 
+      ! size of the data_out
       INTEGER                                 :: Nx_out, Ny_out
 #ifdef __FFTW
       ! FFTW Plan
@@ -173,7 +173,7 @@
       INTEGER, DIMENSION(1)                   :: lda_table, lda_work
 #endif
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
 
       !-------------------------------------------------------------------------
@@ -193,7 +193,7 @@
       CALL ppm_error(ppm_err_noMathKeisan,'ppm_util_fft_forward_2d',  &
      &    'PPM was compiled without MATHKEISAN support',__LINE__,info)
 #endif
-      GOTO 9999   
+      GOTO 9999
 #else
       !-------------------------------------------------------------------------
       !  Check arguments
@@ -219,7 +219,7 @@
           ENDIF
       ENDIF
       ! subtract 1 to fit ppm-convention
-      Nx_in = lda(1)-1      
+      Nx_in = lda(1)-1
       Ny_in = lda(2)
       !-------------------------------------------------------------------------
       !  Allocate result array
@@ -300,7 +300,7 @@
      &              lda_work(1), isys)
 #endif
       !-------------------------------------------------------------------------
-      !  Forward FFT 
+      !  Forward FFT
       !-------------------------------------------------------------------------
       isign_fft = -1
       DO j=1,Ny_in
@@ -365,14 +365,14 @@
       CALL dfftw_destroy_plan(Plan)
 #endif
 #endif
-#endif 
+#endif
 #if __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       !-------------------------------------------------------------------------
       !  Copy margin to conform with PPM convention
       !-------------------------------------------------------------------------
       DO j=1,Ny_out
           data_out(lda(1),j) = data_out(1,j)
-      ENDDO     
+      ENDDO
 #endif
       !-------------------------------------------------------------------------
       !  Return
