@@ -290,6 +290,7 @@
                  CLASS IS (ppm_t_particles_d)
                     pset => disc
                     CALL pset%map_push(info,buffer)
+                    or_fail("pset%map_push")
 
                  CLASS DEFAULT
                     fail("This type is not suported right now!",ppm_error=ppm_error_fatal)
@@ -309,6 +310,7 @@
                  CLASS IS (ppm_t_particles_d)
                     pset => disc
                     CALL pset%map_push(info,buffer)
+                    or_fail("pset%map_push")
 
                  CLASS DEFAULT
                     fail("This type is not suported right now!",ppm_error=ppm_error_fatal)
@@ -369,6 +371,7 @@
                  CLASS IS (ppm_t_particles_d)
                     pset => disc
                     CALL pset%map_pop(info,buffer)
+                    or_fail("pset%map_pop")
 
                  CLASS DEFAULT
                     fail("This type is not suported right now!",ppm_error=ppm_error_fatal)
@@ -389,6 +392,7 @@
                  CLASS IS (ppm_t_particles_d)
                     pset => disc
                     CALL pset%map_pop(info,buffer)
+                    or_fail("pset%map_pop")
 
                  CLASS DEFAULT
                     fail("This type is not suported right now!",ppm_error=ppm_error_fatal)

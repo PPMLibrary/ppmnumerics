@@ -51,7 +51,7 @@ CLASS IS(<%= t[0] %>)
 % else
             foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision  %>)
 % end
-            <%= bodies.sca.indent 6 -%>
+               <%= bodies.sca.indent 6 -%>
             end foreach
          ELSE
 % if vb.nil?
@@ -59,7 +59,7 @@ CLASS IS(<%= t[0] %>)
 % else
             foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>)
 % end
-            <%= bodies.vec.indent 6 -%>
+               <%= bodies.vec.indent 6 -%>
             end foreach
          ENDIF
 %   elsif t[0] == 'prop_type'
@@ -72,7 +72,7 @@ CLASS IS(<%= t[0] %>)
 % else
             foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) sca_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
 % end
-            <%= bodies.sca.indent 6 -%>
+               <%= bodies.sca.indent 6 -%>
             end foreach
          ELSE
 % if vb.nil?
@@ -80,7 +80,7 @@ CLASS IS(<%= t[0] %>)
 % else
             foreach <%= iter %> in particles(<%= discr %>) with skip_checks(true) vec_props(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
 % end
-            <%= bodies.vec.indent 6 -%>
+               <%= bodies.vec.indent 6 -%>
             end foreach
          ENDIF
 %   elsif t[0] == 'part_type'
@@ -90,7 +90,7 @@ CLASS IS(<%= t[0] %>)
 % else
          foreach <%= iter %> in particles(<%= var[1]  %>) with skip_checks(true) positions(<%= var[0] %>,writex=true) vec_props(<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>)
 % end
-         <%= bodies.pos.indent 6 -%>
+            <%= bodies.pos.indent 6 -%>
          end foreach
 %   end
 % elsif t[2] == 'ppm_t_equi_mesh'
@@ -105,7 +105,7 @@ CLASS IS(<%= t[0] %>)
                foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>) indices(i,j)
 % end
                for real
-               <%= bodies.sca.indent 6 -%>
+                  <%= bodies.sca.indent 6 -%>
                end foreach
             ELSE
 % if vb.nil?
@@ -114,7 +114,7 @@ CLASS IS(<%= t[0] %>)
                foreach <%= iter %> in equi_mesh(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>) indices(i,j)
 % end
                for real
-               <%= bodies.vec.indent 6 -%>
+                  <%= bodies.vec.indent 6 -%>
                end foreach
             ENDIF
          ELSE
@@ -127,7 +127,7 @@ CLASS IS(<%= t[0] %>)
                foreach <%= iter %> in equi_mesh(<%= discr %>) with sca_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>) vec_fields(<%= bfr_str %>) prec(<%= precision %>) indices(i,j,k)
 % end
                for real
-               <%= bodies.sca.indent 6 -%>
+                  <%= bodies.sca.indent 6 -%>
                end foreach
             ELSE
 % if vb.nil?
@@ -136,7 +136,7 @@ CLASS IS(<%= t[0] %>)
                foreach <%= iter %> in equi_mesh(<%= discr %>) with vec_fields(<%= var[0] %>=<%= var[1] %>,<%= change[0] %>=<%= change[1] %>,<%= bfr_str %>) prec(<%= precision %>) indices(i,j,k)
 % end
                for real
-               <%= bodies.vec.indent 6 -%>
+                  <%= bodies.vec.indent 6 -%>
                end foreach
             ENDIF
          ENDIF

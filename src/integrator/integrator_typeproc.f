@@ -305,16 +305,19 @@
         end_subroutine()
       END SUBROUTINE integrator_destroy
 
-      template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+      template <kind_type:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
       SUBROUTINE integrator_step(this,t,dt,istage,info)
         IMPLICIT NONE
 
+        parameter(MK,INTEGER,kind_type)
         !----------------------------------------------------------------------
         ! Arguments
         !----------------------------------------------------------------------
         CLASS(ppm_t_integrator) :: this
+
         REAL(MK), INTENT(INOUT) :: t
         REAL(MK), INTENT(IN   ) :: dt
+
         INTEGER,  INTENT(IN   ) :: istage
         INTEGER,  INTENT(  OUT) :: info
         !----------------------------------------------------------------------
@@ -379,10 +382,11 @@
 
       END SUBROUTINE eulerf_create
 
-      template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+      template <kind_type:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
       SUBROUTINE eulerf_step(this,t,dt,istage,info)
         IMPLICIT NONE
 
+        parameter(MK,INTEGER,kind_type)
         !----------------------------------------------------------------------
         ! Arguments
         !----------------------------------------------------------------------
@@ -407,9 +411,9 @@
 
         rhs_info = this%rhsfunc_t(this%rhs_variables,t,this%changes)
 
-        var => this%variables%begin()
+        var    => this%variables%begin()
         change => this%changes%begin()
-        discr => this%discretizations%begin()
+        discr  => this%discretizations%begin()
         DO WHILE (ASSOCIATED(var))
            check_associated(change,"Fields and changes should have same length")
            check_associated(discr,"Fields and discretizations should have same length")
@@ -440,11 +444,11 @@
 
       END SUBROUTINE eulerf_step
 
-      template <stsnu:[stsnu_s,stsnu_d],MK:[ppm_kind_single,ppm_kind_double],ppm_p_rhsfunc_t:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
+      template <stsnu:[stsnu_s,stsnu_d],kind_type:[ppm_kind_single,ppm_kind_double],ppm_p_rhsfunc_t:[ppm_p_rhsfunc_s,ppm_p_rhsfunc_d]> nointerface suffixes [s,d]
       SUBROUTINE sts_create(this,variables,rhsfunc,rhs_variables,info,options)
         IMPLICIT NONE
 
-        parameter(mk,integer,MK)
+        parameter(MK,INTEGER,kind_type)
         !----------------------------------------------------------------------
         !  Arguments
         !----------------------------------------------------------------------
@@ -486,12 +490,12 @@
         this%scheme_nstages = 1000
         this%scheme_kickoff = ppm_param_ode_scheme_sts
 
-        this%stsnu(:)  = 0.0_mk
-        this%stsnu(1)  = 0.0_mk
-        this%stsnu(5)  = 0.04_mk
-        this%stsnu(7)  = 0.0015_mk
-        this%stsnu(9)  = 0.04_mk
-        this%stsnu(20) = 0.006_mk
+        this%stsnu(:)  = 0.0_MK
+        this%stsnu(1)  = 0.0_MK
+        this%stsnu(5)  = 0.04_MK
+        this%stsnu(7)  = 0.0015_MK
+        this%stsnu(9)  = 0.04_MK
+        this%stsnu(20) = 0.006_MK
 
         SELECT TYPE(options)
         CLASS is (ppm_t_sts_options_s)
@@ -513,17 +517,19 @@
 
       END SUBROUTINE sts_create
 
-      template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+      template <kind_type:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
       SUBROUTINE sts_step(this,t,dt,istage,info)
         IMPLICIT NONE
 
-        parameter(mk,integer,MK)
+        parameter(MK,INTEGER,kind_type)
         !----------------------------------------------------------------------
         ! Arguments
         !----------------------------------------------------------------------
         CLASS(ppm_t_sts)        :: this
-        REAL(mk), INTENT(INOUT) :: t
-        REAL(mk), INTENT(IN   ) :: dt
+
+        REAL(MK), INTENT(INOUT) :: t
+        REAL(MK), INTENT(IN   ) :: dt
+
         INTEGER,  INTENT(IN   ) :: istage
         INTEGER,  INTENT(  OUT) :: info
 
@@ -534,9 +540,9 @@
         CLASS(ppm_t_main_abstr), POINTER :: change
         CLASS(ppm_t_discr_kind), POINTER :: discr
 
-        REAL(MK) :: rhs_info
-        REAL(MK) :: tau
-        REAL(MK), PARAMETER :: m_pi=ACOS(-1.0_mk)
+        REAL(MK)            :: rhs_info
+        REAL(MK)            :: tau
+        REAL(MK), PARAMETER :: m_pi=ACOS(-1.0_MK)
 
         !-----------------------------------------------------------------------
         !  call substart
@@ -546,21 +552,21 @@
         !-----------------------------------------------------
         !  compute the new dt
         !-----------------------------------------------------
-        IF (mk.EQ.ppm_kind_single) THEN
-           tau = dt/((this%stsnu_s(this%nsts) - 1.0_mk) * &
-           &     cos((2.0_mk * REAL(istage,mk) - 1.0_mk)/REAL(this%nsts,mk) * M_PI * 0.5_mk) + &
-           &     1.0_mk + this%stsnu_s(this%nsts))
+        IF (MK.EQ.ppm_kind_single) THEN
+           tau = dt/((this%stsnu_s(this%nsts) - 1.0_MK) * &
+           &     COS((2.0_MK * REAL(istage,MK) - 1.0_MK)/REAL(this%nsts,MK) * m_pi * 0.5_MK) + &
+           &     1.0_MK + this%stsnu_s(this%nsts))
         ELSE
-           tau = dt/((this%stsnu_d(this%nsts) - 1.0_mk) * &
-           &     cos((2.0_mk * REAL(istage,mk) - 1.0_mk)/REAL(this%nsts,mk) * M_PI * 0.5_mk) + &
-           &     1.0_mk + this%stsnu_d(this%nsts))
+           tau = dt/((this%stsnu_d(this%nsts) - 1.0_MK) * &
+           &     COS((2.0_MK * REAL(istage,MK) - 1.0_MK)/REAL(this%nsts,MK) * m_pi * 0.5_MK) + &
+           &     1.0_MK + this%stsnu_d(this%nsts))
         ENDIF
 
         rhs_info = this%rhsfunc_t(this%rhs_variables,t,this%changes)
 
-        var => this%variables%begin()
+        var    => this%variables%begin()
         change => this%changes%begin()
-        discr => this%discretizations%begin()
+        discr  => this%discretizations%begin()
         DO WHILE (ASSOCIATED(var))
           check_associated(change,"Fields and changes should have same length")
           check_associated(discr,"Fields and discretizations should have same length")
@@ -574,9 +580,9 @@
               u_e(:) = u_e(:) + tau*du_e(:)
           end foreach
 
-          var => this%variables%next()
+          var    => this%variables%next()
           change => this%changes%next()
-          discr => this%discretizations%next()
+          discr  => this%discretizations%next()
         ENDDO !ASSOCIATED(var)
 
         check_false("ASSOCIATED(change)","Fields and changes should have same length")
@@ -597,20 +603,25 @@
         !  Arguments
         !----------------------------------------------------------------------
         CLASS(ppm_t_tvdrk2)                                   :: this
+
         CLASS(ppm_v_main_abstr)                               :: variables
         !!! This vector holds all entities to be updated by the integrator the
         !!! elements may be fields or particle discretizations.
         !!!
         !!! fields must either have one discretization or wrapped together with the
         !!! intended discretization in a ppm_t_pair object
+
         PROCEDURE(ppm_p_rhsfunc_t)                            :: rhsfunc
         !!! The right hand side function to be executed by the eulerf::step function
+
         CLASS(ppm_v_var_discr_pair)                           :: rhs_variables
         !!! The fields to be passed to the right hand side function.
         !!!
         !!! The elements of the container can be fields, or pairs continaing a field
         !!! and its intended discretization.
+
         INTEGER,                                INTENT(  OUT) :: info
+
         CLASS(ppm_t_options), OPTIONAL, TARGET, INTENT(IN   ) :: options
 
         !-----------------------------------------------------------------------
@@ -631,18 +642,18 @@
 
       END SUBROUTINE tvdrk2_create
 
-      template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+      template <kind_type:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
       SUBROUTINE tvdrk2_step(this,t,dt,istage,info)
         IMPLICIT NONE
 
-        parameter(mk,integer,MK)
+        parameter(MK,INTEGER,kind_type)
         !----------------------------------------------------------------------
         ! Arguments
         !----------------------------------------------------------------------
         CLASS(ppm_t_tvdrk2)     :: this
 
-        REAL(mk), INTENT(INOUT) :: t
-        REAL(mk), INTENT(IN   ) :: dt
+        REAL(MK), INTENT(INOUT) :: t
+        REAL(MK), INTENT(IN   ) :: dt
 
         INTEGER,  INTENT(IN   ) :: istage
         INTEGER,  INTENT(  OUT) :: info
@@ -671,9 +682,9 @@
           !----------------------------------------------------------------------
           rhs_info = this%rhsfunc_t(this%rhs_variables,t,this%changes)
 
-          var => this%variables%begin()
+          var    => this%variables%begin()
           change => this%changes%begin()
-          discr => this%discretizations%begin()
+          discr  => this%discretizations%begin()
           buffer => this%buffers%begin()
           DO WHILE (ASSOCIATED(var))
             check_associated(change,"Fields and changes should have same length")
@@ -691,9 +702,9 @@
                 u_e(:) = u_e(:) + dt*du_e(:)
             end foreach
 
-            var => this%variables%next()
+            var    => this%variables%next()
             change => this%changes%next()
-            discr => this%discretizations%next()
+            discr  => this%discretizations%next()
             buffer => this%buffers%next()
           ENDDO !ASSOCIATED(var)
 
@@ -707,9 +718,9 @@
           !----------------------------------------------------------------------
           rhs_info = this%rhsfunc_t(this%rhs_variables,t+dt,this%changes)
 
-          var => this%variables%begin()
+          var    => this%variables%begin()
           change => this%changes%begin()
-          discr => this%discretizations%begin()
+          discr  => this%discretizations%begin()
           buffer => this%buffers%begin()
           DO WHILE (ASSOCIATED(var))
             check_associated(change,"Fields and changes should have same length")
@@ -718,18 +729,18 @@
             foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer]) prec(MK) part_type(part_type) prop_type(prop_type)
               for sca
                 u_e = u_e + dt*du_e
-                u_e  = 0.5_mk * (u_e + bfr_e)
+                u_e  = 0.5_MK * (u_e + bfr_e)
               for vec
                 u_e(:) = u_e(:) + dt*du_e(:)
-                u_e(:)  = 0.5_mk * (u_e(:) + bfr_e(:))
+                u_e(:)  = 0.5_MK * (u_e(:) + bfr_e(:))
               for pos
                 u_e(:) = u_e(:) + dt*du_e(:)
-                u_e(:)  = 0.5_mk * (u_e(:) + bfr_e(:))
+                u_e(:)  = 0.5_MK * (u_e(:) + bfr_e(:))
             end foreach
 
-            var => this%variables%next()
+            var    => this%variables%next()
             change => this%changes%next()
-            discr => this%discretizations%next()
+            discr  => this%discretizations%next()
             buffer => this%buffers%next()
           ENDDO !ASSOCIATED(var)
 
@@ -786,24 +797,27 @@
 
         ! TODO ALLOCATE buffer
         CALL this%ppm_t_integrator%create(variables,rhsfunc,rhs_variables,info)
+        or_fail("this%ppm_t_integrator%create")
 
         end_subroutine()
 
       END SUBROUTINE midrk2_create
 
-      template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+      template <kind_type:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
       SUBROUTINE midrk2_step(this,t,dt,istage,info)
         IMPLICIT NONE
 
-        parameter(mk,integer,MK)
+        parameter(MK,INTEGER,kind_type)
         !----------------------------------------------------------------------
         ! Arguments
         !----------------------------------------------------------------------
-        CLASS(ppm_t_midrk2)                                :: this
-        REAL(mk), INTENT(INOUT)    :: t
-        REAL(mk), INTENT(IN   )    :: dt
-        INTEGER , INTENT(IN   )    :: istage
-        INTEGER , INTENT(  OUT)    :: info
+        CLASS(ppm_t_midrk2)     :: this
+
+        REAL(MK), INTENT(INOUT) :: t
+        REAL(MK), INTENT(IN   ) :: dt
+
+        INTEGER , INTENT(IN   ) :: istage
+        INTEGER , INTENT(  OUT) :: info
 
         !----------------------------------------------------------------------
         ! Local Variables
@@ -814,11 +828,14 @@
         CLASS(ppm_t_discr_kind), POINTER :: discr
 
         REAL(MK) :: rhs_info
+        REAL(MK) :: hdt
 
         !-----------------------------------------------------------------------
         !  call substart
         !-----------------------------------------------------------------------
         start_subroutine("midrk2_step")
+
+        hdt=0.5_MK*dt
 
         ! TODO check if buffers where mapped
         SELECT CASE (istage)
@@ -830,9 +847,9 @@
           !----------------------------------------------------------------------
           rhs_info = this%rhsfunc_t(this%rhs_variables,t,this%changes)
 
-          var => this%variables%begin()
+          var    => this%variables%begin()
           change => this%changes%begin()
-          discr => this%discretizations%begin()
+          discr  => this%discretizations%begin()
           buffer => this%buffers%begin()
           DO WHILE (ASSOCIATED(var))
             check_associated(change,"Fields and changes should have same length")
@@ -841,18 +858,18 @@
             foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer]) prec(MK) part_type(part_type) prop_type(prop_type)
               for sca
                 bfr_e = u_e
-                u_e = u_e + 0.5_mk*dt*du_e
+                u_e = u_e + hdt*du_e
               for vec
                 bfr_e(:) = u_e(:)
-                u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+                u_e(:) = u_e(:) + hdt*du_e(:)
               for pos
                 bfr_e(:) = u_e(:)
-                u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+                u_e(:) = u_e(:) + hdt*du_e(:)
             end foreach
 
-            var => this%variables%next()
+            var    => this%variables%next()
             change => this%changes%next()
-            discr => this%discretizations%next()
+            discr  => this%discretizations%next()
             buffer => this%buffers%next()
           ENDDO !ASSOCIATED(var)
 
@@ -864,11 +881,11 @@
           !----------------------------------------------------------------------
           ! STAGE 2: Do another update and interpolate with previously saved data
           !----------------------------------------------------------------------
-          rhs_info = this%rhsfunc_t(this%rhs_variables,t+0.5_mk*dt,this%changes)
+          rhs_info = this%rhsfunc_t(this%rhs_variables,t+hdt,this%changes)
 
-          var => this%variables%begin()
+          var    => this%variables%begin()
           change => this%changes%begin()
-          discr => this%discretizations%begin()
+          discr  => this%discretizations%begin()
           buffer => this%buffers%begin()
           DO WHILE (ASSOCIATED(var))
             check_associated(change,"Fields and changes should have same length")
@@ -883,9 +900,9 @@
                 u_e(:) = bfr_e(:) + dt*du_e(:)
             end foreach
 
-            var => this%variables%next()
+            var    => this%variables%next()
             change => this%changes%next()
-            discr => this%discretizations%next()
+            discr  => this%discretizations%next()
             buffer => this%buffers%next()
           ENDDO !ASSOCIATED(var)
 
@@ -943,25 +960,29 @@
 
         ! TODO allocate buffer
         CALL this%ppm_t_integrator%create(variables,rhsfunc,rhs_variables,info)
+        or_fail("this%ppm_t_integrator%create")
 
         end_subroutine()
 
       END SUBROUTINE rk4_create
 
 
-      template <MK:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
+      template <kind_type:[ppm_kind_single,ppm_kind_double],part_type:[ppm_t_particles_s,ppm_t_particles_d],prop_type:[ppm_t_part_prop_s,ppm_t_part_prop_d],rhsfunc_t:[rhsfunc_s,rhsfunc_d]> nointerface suffixes [s,d]
       SUBROUTINE rk4_step(this,t,dt,istage,info)
         IMPLICIT NONE
 
-        parameter(mk,integer,MK)
+        parameter(MK,INTEGER,kind_type)
         !----------------------------------------------------------------------
         ! Arguments
         !----------------------------------------------------------------------
         CLASS(ppm_t_rk4)        :: this
-        REAL(mk), INTENT(INOUT) :: t
-        REAL(mk), INTENT(IN   ) :: dt
+
+        REAL(MK), INTENT(INOUT) :: t
+        REAL(MK), INTENT(IN   ) :: dt
+
         INTEGER , INTENT(IN   ) :: istage
         INTEGER , INTENT(  OUT) :: info
+
         !----------------------------------------------------------------------
         ! Local Variables
         !----------------------------------------------------------------------
@@ -970,7 +991,8 @@
         CLASS(ppm_t_field_),     POINTER :: buffer
         CLASS(ppm_t_discr_kind), POINTER :: discr
 
-        REAL(mk) :: rhs_info
+        REAL(MK) :: rhs_info
+        REAL(MK) :: hdt,h6dt
 
         INTEGER :: bs
 
@@ -982,6 +1004,8 @@
         ! TODO check if buffers where mapped
         SELECT CASE (istage)
         CASE (1)
+          hdt=0.5_MK*dt
+
           !----------------------------------------------------------------------
           ! STAGE 1: x_n + 1/2 dt k1
           !----------------------------------------------------------------------
@@ -999,15 +1023,15 @@
               for sca
                 bfr_e(1) = u_e
                 bfr_e(2) = du_e
-                u_e = u_e + 0.5_mk*dt*du_e
+                u_e = u_e + hdt*du_e
               for vec
                 bfr_e(1:ulda) = u_e(:)
                 bfr_e(ulda+1:2*ulda) = du_e(:)
-                u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+                u_e(:) = u_e(:) + hdt*du_e(:)
               for pos
                 bfr_e(1:ulda) = u_e(:)
                 bfr_e(ulda+1:2*ulda) = du_e(:)
-                u_e(:) = u_e(:) + 0.5_mk*dt*du_e(:)
+                u_e(:) = u_e(:) + hdt*du_e(:)
             end foreach
 
             var => this%variables%next()
@@ -1021,14 +1045,16 @@
           check_false("ASSOCIATED(buffer)","Fields and buffers should have same length")
 
         CASE (2)
+          hdt=0.5_MK*dt
+
           !----------------------------------------------------------------------
           ! STAGE 2: x_n + 1/2 dt k2
           !----------------------------------------------------------------------
-          rhs_info = this%rhsfunc_t(this%rhs_variables,t+0.5_mk*dt,this%changes)
+          rhs_info = this%rhsfunc_t(this%rhs_variables,t+hdt,this%changes)
 
-          var => this%variables%begin()
+          var    => this%variables%begin()
           change => this%changes%begin()
-          discr => this%discretizations%begin()
+          discr  => this%discretizations%begin()
           buffer => this%buffers%begin()
           DO WHILE (ASSOCIATED(var))
             check_associated(change,"Fields and changes should have same length")
@@ -1037,13 +1063,13 @@
             foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer],vecbuf=true) prec(MK) part_type(part_type) prop_type(prop_type)
               for sca
                 bfr_e(3) = du_e
-                u_e = bfr_e(1) + 0.5_mk*dt*du_e
+                u_e = bfr_e(1) + hdt*du_e
               for vec
                 bfr_e(2*ulda+1:3*ulda) = du_e(:)
-                u_e(:) = bfr_e(1:ulda) + 0.5_mk*dt*du_e(:)
+                u_e(:) = bfr_e(1:ulda) + hdt*du_e(:)
               for pos
                 bfr_e(2*ulda+1:3*ulda) = du_e(:)
-                u_e(:) = bfr_e(1:ulda) + 0.5_mk*dt*du_e(:)
+                u_e(:) = bfr_e(1:ulda) + hdt*du_e(:)
             end foreach
 
             var    => this%variables%next()
@@ -1057,10 +1083,12 @@
           check_false("ASSOCIATED(buffer)","Fields and buffers should have same length")
 
         CASE (3)
+          hdt=0.5_MK*dt
+
           !----------------------------------------------------------------------
           ! STAGE 3: x_n + dt k3
           !----------------------------------------------------------------------
-          rhs_info = this%rhsfunc_t(this%rhs_variables,t+0.5_mk*dt,this%changes)
+          rhs_info = this%rhsfunc_t(this%rhs_variables,t+hdt,this%changes)
 
           var    => this%variables%begin()
           change => this%changes%begin()
@@ -1093,6 +1121,8 @@
           check_false("ASSOCIATED(buffer)","Fields and buffers should have same length")
 
         CASE (4)
+          h6dt = 1.0_MK/6.0_MK * dt
+
           !----------------------------------------------------------------------
           ! STAGE 4: Final step, interpolating the previous results
           ! x_n + 1/6 dt (k1 + 2 k2 + 2k3 +k4)
@@ -1109,16 +1139,11 @@
 
             foreach e in discrp(discr) with vars([u=>var],[du=>change]) buffer([bfr=>buffer],vecbuf=true) prec(MK) part_type(part_type) prop_type(prop_type)
               for sca
-                u_e = bfr_e(1) + 1.0_mk/6.0_mk * dt * &
-                &     (bfr_e(2) + 2.0_mk*bfr_e(3) + 2.0_mk*bfr_e(4) + du_e)
+                u_e = bfr_e(1) + h6dt * (bfr_e(2) + 2.0_MK*bfr_e(3) + 2.0_MK*bfr_e(4) + du_e)
               for vec
-                u_e(:) = bfr_e(1:ulda) + 1.0_mk/6.0_mk * dt * &
-                &     (bfr_e(ulda+1:2*ulda) + 2.0_mk*bfr_e(2*ulda+1:3*ulda) + &
-                &      2.0_mk*bfr_e(3*ulda+1:4*ulda) + du_e(:))
+                u_e(:) = bfr_e(1:ulda) + h6dt * (bfr_e(ulda+1:2*ulda) + 2.0_MK*bfr_e(2*ulda+1:3*ulda) + 2.0_MK*bfr_e(3*ulda+1:4*ulda) + du_e(:))
               for pos
-                u_e(:) = bfr_e(1:ulda) + 1.0_mk/6.0_mk * dt * &
-                &     (bfr_e(ulda+1:2*ulda) + 2.0_mk*bfr_e(2*ulda+1:3*ulda) + &
-                &      2.0_mk*bfr_e(3*ulda+1:4*ulda) + du_e(:))
+                u_e(:) = bfr_e(1:ulda) + h6dt * (bfr_e(ulda+1:2*ulda) + 2.0_MK*bfr_e(2*ulda+1:3*ulda) + 2.0_MK*bfr_e(3*ulda+1:4*ulda) + du_e(:))
             end foreach
 
             var    => this%variables%next()
