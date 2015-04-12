@@ -28,14 +28,19 @@
       !-------------------------------------------------------------------------
 
       MODULE ppm_module_data_ode
+        !----------------------------------------------------------------------
+        !  Modules
+        !----------------------------------------------------------------------
+        USE ppm_module_core, ONLY : ppm_kind_double
+        IMPLICIT NONE
+
         !-----------------------------------------------------------------------
         !  Includes
         !-----------------------------------------------------------------------
-
         !-----------------------------------------------------------------------
         !  Time
         !-----------------------------------------------------------------------
-        REAL(KIND(1.0D0)) :: t0
+        REAL(ppm_kind_double) :: t0
 
         !-----------------------------------------------------------------------
         ! scheme stuff
@@ -44,10 +49,10 @@
         ! _s : number of stages
         ! _k : suitable kick off scheme
         !-----------------------------------------------------------------------
-        INTEGER, DIMENSION(7)       :: ppm_ode_scheme_order
-        INTEGER, DIMENSION(7)       :: ppm_ode_scheme_memsize
-        INTEGER, DIMENSION(7)       :: ppm_ode_scheme_nstages
-        INTEGER, DIMENSION(7)       :: ppm_ode_scheme_kickoff
+        INTEGER, DIMENSION(7) :: ppm_ode_scheme_order
+        INTEGER, DIMENSION(7) :: ppm_ode_scheme_memsize
+        INTEGER, DIMENSION(7) :: ppm_ode_scheme_nstages
+        INTEGER, DIMENSION(7) :: ppm_ode_scheme_kickoff
         DATA ppm_ode_scheme_order   /1,2,2,4,2,3,1/
         DATA ppm_ode_scheme_memsize /1,2,2,4,2,1,0/
         DATA ppm_ode_scheme_nstages /1,2,2,4,2,3,999999/
@@ -88,7 +93,6 @@
         !-----------------------------------------------------------------------
         INTEGER, DIMENSION(:), POINTER :: ppm_ode_mode_id => NULL()
 
-
         !-----------------------------------------------------------------------
         ! some stages for ppm_ode_state
         !-----------------------------------------------------------------------
@@ -96,7 +100,6 @@
         INTEGER, PARAMETER :: ppm_ode_state_kickoff   = 2
         INTEGER, PARAMETER :: ppm_ode_state_running   = 1
         INTEGER, PARAMETER :: ppm_ode_state_inited    = 0
-
 
         !-----------------------------------------------------------------------
         ! number of modes
@@ -108,6 +111,5 @@
         ! topology ID to work on
         !-----------------------------------------------------------------------
         INTEGER            :: ppm_ode_topoid
-
 
       END MODULE ppm_module_data_ode

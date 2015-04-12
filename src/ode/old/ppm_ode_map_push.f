@@ -4,9 +4,9 @@
       !
       !
       !
-      !  Remarks      : 
+      !  Remarks      :
       !
-      !  References   : 
+      !  References   :
       !
       !  Revisions    :
       !-------------------------------------------------------------------------
@@ -40,16 +40,16 @@
       !  initial implementation.
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -73,153 +73,134 @@
 #endif
       !!! pushes whats needed of the buffer
         !-----------------------------------------------------------------------
-        !  Includes
-        !-----------------------------------------------------------------------
-#include "ppm_define.h"
-        !-----------------------------------------------------------------------
         !  Modules
         !-----------------------------------------------------------------------
-        USE ppm_module_data_ode
         USE ppm_module_data
         USE ppm_module_substart
         USE ppm_module_substop
-        USE ppm_module_map
         USE ppm_module_error
         USE ppm_module_alloc
+        USE ppm_module_write
+        USE ppm_module_map
         USE ppm_module_map_part
+
+        USE ppm_module_data_ode
         IMPLICIT NONE
+
 #if     __KIND == __SINGLE_PRECISION
-        INTEGER, PARAMETER :: mk = ppm_kind_single
+        INTEGER, PARAMETER :: MK = ppm_kind_single
 #else
-        INTEGER, PARAMETER :: mk = ppm_kind_double
+        INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
         !-----------------------------------------------------------------------
         !  Arguments
         !-----------------------------------------------------------------------
-        INTEGER,                    INTENT(in   ) :: odeid
+        INTEGER,                  INTENT(IN   ) :: odeid
         !!! mode to push
-        REAL(mk), DIMENSION(:,:),   POINTER       :: bfr
+        REAL(MK), DIMENSION(:,:), POINTER       :: bfr
         !!! buffer to push
-        INTEGER,                    INTENT(in   ) :: lda
+        INTEGER,                  INTENT(IN   ) :: lda
         !!! leading dimension
-        INTEGER,                    INTENT(in   ) :: Npart
+        INTEGER,                  INTENT(IN   ) :: Npart
         !!! number of particles
-        INTEGER,                    INTENT(inout) :: mpart
-        INTEGER,                    INTENT(  out) :: info
+        INTEGER,                  INTENT(INOUT) :: mpart
+        INTEGER,                  INTENT(  OUT) :: info
         !!! return status
         !-----------------------------------------------------------------------
         ! Local Variables
         !-----------------------------------------------------------------------
-        INTEGER                                   :: ldasend
-        INTEGER                                   :: throwaway
-        INTEGER                                   :: mid, umidmax, umidmin
-        CHARACTER(LEN=*), PARAMETER               :: caller = 'ppm_ode_map_push'
+        INTEGER :: ldasend
+        INTEGER :: throwaway
+        INTEGER :: mid, umidmax, umidmin
+
+        CHARACTER(LEN=*), PARAMETER :: caller = 'ppm_ode_map_push'
+
         !-----------------------------------------------------------------------
         !  call substart
         !-----------------------------------------------------------------------
         CALL substart(caller,t0,info)
+
         !-----------------------------------------------------------------------
         ! general remark:
         ! were going to push only the stages that are needed to the
         ! other cpu. But that guy will pop the stuff and create a new
         ! array to comprise  only the stages that weve sent? so the
-        ! array may shrink? must not happen. 
+        ! array may shrink? must not happen.
         !-----------------------------------------------------------------------
-        IF(Npart.EQ.0) THEN
-           !--------------------------------------------------------------------
-           ! just save the number of stages that we would have sent
-           !--------------------------------------------------------------------
-           ! already happened in ppm_ode_step
-           !--------------------------------------------------------------------
-           GOTO 9999
-        END IF
+        IF (Npart.EQ.0) GOTO 9999
+        !--------------------------------------------------------------------
+        ! just save the number of stages that we would have sent
+        !--------------------------------------------------------------------
+        ! already happened in ppm_ode_step
+        !--------------------------------------------------------------------
+
         !-----------------------------------------------------------------------
         !  check input arguments
         !-----------------------------------------------------------------------
-        IF(ppm_debug.GT.0) THEN
-          IF (info.NE.0) THEN
-             CALL ppm_error(ppm_err_argument,caller,& 
-                  & 'Error in arguments',__LINE__,info)
-             GOTO 9999
-           ENDIF
-        END IF
+        IF (ppm_debug.GT.0) THEN
+           CALL check
+           IF (info.NE.0) GOTO 9999
+        ENDIF
 
         mid     = ppm_internal_mid(odeid)
         ldasend = lda*ppm_ode_sent(mid)
-        IF(ldasend.EQ.0) GOTO 9999
-        
+
+        IF (ldasend.EQ.0) GOTO 9999
+
         CALL ppm_map_part_push(bfr,ldasend,Npart,info)
-        IF(info.NE.0) THEN
-           GOTO 9999
-        END IF
-9999    CONTINUE        
+        or_fail("ppm_map_part_push")
+
+      9999 CONTINUE
         !-----------------------------------------------------------------------
         ! substop
         !-----------------------------------------------------------------------
         CALL substop(caller,t0,info)
         RETURN
-
-        CONTAINS
-
-        SUBROUTINE check_args
+      CONTAINS
+        SUBROUTINE check
            !--------------------------------------------------------------------
            ! check if ppm is initialized
            !--------------------------------------------------------------------
-           IF(.NOT.ppm_initialized) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_ppm_noinit,caller,&
-                   & 'Please call ppm_init first!',__LINE__,info)
-              GOTO 8888
-           END IF
+           IF (.NOT.ppm_initialized) THEN
+              fail('Please call ppm_init first!',ppm_err_ppm_noinit,exit_point=8888)
+           ENDIF
+
            !--------------------------------------------------------------------
            ! check odeid
            !--------------------------------------------------------------------
            umidmin = LBOUND(ppm_internal_mid,1)
            umidmax = UBOUND(ppm_internal_mid,1)
-           IF(odeid.LT.umidmin.OR.odeid.GT.umidmax) THEN
+           IF (odeid.LT.umidmin.OR.odeid.GT.umidmax) THEN
               !-----------------------------------------------------------------
               ! user mid does not exist
               !-----------------------------------------------------------------
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,caller, &
-                   & 'odeid does not exist',__LINE__,info)
-              GOTO 8888
+              fail('odeid does not exist',exit_point=8888)
            ELSE
-              IF(ppm_internal_mid(odeid).EQ.-HUGE(odeid)) THEN
+              IF (ppm_internal_mid(odeid).EQ.-HUGE(odeid)) THEN
                  !--------------------------------------------------------------
                  ! user mid does not exist
                  !--------------------------------------------------------------
-                 info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,caller,& 
-                      & 'odeid does not exist',__LINE__,info)
-                 GOTO 8888
-              END IF
-           END IF
+                 fail('odeid does not exist',exit_point=8888)
+              ENDIF
+           ENDIF
+
            !--------------------------------------------------------------------
            ! check dimension
            !--------------------------------------------------------------------
-           IF(Npart.LT.0) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,caller, &
-                   & 'Npart cannot be <0',__LINE__,info)
-              GOTO 8888
-           END IF
-           IF(lda.LE.0) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,caller, &
-                   & 'LDA must be >00',__LINE__,info)
-              GOTO 8888
-           END IF
-           IF(.NOT.ASSOCIATED(bfr)) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,caller, &
-                   & 'BFR is empty',__LINE__,info)
-              GOTO 8888
-           END IF
-8888    CONTINUE        
+           IF (Npart.LT.0) THEN
+              fail('Npart cannot be <0',exit_point=8888)
+           ENDIF
 
+           IF (lda.LE.0) THEN
+              fail('LDA must be >0',exit_point=8888)
+           ENDIF
+
+           IF (.NOT.ASSOCIATED(bfr)) THEN
+              fail('BFR is empty!',exit_point=8888)
+           ENDIF
+
+        8888 CONTINUE
         END SUBROUTINE check_args
-
 #if   __KIND == __SINGLE_PRECISION
       END SUBROUTINE ppm_ode_map_push_s
 #elif __KIND == __DOUBLE_PRECISION

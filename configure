@@ -2267,9 +2267,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Reset existing preprocessing flags
-touch ./src/ppm_define.h
-rm ./src/ppm_define.h
-touch ./src/ppm_define.h
+#touch ./src/ppm_define.h
+#rm ./src/ppm_define.h
+#touch ./src/ppm_define.h
 
 # if MPI is enabled try grabbing those compiler wrappers first
 use_mpi=no
@@ -5896,7 +5896,8 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
                      end program conftest_prog
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
-  echo "#define __MPI" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__MPI"
+   #echo "#define __MPI" >> ./src/ppm_define.h
 else
   as_fn_error $? "Cannot build PPM with MPI support like this" "$LINENO" 5
 fi
@@ -6449,28 +6450,32 @@ fi
 # Check to see if linux was enabled with -enable-linux
 # Check whether --enable-linux was given.
 if test "${enable_linux+set}" = set; then :
-  enableval=$enable_linux; echo "#define __Linux" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__Linux"
+   #enableval=$enable_linux; echo "#define __Linux" >> ./src/ppm_define.h
 fi
 
 
 # Check to see if etime was enabled with -enable-etime
 # Check whether --enable-etime was given.
 if test "${enable_etime+set}" = set; then :
-  enableval=$enable_etime; echo "#define __ETIME" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__ETIME"
+   #enableval=$enable_etime; echo "#define __ETIME" >> ./src/ppm_define.h
 fi
 
 
 # Check to see if vector was enabled with -enable-vector
 # Check whether --enable-vector was given.
 if test "${enable_vector+set}" = set; then :
-  enableval=$enable_vector; echo "#define __VECTOR" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__VECTOR"
+   #enableval=$enable_vector; echo "#define __VECTOR" >> ./src/ppm_define.h
 fi
 
 
 
 # Check whether --enable-no-microinstr was given.
 if test "${enable_no_microinstr+set}" = set; then :
-  enableval=$enable_no_microinstr; echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__NOMICROINSTRUCTIONS"
+   #enableval=$enable_no_microinstr; echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h
 fi
 
 
@@ -6521,7 +6526,8 @@ if test "x${debug_compile}" = xyes; then
 else
     if test "x${vendor}" = xintel; then
         FCFLAGS="$FCFLAGS -diag-disable 5462"
-
+    elif test "x${vendor}" = xgnu; then
+	FCFLAGS="$FCFLAGS -ffree-line-length-none"
     fi
 fi
 

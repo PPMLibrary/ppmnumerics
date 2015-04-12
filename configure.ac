@@ -23,9 +23,9 @@ m4_pattern_allow([AS_TR_SH])
 AC_INIT(PPM, 1.2.2)
 
 # Reset existing preprocessing flags
-touch ./src/ppm_define.h
-rm ./src/ppm_define.h
-touch ./src/ppm_define.h
+#touch ./src/ppm_define.h
+#rm ./src/ppm_define.h
+#touch ./src/ppm_define.h
 
 # if MPI is enabled try grabbing those compiler wrappers first
 use_mpi=no 
@@ -119,7 +119,8 @@ if test "x${use_mpi}" == xyes; then
                      include 'mpif.h'
                      call MPI_Init(ierr)
                      end program conftest_prog],
-                     [echo "#define __MPI" >> ./src/ppm_define.h],
+		     AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__MPI"])
+                     #[echo "#define __MPI" >> ./src/ppm_define.h],
                      [AC_MSG_ERROR([Cannot build PPM with MPI support like this])])
     AC_MSG_RESULT([yes])
 #    AC_CHECK_LIB([],[MPI_Init],[
@@ -209,21 +210,27 @@ AC_SUBST(PPMDIR)
 
 # Check to see if linux was enabled with -enable-linux
 AC_ARG_ENABLE([linux],[AS_HELP_STRING([--enable-linux],
-  [compile for linux (default is no)])],[echo "#define __Linux" >> ./src/ppm_define.h])
+  [compile for linux (default is no)])],
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__Linux"])])
+  #[echo "#define __Linux" >> ./src/ppm_define.h])
 
 # Check to see if etime was enabled with -enable-etime
 AC_ARG_ENABLE([etime],[AS_HELP_STRING([--enable-etime],
-  [use etime (default is no)])],[echo "#define __ETIME" >> ./src/ppm_define.h])
+  [use etime (default is no)])],
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__ETIME"])])
+  #[echo "#define __ETIME" >> ./src/ppm_define.h])
 
 # Check to see if vector was enabled with -enable-vector
 AC_ARG_ENABLE([vector],[AS_HELP_STRING([--enable-vector],
   [enable __VECTOR (default is no)])],
-  [echo "#define __VECTOR" >> ./src/ppm_define.h])
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__VECTOR"])])
+  #[echo "#define __VECTOR" >> ./src/ppm_define.h])
 
 
 AC_ARG_ENABLE([no-microinstr],[AS_HELP_STRING([--enable-no-microinstr],
   [enable __NOMICROINSTRUCTIONS (default is no)])],
-  [echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h])
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__NOMICROINSTRUCTIONS"])])
+  #[echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h])
 
 dev_compile=no
 AC_ARG_ENABLE([dev],[AS_HELP_STRING([--enable-dev],
@@ -232,14 +239,14 @@ if test "x${dev_compile}" = xyes; then
     if test "x${vendor}" = xintel; then
         AC_SUBST(DEBUG,["-g -O0 -check pointers -check bounds -traceback -diag-disable 10120"])
     elif test "x${vendor}" = xgnu; then
-      AC_SUBST(DEBUG,["-g -O0 -fbounds-check -fbacktrace"])
+        AC_SUBST(DEBUG,["-g -O0 -fbounds-check -fbacktrace"])
     else
-      AC_SUBST(DEBUG,["-g"])
+         AC_SUBST(DEBUG,["-g"])
     fi
 fi
 
 if test "x${vendor}" = xgnu; then
-  AC_SUBST(FCFLAGS,["$FCFLAGS -ffree-line-length-none"])
+   AC_SUBST(FCFLAGS,["$FCFLAGS -ffree-line-length-none"])
 fi
 
 debug_compile=no
@@ -251,13 +258,15 @@ if test "x${debug_compile}" = xyes; then
     if test "x${vendor}" = xintel; then
         AC_SUBST(DEBUG,["-O0 -g -debug all -check all -fp-stack-check -heap-arrays -ftrapuv -check pointers -check bounds -check uninit -traceback -diag-disable 10120"])
     elif test "x${vendor}" = xgnu; then
-      AC_SUBST(DEBUG,["-O0 -g -fbounds-check -fbacktrace -ftrapv -fno-automatic"])
+        AC_SUBST(DEBUG,["-O0 -g -fbounds-check -fbacktrace -ftrapv -fno-automatic"])
     else
-      AC_SUBST(DEBUG,["-O0 -g"])
+        AC_SUBST(DEBUG,["-O0 -g"])
     fi
 else
     if test "x${vendor}" = xintel; then
         AC_SUBST(FCFLAGS,["$FCFLAGS -diag-disable 5462"])
+    elif test "x${vendor}" = xgnu; then
+	AC_SUBST(FCFLAGS,["$FCFLAGS -ffree-line-length-none"])
     fi
 fi
 

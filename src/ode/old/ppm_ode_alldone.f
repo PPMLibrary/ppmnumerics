@@ -2,15 +2,15 @@
       !  Function     :                 ppm_ode_alldone
       !-------------------------------------------------------------------------
       !
-      !  Purpose      : will say .true. if all modes are integrated 
+      !  Purpose      : will say .true. if all modes are integrated
       !
-      !  Input        : 
+      !  Input        :
       !
       !  Output       : info                   (I) return status
       !
-      !  Remarks      : 
+      !  Remarks      :
       !
-      !  References   : 
+      !  References   :
       !
       !  Revisions    :
       !-------------------------------------------------------------------------
@@ -38,16 +38,16 @@
       !  initial implementation.
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -66,45 +66,48 @@
       !-------------------------------------------------------------------------
       FUNCTION ppm_ode_alldone(info)
       !-----------------------------------------------------------------------
-      !  Includes
-      !-----------------------------------------------------------------------
-#include "ppm_define.h"
-      !-----------------------------------------------------------------------
       !  Modules
       !-----------------------------------------------------------------------
-      USE ppm_module_data_ode
       USE ppm_module_data
       USE ppm_module_substart
       USE ppm_module_substop
       USE ppm_module_error
+      USE ppm_module_write
+
+      USE ppm_module_data_ode, ONLY : ppm_ode_state_finished,ppm_ode_state, &
+      &   ppm_max_mid
       IMPLICIT NONE
       !-----------------------------------------------------------------------
       !  Arguments
       !-----------------------------------------------------------------------
-      INTEGER,                    INTENT(  OUT) :: info
-      LOGICAL                                   :: ppm_ode_alldone
+      INTEGER, INTENT(  OUT) :: info
+      LOGICAL                :: ppm_ode_alldone
+
+      CHARACTER(LEN=ppm_char) :: caller="ppm_ode_alldone"
       !-----------------------------------------------------------------------
       !  call substart
       !-----------------------------------------------------------------------
-      CALL substart('ppm_ode_alldone',t0,info)
-        IF(ppm_debug.GT.0) THEN
-           IF(.NOT.ppm_initialized) THEN
-              info = ppm_error_error
-              CALL ppm_error(ppm_err_ppm_noinit,'ppm_ode_alldone',&
-                   & 'Please call ppm_init first!',__LINE__,info)
-              GOTO 9999
-           END IF
-        END IF
-        IF(ANY(ppm_ode_state(1:ppm_max_mid) .NE. ppm_ode_state_finished)) THEN
-           ppm_ode_alldone = .FALSE.
-        ELSE
-           ppm_ode_alldone = .TRUE.
-        END IF
-9999    CONTINUE        
+      CALL substart(caller,t0,info)
+
+      IF (ppm_debug.GT.0) THEN
+         CALL check
+         IF (info.NE.0) GOTO 9999
+      ENDIF
+
+      ppm_ode_alldone = ALL(ppm_ode_state(1:ppm_max_mid).EQ.ppm_ode_state_finished)
+
+      9999 CONTINUE
+
       !-----------------------------------------------------------------------
       ! substop
       !-----------------------------------------------------------------------
-      CALL substop('ppm_ode_alldone',t0,info)
+      CALL substop(caller,t0,info)
       RETURN
-
+      CONTAINS
+      SUBROUTINE check
+         IF (.NOT.ppm_initialized) THEN
+            fail('Please call ppm_init first!',ppm_err_ppm_noinit,exit_point=8888,ppm_error=ppm_error_error)
+         ENDIF
+      8888 CONTINUE
+      END SUBROUTINE check
       END FUNCTION ppm_ode_alldone
