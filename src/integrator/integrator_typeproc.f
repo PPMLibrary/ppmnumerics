@@ -46,7 +46,6 @@
         CLASS(ppm_t_field_discr_pair), POINTER :: el_p
         CLASS(ppm_t_var_discr_pair),   POINTER :: el_vp
 
-        INTEGER :: ibuf
         INTEGER :: ifield
 
         CHARACTER(LEN=16) :: bname
