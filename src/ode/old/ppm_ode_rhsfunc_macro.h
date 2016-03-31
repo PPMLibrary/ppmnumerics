@@ -1,0 +1,46 @@
+        !-----------------------------------------------------
+        ! $Log: ppm_ode_rhsfunc_macro.h,v $
+        ! Revision 1.1.1.1  2007/07/13 10:19:01  ivos
+        ! CBL version of the PPM library
+        !
+        ! Revision 1.1  2004/07/26 07:52:28  michaebe
+        ! Macro to make ppm_ode_step shorter and easier to read.
+        !
+        !-----------------------------------------------------
+        IF (PRESENT(ipackdata)) THEN
+           IF (PRESENT(lpackdata)) THEN
+              IF (PRESENT(rpackdata)) THEN
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,ipack=ipackdata, &
+                 & lpack=lpackdata,rpack=rpackdata,info=info)
+              ELSE
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,ipack=ipackdata, &
+                 & lpack=lpackdata,info=info)
+              ENDIF
+           ELSE
+              IF (PRESENT(rpackdata)) THEN
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,ipack=ipackdata, &
+                 & rpack=rpackdata,info=info)
+              ELSE
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,ipack=ipackdata, &
+                 & info=info)
+              ENDIF
+           ENDIF
+        ELSE
+           IF (PRESENT(lpackdata)) THEN
+              IF (PRESENT(rpackdata)) THEN
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,lpack=lpackdata, &
+                 & rpack=rpackdata,info=info)
+              ELSE
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,lpack=lpackdata, &
+                 & info=info)
+              ENDIF
+           ELSE
+              IF (PRESENT(rpackdata)) THEN
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,rpack=rpackdata, &
+                 & info=info)
+              ELSE
+                 throwaway = rhsfunc(topoid,xp,up,dup,lda,Npart,info=info)
+              ENDIF
+           ENDIF
+        ENDIF
+

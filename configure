@@ -606,6 +606,8 @@ F90_LIBS_ppm
 F90_LDFLAGS_ppm
 F90_MODULE_ppm
 F90_HEADER_ppm
+FUNIT_FLAGS
+MPI_ENABLED
 ax_cv_f90_modflag
 EGREP
 GREP
@@ -676,10 +678,6 @@ with_ppm
 enable_linux
 enable_etime
 enable_vector
-enable_mathkeisan
-enable_sxf90
-enable_crayfishpack
-enable_hypre
 enable_no_microinstr
 enable_dev
 enable_debug
@@ -1322,10 +1320,6 @@ Optional Features:
   --enable-linux          compile for linux (default is no)
   --enable-etime          use etime (default is no)
   --enable-vector         enable __VECTOR (default is no)
-  --enable-mathkeisan     enable __MATHKEISAN (default is no)
-  --enable-sxf90          enable __MATHKEISAN (default is no)
-  --enable-crayfishpack   enable __CRAYFISHPACK (default is no)
-  --enable-hypre          enable __HYPRE (default is no)
   --enable-no-microinstr  enable __NOMICROINSTRUCTIONS (default is no)
   --enable-dev            enable development mode (default is no)
   --enable-debug          enable debug mode (default is no)
@@ -2273,9 +2267,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 # Reset existing preprocessing flags
-touch ./src/ppm_define.h
-rm ./src/ppm_define.h
-touch ./src/ppm_define.h
+#touch ./src/ppm_define.h
+#rm ./src/ppm_define.h
+#touch ./src/ppm_define.h
 
 # if MPI is enabled try grabbing those compiler wrappers first
 use_mpi=no
@@ -3501,6 +3495,7 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: MPI was not enabled. Building non-parallel version of PPM." >&5
 $as_echo "$as_me: MPI was not enabled. Building non-parallel version of PPM." >&6;}
 fi
+
 
 
 : ${CFLAGS="-O3"}
@@ -5901,7 +5896,8 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
                      end program conftest_prog
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
-  echo "#define __MPI" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__MPI"
+   #echo "#define __MPI" >> ./src/ppm_define.h
 else
   as_fn_error $? "Cannot build PPM with MPI support like this" "$LINENO" 5
 fi
@@ -5919,6 +5915,16 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 fi
+
+MPI_ENABLED="false"
+
+if test "x${use_mpi}" = xyes; then
+    FUNIT_FLAGS="--with-mpi"
+
+    MPI_ENABLED="true"
+
+fi
+
 
 # Checks for libraries and set preprocessing flags
 
@@ -6040,6 +6046,153 @@ fi
 $as_echo "$ax_cv_f90_modext" >&6; }
 if test x$ax_cv_f90_modext = xunknown ; then
     as_fn_error $? "unable to find f90 modules extension" "$LINENO" 5
+fi
+
+# check for fftw3
+have_fftw=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dfftw_execute in -lfftw3" >&5
+$as_echo_n "checking for dfftw_execute in -lfftw3... " >&6; }
+if ${ac_cv_lib_fftw3_dfftw_execute+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lfftw3  $LIBS"
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call dfftw_execute
+      end
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_lib_fftw3_dfftw_execute=yes
+else
+  ac_cv_lib_fftw3_dfftw_execute=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_fftw3_dfftw_execute" >&5
+$as_echo "$ac_cv_lib_fftw3_dfftw_execute" >&6; }
+if test "x$ac_cv_lib_fftw3_dfftw_execute" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBFFTW3 1
+_ACEOF
+
+  LIBS="-lfftw3 $LIBS"
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dfftw_execute" >&5
+$as_echo_n "checking for library containing dfftw_execute... " >&6; }
+if ${ac_cv_search_dfftw_execute+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call dfftw_execute
+      end
+_ACEOF
+for ac_lib in '' fftw3; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_search_dfftw_execute=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_dfftw_execute+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_dfftw_execute+:} false; then :
+
+else
+  ac_cv_search_dfftw_execute=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dfftw_execute" >&5
+$as_echo "$ac_cv_search_dfftw_execute" >&6; }
+ac_res=$ac_cv_search_dfftw_execute
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_fftw=yes
+fi
+
+if test "x${have_fftw}" = xno; then
+  echo "------------------------------------------"
+  echo " You are trying to use FFTW to build PPM. "
+  echo " Either the library is missing or incorrectly compiled/linked."
+  echo " It can be downloaded at: http://www.fftw.org/download.html"
+  echo "------------------------------------------"
+  (exit 1); exit 1;
+else
+  CPPFLAGS="$CPPFLAGS -D__FFTW"
+
+fi
+
+# Check for METIS
+have_metis=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing METIS_PartGraphRecursive" >&5
+$as_echo_n "checking for library containing METIS_PartGraphRecursive... " >&6; }
+if ${ac_cv_search_METIS_PartGraphRecursive+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat > conftest.$ac_ext <<_ACEOF
+      program main
+      call METIS_PartGraphRecursive
+      end
+_ACEOF
+for ac_lib in '' metis; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_fc_try_link "$LINENO"; then :
+  ac_cv_search_METIS_PartGraphRecursive=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_METIS_PartGraphRecursive+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_METIS_PartGraphRecursive+:} false; then :
+
+else
+  ac_cv_search_METIS_PartGraphRecursive=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_METIS_PartGraphRecursive" >&5
+$as_echo "$ac_cv_search_METIS_PartGraphRecursive" >&6; }
+ac_res=$ac_cv_search_METIS_PartGraphRecursive
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+  have_metis=yes
+fi
+
+if test "x${have_metis}" = xno; then
+  echo "------------------------------------------"
+  echo " The METIS library is required to build PPM. "
+  echo " Either the library is missing or incorrectly compiled/linked."
+  echo " Stopping...   Please download at:"
+  echo " http://glaros.dtc.umn.edu/gkhome/metis/metis/download"
+  echo "------------------------------------------"
+  (exit 1); exit 1;
+else
+  CPPFLAGS="$CPPFLAGS -D__METIS"
+
 fi
 
 
@@ -6293,141 +6446,36 @@ fi
 
 
 
-# check for fftw3
-have_fftw=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for dfftw_execute in -lfftw3" >&5
-$as_echo_n "checking for dfftw_execute in -lfftw3... " >&6; }
-if ${ac_cv_lib_fftw3_dfftw_execute+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfftw3  $LIBS"
-cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call dfftw_execute
-      end
-_ACEOF
-if ac_fn_fc_try_link "$LINENO"; then :
-  ac_cv_lib_fftw3_dfftw_execute=yes
-else
-  ac_cv_lib_fftw3_dfftw_execute=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_fftw3_dfftw_execute" >&5
-$as_echo "$ac_cv_lib_fftw3_dfftw_execute" >&6; }
-if test "x$ac_cv_lib_fftw3_dfftw_execute" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBFFTW3 1
-_ACEOF
-
-  LIBS="-lfftw3 $LIBS"
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing dfftw_execute" >&5
-$as_echo_n "checking for library containing dfftw_execute... " >&6; }
-if ${ac_cv_search_dfftw_execute+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat > conftest.$ac_ext <<_ACEOF
-      program main
-      call dfftw_execute
-      end
-_ACEOF
-for ac_lib in '' fftw3; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_fc_try_link "$LINENO"; then :
-  ac_cv_search_dfftw_execute=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_dfftw_execute+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_dfftw_execute+:} false; then :
-
-else
-  ac_cv_search_dfftw_execute=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dfftw_execute" >&5
-$as_echo "$ac_cv_search_dfftw_execute" >&6; }
-ac_res=$ac_cv_search_dfftw_execute
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  have_fftw=yes
-fi
-
-if test "x${have_fftw}" = xno; then
-  echo "------------------------------------------"
-  echo " You are trying to use FFTW to build PPM. "
-  echo " Either the library is missing or incorrectly compiled/linked."
-  echo " It can be downloaded at: http://www.fftw.org/download.html"
-  echo "------------------------------------------"
-  (exit 1); exit 1;
-fi
-echo "#define __FFTW" >> ./src/ppm_define.h
 
 # Check to see if linux was enabled with -enable-linux
 # Check whether --enable-linux was given.
 if test "${enable_linux+set}" = set; then :
-  enableval=$enable_linux; echo "#define __Linux" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__Linux"
+   #enableval=$enable_linux; echo "#define __Linux" >> ./src/ppm_define.h
 fi
 
 
 # Check to see if etime was enabled with -enable-etime
 # Check whether --enable-etime was given.
 if test "${enable_etime+set}" = set; then :
-  enableval=$enable_etime; echo "#define __ETIME" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__ETIME"
+   #enableval=$enable_etime; echo "#define __ETIME" >> ./src/ppm_define.h
 fi
 
 
 # Check to see if vector was enabled with -enable-vector
 # Check whether --enable-vector was given.
 if test "${enable_vector+set}" = set; then :
-  enableval=$enable_vector; echo "#define __VECTOR" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__VECTOR"
+   #enableval=$enable_vector; echo "#define __VECTOR" >> ./src/ppm_define.h
 fi
 
-
-# Check whether --enable-mathkeisan was given.
-if test "${enable_mathkeisan+set}" = set; then :
-  enableval=$enable_mathkeisan; echo "#define __MATHKEISAN" >> ./src/ppm_define.h
-fi
-
-
-# Check whether --enable-sxf90 was given.
-if test "${enable_sxf90+set}" = set; then :
-  enableval=$enable_sxf90; echo "#define __SXF90" >> ./src/ppm_define.h
-fi
-
-
-# Check whether --enable-crayfishpack was given.
-if test "${enable_crayfishpack+set}" = set; then :
-  enableval=$enable_crayfishpack; echo "#define __CRAYFISHPACK" >> ./src/ppm_define.h
-fi
-
-
-# Check whether --enable-hypre was given.
-if test "${enable_hypre+set}" = set; then :
-  enableval=$enable_hypre; echo "#define __HYPRE" >> ./src/ppm_define.h
-fi
 
 
 # Check whether --enable-no-microinstr was given.
 if test "${enable_no_microinstr+set}" = set; then :
-  enableval=$enable_no_microinstr; echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h
+   CPPFLAGS="$CPPFLAGS -D__NOMICROINSTRUCTIONS"
+   #enableval=$enable_no_microinstr; echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h
 fi
 
 
@@ -6448,6 +6496,11 @@ if test "x${dev_compile}" = xyes; then
       DEBUG="-g"
 
     fi
+fi
+
+if test "x${vendor}" = xgnu; then
+  FCFLAGS="$FCFLAGS -ffree-line-length-none"
+
 fi
 
 debug_compile=no
@@ -6473,9 +6526,9 @@ if test "x${debug_compile}" = xyes; then
 else
     if test "x${vendor}" = xintel; then
         FCFLAGS="$FCFLAGS -diag-disable 5462"
-
+    elif test "x${vendor}" = xgnu; then
+	FCFLAGS="$FCFLAGS -ffree-line-length-none"
     fi
-
 fi
 
 # set src as the default srcdir

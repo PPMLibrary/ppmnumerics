@@ -26,7 +26,7 @@ CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 CFLAGS = @CFLAGS@
-FCLIBS = @FCLIBS@
+#FCLIBS = @FCLIBS@
 FCFLAGS = @FCFLAGS@
 FC = @FC@
 CC = @CC@
@@ -42,6 +42,7 @@ LIB_PPM := libppmnumerics.a
 TARGET  := $(builddir)/lib/$(LIB_PPM)
 SHELL := /bin/sh
 CPP := cpp
+CG = ppm pp -M $(PPMDIR)/$(srcdir)/macros/:$(srcdir)/macros/
 FUNIT := $(PPMDIR)/utils/funit/bin/funit
 DEPS := $(PPMDIR)/utils/deps.sh
 LOG := compile.log
@@ -89,13 +90,12 @@ $(TARGET): $(OBJECTS)
 	@printf "  AR   %-42s" "Creating library archive"; \
 	$(RUN) "$(ARCMD)" $(LOG) "Error Creating Archive"; \
 	printf "\033[0;32mDone\033[0m.\n"
-	@cp $(SRC_DIR)/ppm_numerics.h $(MODULES_DIR)
 
 # Dont delete the given intermediate files
 .SECONDARY: #$(DEPENDENCIES)
-
+ifneq ($(MAKECMDGOALS),clean)
 # Implicit rules
-CPPCMD = $(CPP) $(CPPFLAGS) $(CPPINCLS) -traditional-cpp -P $< $@
+CPPCMD = $(CPP) $(CPPFLAGS) $(CPPINCLS) -traditional-cpp -P $< | $(CG) > $@
 $(OBJ_DIR)/%.f : $(SRC_DIR)/%.f
 	@printf "  CPP  %-42s" $<; \
 	$(RUN) "$(CPPCMD)" $(LOG) "Preprocessing Error"
@@ -105,8 +105,9 @@ DEPCMD = $(DEPS) --ppm $< $@
 $(OBJ_DIR)/%.d : $(SRC_DIR)/%.f $(OBJ_DIR)/%.f
 	@printf "  DEP  %-42s" $<; \
 	$(ENV) $(RUN) "$(DEPCMD)" $(LOG) "Dependency Error"
+endif
 
-COMPILECMD = $(FC) $(INCLS) $(LDFLAGS) $(FCFLAGS) $(LIBS) $(DEBUG) -Llib -c -o $@ $<
+COMPILECMD = $(FC) $(INCLS) $(FCFLAGS) $(DEBUG) -Llib -c -o $@ $<
 $(OBJ_DIR)/%.o : $(OBJ_DIR)/%.f
 	@printf "  FC   %-42s" $<; \
 	$(RUN) "$(COMPILECMD)" $(LOG) "Compile Error" \
@@ -132,8 +133,8 @@ new: all install
 
 ftest: all
 	@FC=$(FC) FCFLAGS="$(FCFLAGS)" MODULES=$(MODULES_DIR) \
-	LDFLAGS="-L$(builddir)/lib -lppm $(LDFLAGS) $(LIBS)" \
-	CPP=$(CPP) DEFINE="$(CPPFLAGS)" FSFLAG=$(MODFLAG) $(FUNIT) $(FUNIT_FLAGS) $(FUNFILES)
+	LDFLAGS="-L$(builddir)/lib -lppmnumerics $(LDFLAGS) $(LIBS)" \
+	CPP=$(CPP) CG="$(CG)" DEFINE="$(CPPFLAGS)" FSFLAG=$(MODFLAG) $(FUNIT) $(FUNIT_FLAGS) $(FUNITFLAGS) $(FUNFILES)
 
 # This ensures all dependency files are up-to-date
 # WARNING: The directive below will fail silently, in case of problems

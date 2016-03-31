@@ -23,9 +23,9 @@ m4_pattern_allow([AS_TR_SH])
 AC_INIT(PPM, 1.2.2)
 
 # Reset existing preprocessing flags
-touch ./src/ppm_define.h
-rm ./src/ppm_define.h
-touch ./src/ppm_define.h
+#touch ./src/ppm_define.h
+#rm ./src/ppm_define.h
+#touch ./src/ppm_define.h
 
 # if MPI is enabled try grabbing those compiler wrappers first
 use_mpi=no 
@@ -42,6 +42,7 @@ AC_ARG_ENABLE([mpi],
     # compilers should be chosen
     use_mpi=yes],
   [AC_MSG_NOTICE([MPI was not enabled. Building non-parallel version of PPM.])])
+
 
 : ${CFLAGS="-O3"}
 : ${CXXFLAGS="-O3"}
@@ -118,7 +119,8 @@ if test "x${use_mpi}" == xyes; then
                      include 'mpif.h'
                      call MPI_Init(ierr)
                      end program conftest_prog],
-                     [echo "#define __MPI" >> ./src/ppm_define.h],
+		     AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__MPI"])
+                     #[echo "#define __MPI" >> ./src/ppm_define.h],
                      [AC_MSG_ERROR([Cannot build PPM with MPI support like this])])
     AC_MSG_RESULT([yes])
 #    AC_CHECK_LIB([],[MPI_Init],[
@@ -126,6 +128,13 @@ if test "x${use_mpi}" == xyes; then
 #                  [AC_MSG_ERROR([Cannot build PPM with MPI support like this])])
     AC_LANG([C])
 fi
+
+AC_SUBST(MPI_ENABLED,["false"])
+if test "x${use_mpi}" = xyes; then
+    AC_SUBST(FUNIT_FLAGS,["--with-mpi"])
+    AC_SUBST(MPI_ENABLED,["true"])
+fi
+
 
 # Checks for libraries and set preprocessing flags
 
@@ -160,14 +169,6 @@ if test x$ax_cv_f90_modext = xunknown ; then
     AC_MSG_ERROR([unable to find f90 modules extension])
 fi
 
-AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
-    use ppm_module_finalize
-    integer :: info
-    call ppm_finalize(info)
-   ])
-
-AC_SUBST(PPMDIR)
-
 # check for fftw3
 have_fftw=no
 AC_CHECK_LIB([fftw3],[dfftw_execute])
@@ -179,41 +180,57 @@ if test "x${have_fftw}" = xno; then
   echo " It can be downloaded at: http://www.fftw.org/download.html"
   echo "------------------------------------------"
   (exit 1); exit 1;
+else
+  AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__FFTW"])
 fi
-echo "#define __FFTW" >> ./src/ppm_define.h
+
+# Check for METIS
+have_metis=no
+AC_SEARCH_LIBS([METIS_PartGraphRecursive],[metis],[have_metis=yes])
+if test "x${have_metis}" = xno; then
+  echo "------------------------------------------"
+  echo " The METIS library is required to build PPM. "
+  echo " Either the library is missing or incorrectly compiled/linked."
+  echo " Stopping...   Please download at:"
+  echo " http://glaros.dtc.umn.edu/gkhome/metis/metis/download"
+  echo "------------------------------------------"
+  (exit 1); exit 1;
+else
+  AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__METIS"])
+fi
+
+AX_F90_LIBRARY_SETUP(ppm,[],ppm_module_finalize.$ax_cv_f90_modext,libppm*,[
+    use ppm_module_finalize
+    integer :: info
+    call ppm_finalize(info)
+   ])
+
+AC_SUBST(PPMDIR)
+
 
 # Check to see if linux was enabled with -enable-linux
 AC_ARG_ENABLE([linux],[AS_HELP_STRING([--enable-linux],
-  [compile for linux (default is no)])],[echo "#define __Linux" >> ./src/ppm_define.h])
+  [compile for linux (default is no)])],
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__Linux"])])
+  #[echo "#define __Linux" >> ./src/ppm_define.h])
 
 # Check to see if etime was enabled with -enable-etime
 AC_ARG_ENABLE([etime],[AS_HELP_STRING([--enable-etime],
-  [use etime (default is no)])],[echo "#define __ETIME" >> ./src/ppm_define.h])
+  [use etime (default is no)])],
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__ETIME"])])
+  #[echo "#define __ETIME" >> ./src/ppm_define.h])
 
 # Check to see if vector was enabled with -enable-vector
 AC_ARG_ENABLE([vector],[AS_HELP_STRING([--enable-vector],
   [enable __VECTOR (default is no)])],
-  [echo "#define __VECTOR" >> ./src/ppm_define.h])
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__VECTOR"])])
+  #[echo "#define __VECTOR" >> ./src/ppm_define.h])
 
-AC_ARG_ENABLE([mathkeisan],[AS_HELP_STRING([--enable-mathkeisan],
-  [enable __MATHKEISAN (default is no)])],
-  [echo "#define __MATHKEISAN" >> ./src/ppm_define.h])
-
-AC_ARG_ENABLE([sxf90],[AS_HELP_STRING([--enable-sxf90],
-  [enable __MATHKEISAN (default is no)])],
-  [echo "#define __SXF90" >> ./src/ppm_define.h])
-
-AC_ARG_ENABLE([crayfishpack],[AS_HELP_STRING([--enable-crayfishpack],
-  [enable __CRAYFISHPACK (default is no)])],
-  [echo "#define __CRAYFISHPACK" >> ./src/ppm_define.h])
-
-AC_ARG_ENABLE([hypre],[AS_HELP_STRING([--enable-hypre],
-  [enable __HYPRE (default is no)])],
-  [echo "#define __HYPRE" >> ./src/ppm_define.h])
 
 AC_ARG_ENABLE([no-microinstr],[AS_HELP_STRING([--enable-no-microinstr],
   [enable __NOMICROINSTRUCTIONS (default is no)])],
-  [echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h])
+  [AC_SUBST(CPPFLAGS,["$CPPFLAGS -D__NOMICROINSTRUCTIONS"])])
+  #[echo "#define __NOMICROINSTRUCTIONS" >> ./src/ppm_define.h])
 
 dev_compile=no
 AC_ARG_ENABLE([dev],[AS_HELP_STRING([--enable-dev],
@@ -222,10 +239,14 @@ if test "x${dev_compile}" = xyes; then
     if test "x${vendor}" = xintel; then
         AC_SUBST(DEBUG,["-g -O0 -check pointers -check bounds -traceback -diag-disable 10120"])
     elif test "x${vendor}" = xgnu; then
-      AC_SUBST(DEBUG,["-g -O0 -fbounds-check -fbacktrace"])
+        AC_SUBST(DEBUG,["-g -O0 -fbounds-check -fbacktrace"])
     else
-      AC_SUBST(DEBUG,["-g"])
+         AC_SUBST(DEBUG,["-g"])
     fi
+fi
+
+if test "x${vendor}" = xgnu; then
+   AC_SUBST(FCFLAGS,["$FCFLAGS -ffree-line-length-none"])
 fi
 
 debug_compile=no
@@ -237,15 +258,16 @@ if test "x${debug_compile}" = xyes; then
     if test "x${vendor}" = xintel; then
         AC_SUBST(DEBUG,["-O0 -g -debug all -check all -fp-stack-check -heap-arrays -ftrapuv -check pointers -check bounds -check uninit -traceback -diag-disable 10120"])
     elif test "x${vendor}" = xgnu; then
-      AC_SUBST(DEBUG,["-O0 -g -fbounds-check -fbacktrace -ftrapv -fno-automatic"])
+        AC_SUBST(DEBUG,["-O0 -g -fbounds-check -fbacktrace -ftrapv -fno-automatic"])
     else
-      AC_SUBST(DEBUG,["-O0 -g"])
+        AC_SUBST(DEBUG,["-O0 -g"])
     fi
 else
     if test "x${vendor}" = xintel; then
         AC_SUBST(FCFLAGS,["$FCFLAGS -diag-disable 5462"])
+    elif test "x${vendor}" = xgnu; then
+	AC_SUBST(FCFLAGS,["$FCFLAGS -ffree-line-length-none"])
     fi
-
 fi
 
 # set src as the default srcdir
