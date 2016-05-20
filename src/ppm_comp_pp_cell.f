@@ -1,16 +1,16 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                  ppm_comp_pp_cell
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -97,6 +97,7 @@
       !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
+      USE ppm_module_alloc
       USE ppm_module_typedef
       USE ppm_module_check_id
       USE ppm_module_substart
@@ -221,6 +222,7 @@
       INTEGER, SAVE                              :: nnp
       ! cell offsets for box index
       INTEGER                                    :: n1,n2,nz
+      INTEGER, DIMENSION(2)                      :: ld
       LOGICAL                                    :: valid
       REAL(MK)                                   :: t0
       !-------------------------------------------------------------------------
@@ -312,6 +314,7 @@
 
       nsublist = ppm_topo(topoid)%t%nsublist
 
+      NULLIFY(inp,jnp)
       !-------------------------------------------------------------------------
       !  Build interaction index lists
       !-------------------------------------------------------------------------
@@ -785,7 +788,20 @@
       !-------------------------------------------------------------------------
       !  Return
       !-------------------------------------------------------------------------
- 9999 CONTINUE
+      CALL ppm_alloc(inp,ld,ppm_param_dealloc,info)
+      IF (info .NE. 0) THEN
+          info = ppm_error_fatal
+          CALL ppm_error(ppm_err_alloc,'ppm_comp_pp_cell','INP',__LINE__,info)
+          GOTO 9999
+      ENDIF
+      CALL ppm_alloc(jnp,ld,ppm_param_dealloc,info)
+      IF (info .NE. 0) THEN
+          info = ppm_error_fatal
+          CALL ppm_error(ppm_err_alloc,'ppm_comp_pp_cell','JNP',__LINE__,info)
+          GOTO 9999
+      ENDIF
+
+      9999 CONTINUE
       CALL substop('ppm_comp_pp_cell',t0,info)
       RETURN
 #if   __KERNEL == __INTERNAL

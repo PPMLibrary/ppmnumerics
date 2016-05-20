@@ -1,16 +1,16 @@
       !-----------------------------------------------------------------------
       !  Subroutine   :            ppm_mg_smooth_fine
       !-----------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -25,7 +25,7 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-      !------------------------------------------------------------------------ 
+      !------------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if    __KIND == __SINGLE_PRECISION
@@ -63,7 +63,7 @@
 #endif
 #endif
 #endif
-         !!! In this routine we compute the corrections for the function based 
+         !!! In this routine we compute the corrections for the function based
          !!! on the Gauss-Seidel iteration
          !----------------------------------------------------------------------
          !  Includes
@@ -128,14 +128,14 @@
          INTEGER                                    ::  ilda,isweep,count
          REAL(MK)                                   ::  c11,c22,c33,c44
          REAL(MK)                                   ::  dx,dy
-         INTEGER,DIMENSION(:,:),POINTER             ::  lorig => NULL()
-         INTEGER,DIMENSION(:,:),POINTER             ::  lext => NULL()
-         INTEGER,DIMENSION(:),POINTER               ::  a => NULL()
-         INTEGER,DIMENSION(:),POINTER               ::  b => NULL()
-         INTEGER,DIMENSION(:),POINTER               ::  c => NULL()
-         INTEGER,DIMENSION(:),POINTER               ::  d => NULL()
-         INTEGER,DIMENSION(:),POINTER               ::  e => NULL()
-         INTEGER,DIMENSION(:),POINTER               ::  g => NULL()
+         INTEGER,DIMENSION(:,:),POINTER             ::  lorig
+         INTEGER,DIMENSION(:,:),POINTER             ::  lext
+         INTEGER,DIMENSION(:),POINTER               ::  a
+         INTEGER,DIMENSION(:),POINTER               ::  b
+         INTEGER,DIMENSION(:),POINTER               ::  c
+         INTEGER,DIMENSION(:),POINTER               ::  d
+         INTEGER,DIMENSION(:),POINTER               ::  e
+         INTEGER,DIMENSION(:),POINTER               ::  g
          INTEGER                                    ::  k,idom
          REAL(MK)                                   ::  x,y
          REAL(MK)                                   ::  omega
@@ -183,28 +183,15 @@
 #endif
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-     REAL(MK),DIMENSION(:,:,:),POINTER :: oldu
+        REAL(MK) :: moldu
 #elif __MESH_DIM == __3D
-     REAL(MK),DIMENSION(:,:,:,:),POINTER :: oldu
+        REAL(MK) :: moldu
 #endif
 #elif  __DIM == __VFIELD
 #if __MESH_DIM == __2D
-     REAL(MK),DIMENSION(:,:,:,:),POINTER :: oldu
+        REAL(MK),DIMENSION(:),POINTER :: moldu
 #elif __MESH_DIM == __3D
-     REAL(MK),DIMENSION(:,:,:,:,:),POINTER :: oldu
-#endif
-#endif
-#if __DIM == __SFIELD
-#if __MESH_DIM == __2D
-     REAL(MK) :: moldu
-#elif __MESH_DIM == __3D
-     REAL(MK) :: moldu
-#endif
-#elif  __DIM == __VFIELD
-#if __MESH_DIM == __2D
-     REAL(MK),DIMENSION(:),POINTER :: moldu
-#elif __MESH_DIM == __3D
-     REAL(MK),DIMENSION(:),POINTER :: moldu
+        REAL(MK),DIMENSION(:),POINTER :: moldu
 #endif
 #endif
         !----------------------------------------------------------------------
@@ -221,39 +208,33 @@
         IF (ppm_debug .GT. 0) THEN
           IF (nsweep.LT.1) THEN
               info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine',  &
-     &            'nsweep must be >=1',__LINE__,info)
+              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine','nsweep must be >=1',__LINE__,info)
               GOTO 9999
           ENDIF
           IF (mlev.LT.1) THEN
               info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine',  &
-     &            'level must be >1',__LINE__,info)
+              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine','level must be >1',__LINE__,info)
               GOTO 9999
           ENDIF
           IF (c1.LE.0.0_MK) THEN
               info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine',  &
-     &            'Factor c1 must be >0',__LINE__,info)
+              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine','Factor c1 must be >0',__LINE__,info)
               GOTO 9999
           ENDIF
           IF (c2.LE.0.0_MK) THEN
               info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine',  &
-     &            'Factor c2 must be >0',__LINE__,info)
+              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine','Factor c2 must be >0',__LINE__,info)
               GOTO 9999
           ENDIF
           IF (c3.LE.0.0_MK) THEN
               info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine',  &
-     &            'Factor c3 must be >0',__LINE__,info)
+              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine','Factor c3 must be >0',__LINE__,info)
               GOTO 9999
           ENDIF
 #if __MESH_DIM == __3D
           IF (c4.LE.0.0_MK) THEN
               info = ppm_error_error
-              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine',  &
-     &            'Factor c4 must be >0',__LINE__,info)
+              CALL ppm_error(ppm_err_argument,'ppm_mg_smooth_fine', 'Factor c4 must be >0',__LINE__,info)
               GOTO 9999
           ENDIF
 #endif
@@ -292,109 +273,104 @@
 #endif
 #endif
 #if __KIND == __SINGLE_PRECISION
-omega=omega_s
-dx=dx_s
-dy=dy_s
+        omega=omega_s
+        dx=dx_s
+        dy=dy_s
 #if __MESH_DIM == __3D
-dz=dz_s
+        dz=dz_s
 #endif
 #elif __KIND == __DOUBLE_PRECISION
-omega=omega_d
-dx=dx_d
-dy=dy_d
+        omega=omega_d
+        dx=dx_d
+        dy=dy_d
 #if __MESH_DIM == __3D
-dz=dz_d
+        dz=dz_d
 #endif
 #endif
-            iopt = ppm_param_alloc_fit
-            ldu2(1) = ppm_dim
-            ldu2(2) = nsubs
-            CALL ppm_alloc(lorig,ldu2,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'origi',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(lext,ldu2,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'origi',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            iopt = ppm_param_alloc_fit
-            ldl1(1) = 1
-            ldu1(1) = nsubs
-            CALL ppm_alloc(a,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'a',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(b,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'b',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(c,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'c',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(d,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'd',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(e,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'e',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(g,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'g',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            
-            lorig=0
-            lext=0
-            !-------------------------------------------------------------
-            !  set up counter origin and extents
-            !-------------------------------------------------------------
-            DO isub=1,nsubs
-                DO iface=1,ppm_dim
-                  IF (bcdef_sca(isub,2*iface-1).EQ.ppm_param_bcdef_periodic) THEN
-                      lorig(iface,isub)=1
-                  ELSEIF (bcdef_sca(isub,2*iface-1).EQ.ppm_param_bcdef_dirichlet) THEN
-                      lorig(iface,isub)=2
-                  ELSEIF (bcdef_sca(isub,2*iface-1).EQ.0) THEN
-                      lorig(iface,isub)=0
-                  ENDIF
-                ENDDO!iface
-                DO iface=1,ppm_dim
-                  IF (bcdef_sca(isub,2*iface).EQ.ppm_param_bcdef_periodic) THEN
-                      lext(iface,isub)=istop(iface,isub,1)
-                  ELSEIF (bcdef_sca(isub,2*iface).EQ.ppm_param_bcdef_dirichlet) THEN
-                      lext(iface,isub)=istop(iface,isub,1)-1
-                  ELSEIF (bcdef_sca(isub,2*iface).EQ.0) THEN
-                      lext(iface,isub)=istop(iface,isub,1)+1
-                  ENDIF
-                ENDDO!iface
-              ENDDO!DO isub 
+        NULLIFY(lorig)
+        iopt = ppm_param_alloc_fit
+        ldu2(1) = ppm_dim
+        ldu2(2) = nsubs
+        CALL ppm_alloc(lorig,ldu2,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','origi',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        NULLIFY(lext)
+        CALL ppm_alloc(lext,ldu2,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','origi',__LINE__,info)
+        GOTO 9999
+        ENDIF
 
+        NULLIFY(a,b,c,d,e,g)
+        iopt = ppm_param_alloc_fit
+        ldl1(1) = 1
+        ldu1(1) = nsubs
+        CALL ppm_alloc(a,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','a',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(b,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','b',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(c,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','c',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(d,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','d',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(e,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','e',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(g,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','g',__LINE__,info)
+        GOTO 9999
+        ENDIF
+
+        lorig=0
+        lext=0
+        !-------------------------------------------------------------
+        !  set up counter origin and extents
+        !-------------------------------------------------------------
+        DO isub=1,nsubs
+            DO iface=1,ppm_dim
+              IF (bcdef_sca(isub,2*iface-1).EQ.ppm_param_bcdef_periodic) THEN
+                  lorig(iface,isub)=1
+              ELSEIF (bcdef_sca(isub,2*iface-1).EQ.ppm_param_bcdef_dirichlet) THEN
+                  lorig(iface,isub)=2
+              ELSEIF (bcdef_sca(isub,2*iface-1).EQ.0) THEN
+                  lorig(iface,isub)=0
+              ENDIF
+            ENDDO!iface
+            DO iface=1,ppm_dim
+              IF (bcdef_sca(isub,2*iface).EQ.ppm_param_bcdef_periodic) THEN
+                  lext(iface,isub)=istop(iface,isub,1)
+              ELSEIF (bcdef_sca(isub,2*iface).EQ.ppm_param_bcdef_dirichlet) THEN
+                  lext(iface,isub)=istop(iface,isub,1)-1
+              ELSEIF (bcdef_sca(isub,2*iface).EQ.0) THEN
+                  lext(iface,isub)=istop(iface,isub,1)+1
+              ENDIF
+            ENDDO!iface
+        ENDDO!DO isub
 
 #if  __DIM == __SFIELD
 #if  __MESH_DIM == __2D
@@ -404,71 +380,80 @@ dz=dz_d
         count = 0
         DO isweep=1,nsweep
           DO color=0,1
-            !-------------------------------------------------------------
-            !Impose boundaries on even if color=0 or odd if color=1
-            !-------------------------------------------------------------
-              DO isub=1,nsubs
-                DO iface=1,4
-                  IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
-                      IF (iface.EQ.1) THEN
-                          i=1
-                          DO j=1,max_node(2,mlev)
-                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j)
-                          ENDDO
-                      ELSEIF (iface.EQ.2) THEN
-                          i=max_node(1,mlev)
-                          DO j=1,max_node(2,mlev)
-                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j)
-                          enddo
-                      ELSEIF (iface.EQ.3) THEN
-                          j=1
-                          DO i=1,max_node(1,mlev)
-                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(i)
-                          ENDDO
-                      ELSEIF (iface.EQ.4) THEN
-                          j=max_node(2,mlev)
-                          DO i=1,max_node(1,mlev)
-                            u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(i)
-                          ENDDO
-                      ENDIF !iface
-                  ENDIF !bcdef
-                ENDDO!iface
-              ENDDO!DO isub 
-              !----------------------------------------------------------------
-              !Communicate
-              !----------------------------------------------------------------
+        !-------------------------------------------------------------
+        !Impose boundaries on even if color=0 or odd if color=1
+        !-------------------------------------------------------------
+          DO isub=1,nsubs
+            DO iface=1,4
+              IF (bcdef_sca(isub,iface).EQ.ppm_param_bcdef_dirichlet) THEN
+                  IF (iface.EQ.1) THEN
+                  i=1
+                  DO j=1,max_node(2,mlev)
+                    u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j)
+                  ENDDO
+                  ELSEIF (iface.EQ.2) THEN
+                  i=max_node(1,mlev)
+                  DO j=1,max_node(2,mlev)
+                    u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(j)
+                  enddo
+                  ELSEIF (iface.EQ.3) THEN
+                  j=1
+                  DO i=1,max_node(1,mlev)
+                    u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(i)
+                  ENDDO
+                  ELSEIF (iface.EQ.4) THEN
+                  j=max_node(2,mlev)
+                  DO i=1,max_node(1,mlev)
+                    u(i,j,isub)=mgfield(isub,1)%bcvalue(iface)%pbcvalue(i)
+                  ENDDO
+                  ENDIF !iface
+              ENDIF !bcdef
+            ENDDO!iface
+          ENDDO!DO isub
+          !----------------------------------------------------------------
+          !Communicate
+          !----------------------------------------------------------------
 
-              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
-        &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,info)
-              CALL ppm_map_field_send(info)
+          CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
+        &                 ghostsize,info)
+          CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,info)
+          CALL ppm_map_field_send(info)
 
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,ghostsize,info)
-            DO isub=1,nsubs
-              DO j=lorig(2,isub),lext(2,isub)
-                 DO i=lorig(1,isub)+mod(j+color,2), &
-                    & lext(1,isub)-mod(j+color,2),2
-!                     IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
-!     &                   (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
-                       u(i,j,isub)=u(i,j,isub) + omega*(c1*(  &
-                       &   (u(i-1,j,isub)+u(i+1,j,isub))*c2 + &
-                       &   (u(i,j-1,isub)+u(i,j+1,isub))*c3 - &
-                       &        f(i,j,isub)) - u(i,j,isub))
-!                     ENDIF
-                 ENDDO
-              ENDDO
-            ENDDO !isub
+          CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,ghostsize,info)
+        DO isub=1,nsubs
+          DO j=lorig(2,isub),lext(2,isub)
+             DO i=lorig(1,isub)+mod(j+color,2), &
+                & lext(1,isub)-mod(j+color,2),2
+!                 IF ((i.GE.1.AND.i.LE.max_node(1,mlev)).AND. &
+!     &               (j.GE.1.AND.j.LE.max_node(2,mlev))) THEN
+                   u(i,j,isub)=u(i,j,isub) + omega*(c1*(  &
+                   &   (u(i-1,j,isub)+u(i+1,j,isub))*c2 + &
+                   &   (u(i,j-1,isub)+u(i,j+1,isub))*c3 - &
+                   &        f(i,j,isub)) - u(i,j,isub))
+!                 ENDIF
+             ENDDO
+          ENDDO
+        ENDDO !isub
         ENDDO!DO color
 
-
+        iopt = ppm_param_dealloc
+        CALL ppm_alloc(lorig,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','lorig',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(lext,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','lext',__LINE__,info)
+        GOTO 9999
+        ENDIF
         IF (isweep.EQ.nsweep) THEN
-              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
-        &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,info)
-              CALL ppm_map_field_send(info)
-
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,ghostsize,info)
-
+           CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),ghostsize,info)
+           CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,info)
+           CALL ppm_map_field_send(info)
+           CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,ghostsize,info)
         ENDIF
       ENDDO
 #elif __MESH_DIM == __3D
@@ -528,7 +513,7 @@ dz=dz_d
                       ENDIF !iface
                   ENDIF !bcdef
                 ENDDO!iface
-              ENDDO!DO isub 
+              ENDDO!DO isub
               !----------------------------------------------------------------
               !Communicate red(even) if color==0 or communicate black(odd)
               !if color==1
@@ -557,12 +542,24 @@ dz=dz_d
               ENDDO
            ENDDO!subs
         ENDDO!DO color
+        iopt = ppm_param_dealloc
+        CALL ppm_alloc(lorig,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','lorig',__LINE__,info)
+            GOTO 9999
+        ENDIF
+        CALL ppm_alloc(lext,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','lext',__LINE__,info)
+            GOTO 9999
+        ENDIF
         IF (isweep.EQ.nsweep) THEN
-            CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
-            &                         ghostsize,info)
-            CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,info)
-            CALL ppm_map_field_send(info)
-            CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,ghostsize,info)
+           CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),ghostsize,info)
+           CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,info)
+           CALL ppm_map_field_send(info)
+           CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,ghostsize,info)
         ENDIF
       ENDDO
 #endif
@@ -605,20 +602,20 @@ dz=dz_d
               CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,&
         &                          vecdim,ghostsize,info)
          ENDIF
-       ENDDO
+        ENDDO
 #elif __MESH_DIM == __3D
         !----------------------------------------------------------------------
         !Implementation
         !---------------------------------------------------------------------
-            iopt = ppm_param_alloc_fit
-            ldu1(1)=vecdim
-            CALL ppm_alloc(moldu,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'moldu',__LINE__,info)
-            GOTO 9999
-            ENDIF
+        NULLIFY(moldu)
+        iopt = ppm_param_alloc_fit
+        ldu1(1)=vecdim
+        CALL ppm_alloc(moldu,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+           info = ppm_error_fatal
+           CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','moldu',__LINE__,info)
+           GOTO 9999
+        ENDIF
         DO isweep=1,nsweep
            DO color=0,1
               a=0
@@ -727,30 +724,16 @@ dz=dz_d
                         moldu(1) = u(1,i,j,k,isub)
                         moldu(2) = u(2,i,j,k,isub)
                         moldu(3) = u(3,i,j,k,isub)
-                       u(1,i,j,k,isub)=moldu(1)+omega*&
-     &                           (&
-                       &c1*((u(1,i-1,j,k,isub)+ &
-     &                                          u(1,i+1,j,k,isub))*c2 &
+                       u(1,i,j,k,isub)=moldu(1)+omega*( &
+                       &c1*((u(1,i-1,j,k,isub)+u(1,i+1,j,k,isub))*c2 &
      &                  +(u(1,i,j-1,k,isub)+u(1,i,j+1,k,isub))*c3 &
-     &                  +(u(1,i,j,k-1,isub)+u(1,i,j,k+1,isub))*c4- &
-     &                                                 f(1,i,j,k,isub))&
-&-moldu(1))
-                       u(2,i,j,k,isub)=moldu(2)+omega*&
-     &                           (&
-                       &c1*((u(2,i-1,j,k,isub)+ &
-     &                                          u(2,i+1,j,k,isub))*c2 &
-     &                  +(u(2,i,j-1,k,isub)+u(2,i,j+1,k,isub))*c3 &
-     &                  +(u(2,i,j,k-1,isub)+u(2,i,j,k+1,isub))*c4- &
-     &                                                 f(2,i,j,k,isub))&
-&-moldu(2))
-                       u(3,i,j,k,isub)=moldu(3)+omega*&
-     &                           (&
-                       &c1*((u(3,i-1,j,k,isub)+ &
-     &                                          u(3,i+1,j,k,isub))*c2 &
-     &                  +(u(3,i,j-1,k,isub)+u(3,i,j+1,k,isub))*c3 &
-     &                  +(u(3,i,j,k-1,isub)+u(3,i,j,k+1,isub))*c4- &
-     &                                                 f(3,i,j,k,isub))&
-&-moldu(3))
+     &                  +(u(1,i,j,k-1,isub)+u(1,i,j,k+1,isub))*c4-f(1,i,j,k,isub))-moldu(1))
+                       u(2,i,j,k,isub)=moldu(2)+omega*(c1*((u(2,i-1,j,k,isub)+ &
+     &                 u(2,i+1,j,k,isub))*c2+(u(2,i,j-1,k,isub)+u(2,i,j+1,k,isub))*c3 &
+     &                  +(u(2,i,j,k-1,isub)+u(2,i,j,k+1,isub))*c4-f(2,i,j,k,isub))-moldu(2))
+                       u(3,i,j,k,isub)=moldu(3)+omega*(c1*((u(3,i-1,j,k,isub)+ &
+     &                 u(3,i+1,j,k,isub))*c2+(u(3,i,j-1,k,isub)+u(3,i,j+1,k,isub))*c3 &
+     &                  +(u(3,i,j,k-1,isub)+u(3,i,j,k+1,isub))*c4-f(3,i,j,k,isub))-moldu(3))
                     ENDDO
                 ENDDO
               ENDDO
@@ -767,14 +750,9 @@ dz=dz_d
                         moldu(ilda) = u(ilda,i,j,k,isub)
                      end do
                      DO ilda=1,vecdim
-                       u(ilda,i,j,k,isub)=moldu(ilda)+omega*&
-     &                           (&
-                       &c1*((u(ilda,i-1,j,k,isub)+ &
-     &                                          u(ilda,i+1,j,k,isub))*c2 &
+                       u(ilda,i,j,k,isub)=moldu(ilda)+omega*(c1*((u(ilda,i-1,j,k,isub)+ u(ilda,i+1,j,k,isub))*c2 &
      &                  +(u(ilda,i,j-1,k,isub)+u(ilda,i,j+1,k,isub))*c3 &
-     &                  +(u(ilda,i,j,k-1,isub)+u(ilda,i,j,k+1,isub))*c4- &
-     &                                                 f(ilda,i,j,k,isub))&
-&-moldu(ilda))
+     &                  +(u(ilda,i,j,k-1,isub)+u(ilda,i,j,k+1,isub))*c4-f(ilda,i,j,k,isub))-moldu(ilda))
                      ENDDO
                  ENDIF
                     ENDDO
@@ -783,72 +761,63 @@ dz=dz_d
             ENDDO!subs
 #endif
           ENDDO!DO color
-            IF (isweep.EQ.nsweep) THEN
-              CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),&
-        &                         ghostsize,info)
-              CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,vecdim,info)
-              CALL ppm_map_field_send(info)
-              CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,&
-        &                          vecdim,ghostsize,info)
-           ENDIF
-       ENDDO
-            iopt = ppm_param_dealloc
-            ldu1(1)=vecdim
-            CALL ppm_alloc(moldu,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'moldu',__LINE__,info)
-            GOTO 9999
-            ENDIF
+          IF (isweep.EQ.nsweep) THEN
+             CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlev),ghostsize,info)
+             CALL ppm_map_field_push(topoid,mg_meshid(mlev),u,vecdim,info)
+             CALL ppm_map_field_send(info)
+             CALL ppm_map_field_pop(topoid,mg_meshid(mlev),u,vecdim,ghostsize,info)
+          ENDIF
+        ENDDO
+        iopt = ppm_param_dealloc
+        ldu1(1)=vecdim
+        CALL ppm_alloc(moldu,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+           info = ppm_error_fatal
+           CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine', 'moldu',__LINE__,info)
+           GOTO 9999
+        ENDIF
 #endif
 #endif
         !---------------------------------------------------------------------
         !  Deallocate local work arrays
         !----------------------------------------------------------------------
-            iopt = ppm_param_dealloc
-            CALL ppm_alloc(a,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'a',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(b,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'b',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(c,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'c',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(d,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'd',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(e,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'e',__LINE__,info)
-            GOTO 9999
-            ENDIF
-            CALL ppm_alloc(g,ldl1,ldu1,iopt,info)
-            IF (info .NE. 0) THEN
-            info = ppm_error_fatal
-            CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine',    &
-      &                       'g',__LINE__,info)
-            GOTO 9999
-            ENDIF
+        iopt = ppm_param_dealloc
+        CALL ppm_alloc(a,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','a',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(b,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','b',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(c,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine', 'c',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(d,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','d',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(e,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','e',__LINE__,info)
+        GOTO 9999
+        ENDIF
+        CALL ppm_alloc(g,ldl1,ldu1,iopt,info)
+        IF (info .NE. 0) THEN
+        info = ppm_error_fatal
+        CALL ppm_error(ppm_err_alloc,'ppm_mg_smooth_fine','g',__LINE__,info)
+        GOTO 9999
+        ENDIF
         !---------------------------------------------------------------------
         !  Return
         !----------------------------------------------------------------------

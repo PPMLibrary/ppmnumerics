@@ -2,10 +2,10 @@
       !  Subroutine   :               ppm_util_fft_backward_2d
       !-------------------------------------------------------------------------
       !
-      !  Purpose      : This routine performs inverse Fast Fourier Transform 
+      !  Purpose      : This routine performs inverse Fast Fourier Transform
       !                 using FFTW in the first (x) dimension
       !
-      !  Input        : data_in(:,:)   (F) data to be transformed 
+      !  Input        : data_in(:,:)   (F) data to be transformed
       !
       !  Input/output : lda(:)         (I) size of data
       !
@@ -59,21 +59,21 @@
       !  Bugfix: arguments are now checked BEFORE they are assigned to Nx_in...
       !
       !  Revision 1.2  2004/02/11 10:13:23  hiebers
-      !  changed arguments, included test on info , included ppm_define.h, 
-      !  shortened lines to 80 characters, excluded module_mesh, 
+      !  changed arguments, included test on info , included ppm_define.h,
+      !  shortened lines to 80 characters, excluded module_mesh,
       !  included fftw3.f
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -112,9 +112,9 @@
       USE ppm_module_error
       USE ppm_module_alloc
       IMPLICIT NONE
-#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
+#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX 
+#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
@@ -124,7 +124,7 @@
       INCLUDE "fftw3.f"
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       ! input data
       COMPLEX(MK), DIMENSION(:,:)       , INTENT(IN   ) :: data_in
@@ -134,24 +134,24 @@
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       REAL(MK), DIMENSION(:,:)      , POINTER       :: data_out
 #elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
-      COMPLEX(MK), DIMENSION(:,:)   , POINTER       :: data_out 
+      COMPLEX(MK), DIMENSION(:,:)   , POINTER       :: data_out
 #endif
       INTEGER                       , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! timer
       REAL(MK)                                :: t0
       ! counters
       INTEGER                                 :: i,j,iopt
-      ! size of the data_in 
+      ! size of the data_in
       INTEGER                                 :: Nx_in, Ny_in
-      ! size of the data_out 
+      ! size of the data_out
       INTEGER                                 :: Nx_out, Ny_out
 #ifdef __FFTW
       ! FFTW Plan
-      INTEGER*8                        :: Plan      
-      INTEGER                          :: mbistride, mbrank, mbidist, mbiembed 
+      INTEGER*8                        :: Plan
+      INTEGER                          :: mbistride, mbrank, mbidist, mbiembed
       INTEGER                          :: mboembed, mbhowmany, mbodist
 #endif
 #ifdef __MATHKEISAN
@@ -171,7 +171,7 @@
       INTEGER, DIMENSION(1)                   :: lda_table, lda_work
 #endif
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
 
       !-------------------------------------------------------------------------
@@ -191,7 +191,7 @@
       CALL ppm_error(ppm_err_noMathKeisan,'ppm_util_fft_backward_2d',  &
      &    'PPM was compiled without MATHKEISAN support',__LINE__,info)
 #endif
-      GOTO 9999      
+      GOTO 9999
 #else
       !-------------------------------------------------------------------------
       !  Check arguments
@@ -244,6 +244,7 @@
       !-------------------------------------------------------------------------
       !  Allocate working storage
       !-------------------------------------------------------------------------
+      NULLIFY(table,work)
       lda_table(1) = 2*Nx_out + 64
       CALL ppm_alloc(table,lda_table,ppm_param_alloc_fit,info)
       IF (info .NE. 0) THEN
@@ -291,7 +292,7 @@
 
 #endif
       !-------------------------------------------------------------------------
-      !  Forward FFT 
+      !  Forward FFT
       !-------------------------------------------------------------------------
       isign_fft = 1
       DO j=1,Ny_in
@@ -317,11 +318,10 @@
       CALL ppm_alloc(table,lda_table,ppm_param_dealloc,info)
       CALL ppm_alloc(work,lda_work,ppm_param_dealloc,info)
       IF (info .NE. 0) THEN
-          WRITE(mesg,'(A)') 'could not deallocate memory'
-          info = ppm_error_error
-          CALL ppm_error(ppm_err_dealloc,'ppm_util_fft_backward_2d',mesg,__LINE__,&
-     &                                                                 info)
-          GOTO 9999
+         WRITE(mesg,'(A)') 'could not deallocate memory'
+         info = ppm_error_error
+         CALL ppm_error(ppm_err_dealloc,'ppm_util_fft_backward_2d',mesg,__LINE__,info)
+         GOTO 9999
       ENDIF
 #else
       !-------------------------------------------------------------------------
@@ -368,7 +368,7 @@
       !-------------------------------------------------------------------------
       DO j=1,Ny_out
           data_out(lda(1),j) = data_out(1,j)
-      ENDDO     
+      ENDDO
       !-------------------------------------------------------------------------
       !  Return
       !-------------------------------------------------------------------------

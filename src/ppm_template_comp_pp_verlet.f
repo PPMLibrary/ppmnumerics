@@ -32,7 +32,7 @@
       !                        vlist and nvlist to your client program and
       !                        add them as arguments to this routine. This
       !                        makes it possible to use several sets of
-      !                        lists. 
+      !                        lists.
       !                    (11)Optional: Remove the imode=-1 and imode=1
       !                        cases from this routine and build/destroy
       !                        the lists directly in your client program by
@@ -52,13 +52,13 @@
       !                                   .TRUE. : Yes
       !                                   .FALSE.: No
       !                 imode      (I) Mode of action. Any of the folowing:
-      !                                 0  PP interactions 
+      !                                 0  PP interactions
       !                                 1  build Verlet lists and return
       !                                 -1 destroy Verlet lists and return
       !
-      !  Input/output : 
+      !  Input/output :
       !
-      !  Output       : dpd(:,:)   (F) Change of particle data (pdata) due to 
+      !  Output       : dpd(:,:)   (F) Change of particle data (pdata) due to
       !                                interaction.
       !                 info       (I) return status. =0 if no error.
       !
@@ -71,7 +71,7 @@
       !                 seach for USER in this file and fill in
       !                 the particle-particle interactions in both places.
       !                 Use the dpd array to return the result. It is your
-      !                 responsibility to properly allocate and initialize 
+      !                 responsibility to properly allocate and initialize
       !                 this array BEFORE calling this routine.
       !
       !                 After finishing all time steps, always call this
@@ -97,16 +97,16 @@
       !  Revision 1.2  2004/02/24 11:35:54  ivos
       !  Revision 1.1  2004/01/26 17:24:35  ivos
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -124,8 +124,7 @@
 
       !-------------------------------------------------------------------------
 
-      SUBROUTINE ppm_template_comp_pp_verlet(xp,pdata,Np,cutoff,skin,   &
-     &               lsymm,imode,dpd,info)
+      SUBROUTINE ppm_template_comp_pp_verlet(xp,pdata,Np,cutoff,skin,lsymm,imode,dpd,info)
 
       !-------------------------------------------------------------------------
       !  Modules
@@ -143,7 +142,7 @@
 !     INTEGER, PARAMETER :: MK = ppm_kind_single
       INTEGER, PARAMETER :: MK = ppm_kind_double
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       REAL(MK), DIMENSION(:,:), INTENT(IN   ) :: xp
       REAL(MK), DIMENSION(:,:), INTENT(IN   ) :: pdata
@@ -156,28 +155,28 @@
       REAL(MK), DIMENSION(:,:), INTENT(INOUT) :: dpd
       INTEGER                 , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! Verlet lists
-      ! USER: if allocation of the following two varaibles fails due to stack 
+      ! USER: if allocation of the following two varaibles fails due to stack
       ! size limitations, try putting them in a module and add a USE
       ! statement for it above. In order to use several Verlet lists, move
       ! these declarations to the client program and add vlist and nvlist
       ! to the argument list of this routine.
-      INTEGER, DIMENSION(:,:), POINTER, SAVE     :: vlist
-      INTEGER, DIMENSION(  :), POINTER, SAVE     :: nvlist
+      INTEGER, DIMENSION(:,:), POINTER, SAVE :: vlist => NULL()
+      INTEGER, DIMENSION(  :), POINTER, SAVE :: nvlist => NULL()
       ! counters
-      INTEGER                                    :: jpart,ip,jp
+      INTEGER                                :: jpart,ip,jp
       ! coordinate differences
-      REAL(MK)                                   :: dx,dy,dz
+      REAL(MK)                               :: dx,dy,dz
       ! square of inter particle distance
-      REAL(MK)                                   :: dij
+      REAL(MK)                               :: dij
       ! cutoff squared
-      REAL(MK)                                   :: cut2
+      REAL(MK)                               :: cut2
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
-      
+
       !-------------------------------------------------------------------------
       !  Initialise
       !-------------------------------------------------------------------------
@@ -214,13 +213,12 @@
       !  just here as a template.
       !-------------------------------------------------------------------------
       IF (imode .EQ. -1) THEN
-          DEALLOCATE(vlist,nvlist,STAT=info)
-          IF (info .NE. 0) THEN
-              WRITE(*,'(2A,I)') '(ppm_template_comp_pp_verlet): ',  &
-     &            'DEALLOCATE failed on line ',__LINE__
-              info = -1
-          ENDIF  
-          GOTO 9999
+         DEALLOCATE(vlist,nvlist,STAT=info)
+         IF (info .NE. 0) THEN
+            WRITE(*,'(2A,I)') '(ppm_template_comp_pp_verlet): ','DEALLOCATE failed on line ',__LINE__
+            info = -1
+         ENDIF
+         GOTO 9999
       ENDIF
 
       !-------------------------------------------------------------------------
@@ -229,16 +227,16 @@
       !  ppm_neighlist_vlist directly. The code is just here as a template.
       !-------------------------------------------------------------------------
       IF (imode .EQ. 1) THEN
-          !---------------------------------------------------------------------
-          !  Generate Verlet lists
-          !---------------------------------------------------------------------
-          CALL ppm_neighlist_vlist(xp,Np,cutoff,skin,lsymm,vlist,nvlist,info)
-          IF (info .NE. 0) THEN
-              WRITE(*,'(2A,I)') '(ppm_template_comp_pp_verlet): ',&
-     &            'Building Verlet lists failed on line ',__LINE__
-              info = -1
-          ENDIF
-          GOTO 9999
+         !---------------------------------------------------------------------
+         !  Generate Verlet lists
+         !---------------------------------------------------------------------
+         CALL ppm_neighlist_vlist(xp,Np,cutoff,skin,lsymm,vlist,nvlist,info)
+         IF (info .NE. 0) THEN
+            WRITE(*,'(2A,I)') '(ppm_template_comp_pp_verlet): ', &
+            & 'Building Verlet lists failed on line ',__LINE__
+            info = -1
+         ENDIF
+         GOTO 9999
       ENDIF
 
       !-------------------------------------------------------------------------
@@ -249,8 +247,8 @@
               DO jpart=1,nvlist(ip)
                   jp = vlist(jpart,ip)
                   !-------------------------------------------------------------
-                  !  Calculate the square of the distance between the two 
-                  !  particles. It will always be .LE. (cutoff+skin)**2 by 
+                  !  Calculate the square of the distance between the two
+                  !  particles. It will always be .LE. (cutoff+skin)**2 by
                   !  construction of the Verlet list.
                   !  COMMENT THIS IF YOU DO NOT NEED THE DISTANCE!
                   !-------------------------------------------------------------
@@ -288,8 +286,8 @@
               DO jpart=1,nvlist(ip)
                   jp = vlist(jpart,ip)
                   !-------------------------------------------------------------
-                  !  Calculate the square of the distance between the two 
-                  !  particles. It will always be .LE. (cutoff+skin)**2 by 
+                  !  Calculate the square of the distance between the two
+                  !  particles. It will always be .LE. (cutoff+skin)**2 by
                   !  construction of the Verlet list.
                   !  COMMENT THIS IF YOU DO NOT NEED THE DISTANCE!
                   !-------------------------------------------------------------

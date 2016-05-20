@@ -1,20 +1,20 @@
       !-------------------------------------------------------------------------
       !     Subroutine   :           ppm_hamjac_reinit_step_3d
       !-------------------------------------------------------------------------
-      !     
+      !
       !     Purpose      : Solve Hamilton-Jacobi for Gowas reinit
-      !      
-      !     Input        : 
-      !                    
-      !     Input/Output : 
-      !                    
-      !     Output       : 
-      !      
-      !     Remarks      : 
-      !                    
-      !     
+      !
+      !     Input        :
+      !
+      !     Input/Output :
+      !
+      !     Output       :
+      !
+      !     Remarks      :
+      !
+      !
       !     References   :
-      !     
+      !
       !     Revisions    :
       !-------------------------------------------------------------------------
       !     $Log: ppm_hamjac_reinit_loc_step_3d.f,v $
@@ -53,16 +53,16 @@
 #endif
 
         USE ppm_module_data
-        
+
         USE ppm_module_error
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_typedef
         IMPLICIT NONE
-        
+
 #if    __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
 
@@ -73,7 +73,7 @@
         REAL(MK), DIMENSION(:,:,:,:), POINTER :: phi
 #elif __MODE == __VEC
         REAL(MK), DIMENSION(:,:,:,:,:), POINTER :: phi
-#endif        
+#endif
         REAL(MK), DIMENSION(:,:,:,:), POINTER :: tphi
         INTEGER, INTENT(in)                   :: topo_id, mesh_id
         INTEGER, DIMENSION(3), INTENT(in)     :: ghostsize
@@ -81,7 +81,7 @@
         REAL(mk), INTENT(out)                 :: res
 #if __MODE == __VEC
         INTEGER, INTENT(in)                   :: idx
-#endif        
+#endif
         REAL(mk), INTENT(in)                  :: trgt
         INTEGER, DIMENSION(:,:), INTENT(in)   :: iloc
         INTEGER                               :: np, p
@@ -91,11 +91,10 @@
         INTEGER, DIMENSION(:), POINTER        :: isublist
         INTEGER                               :: nsublist
         INTEGER, DIMENSION(:,:), POINTER      :: ndata
-        INTEGER                               :: topoid, meshid
         REAL(MK), DIMENSION(:), POINTER       :: min_phys, max_phys
         TYPE(ppm_t_topo),      POINTER        :: topo
         TYPE(ppm_t_equi_mesh), POINTER        :: mesh
-        
+
         !-----------------------------------------------------
         !  standard stuff
         !-----------------------------------------------------
@@ -112,22 +111,21 @@
              & = RESHAPE((/2,1,0,1,0,-1,0,-1,-2/),(/3,3/))
         REAL(mk) :: t0
 
-        
+
         CALL substart('ppm_hamjac_reinit_loc_step_3d',t0,info)
-        
+
         !-----------------------------------------------------
         !  Get the mesh data
         !-----------------------------------------------------
         topo => ppm_topo(topo_id)%t
         mesh => topo%mesh(mesh_id)
-        meshid = mesh%ID
         nsublist = topo%nsublist
         ndata    => mesh%nnodes
         isublist => topo%isublist
 #if    __KIND == __SINGLE_PRECISION
         min_phys => topo%min_physs
         max_phys => topo%max_physs
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         min_phys => topo%min_physd
         max_phys => topo%max_physd
 #endif
@@ -152,12 +150,12 @@
               j = iloc(2,p)
               k = iloc(3,p)
                     ! hack
-#if __MODE == __SCA                    
+#if __MODE == __SCA
 !                    IF(phi(i+1,j,k,isub).EQ.phi(i-1,j,k,isub).AND. &
 !                         & phi(i,j+1,k,isub).EQ.phi(i,j-1,k,isub).AND. &
 !                         & phi(i,j,k+1,isub).EQ.phi(i,j,k-1,isub).AND.ABS(phi(i&
 !                         &,j,k,isub)).LT.14.0_mk*dx(1)) CYCLE
-#endif                    
+#endif
 #if __MODE == __SCA
                     phimid(1) = phi(i+1,j,k,isub)-phi(i-1,j,k,isub)
                     phimid(2) = phi(i,j+1,k,isub)-phi(i,j-1,k,isub)
@@ -167,7 +165,7 @@
                     phimid(2) = phi(idx,i,j+1,k,isub)-phi(idx,i,j-1,k,isub)
                     phimid(3) = phi(idx,i,j,k+1,isub)-phi(idx,i,j,k-1,isub)
 #endif
-                    
+
 #if __MODE == __SCA
                        laps(2-3,1) = phi(i+offs(1,3),j,k,isub)   &
                             & -2.0_mk * phi(i+offs(2,3),j,k,isub) &
@@ -208,7 +206,7 @@
                             & -2.0_mk * phi(idx,i,j,k+offs(2,ilap),isub) &
                             &       + phi(idx,i,j,k+offs(3,ilap),isub)
                     END DO
-#endif                       
+#endif
 
                     rpos(1) = (wenoeps + laps( 1,1)**2)/(wenoeps + laps(0,1)**2)
                     rneg(1) = (wenoeps + laps(-1,1)**2)/(wenoeps + laps(0,1)**2)
@@ -288,7 +286,7 @@
                          &         phi(idx,i,j,k-2,isub)))*dxi(3)
 #endif
 
-#if __MODE == __SCA                    
+#if __MODE == __SCA
                     !--- collect
                     IF(phi(i,j,k,isub).GT.0.0_mk) THEN
                        pbs = SQRT( &
@@ -306,9 +304,9 @@
                        pbs = 0.0_mk
                     END IF
                     dphi_dt =  pbs * phi(i,j,k,isub) / &
-                         & SQRT(phi(i,j,k,isub)**2+0.25_mk*SUM(phimid**2)) 
+                         & SQRT(phi(i,j,k,isub)**2+0.25_mk*SUM(phimid**2))
                     tphi(i,j,k,isub) = phi(i,j,k,isub) - wenotau * dphi_dt
-                    
+
 #else
                     !--- collect
                     IF(phi(idx,i,j,k,isub).GT.0.0_mk) THEN
@@ -327,10 +325,10 @@
                        pbs = 0.0_mk
                     END IF
                     dphi_dt =  pbs * phi(idx,i,j,k,isub) / &
-                         & SQRT(phi(idx,i,j,k,isub)**2+0.25_mk*SUM(phimid**2)) 
+                         & SQRT(phi(idx,i,j,k,isub)**2+0.25_mk*SUM(phimid**2))
                     tphi(i,j,k,isub) = phi(idx,i,j,k,isub) - wenotau * dphi_dt
-                    
-#endif                    
+
+#endif
 
                     rms = MAX(rms,ABS(dphi_dt))
 
@@ -343,29 +341,29 @@
         CALL substop('ppm_hamjac_reinit_loc_step_3d',t0,info)
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_loc_step_3ds 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3ds
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_loc_step_3dd 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3dd
 #endif
 #elif __MODE == __VEC
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_loc_step_3dsV 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3dsV
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_loc_step_3ddV 
+      END SUBROUTINE ppm_hamjac_reinit_loc_step_3ddV
 #endif
-#endif      
-
-      
-                    
-
-
-                    
-           
-           
+#endif
 
 
 
-        
-        
-        
-        
+
+
+
+
+
+
+
+
+
+
+
+

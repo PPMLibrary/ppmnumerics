@@ -1,16 +1,16 @@
       !-----------------------------------------------------------------------
-      !  Subroutine   :            ppm_mg_res 
+      !  Subroutine   :            ppm_mg_res
       !-----------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -25,7 +25,7 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-      !------------------------------------------------------------------------ 
+      !------------------------------------------------------------------------
 
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
@@ -52,11 +52,9 @@
 #endif
 #elif __MESH_DIM == __3D
 #if    __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_mg_res_fine_3D_vec_s(topo_id,u,f,c1,c2,c3,c4,c5,&
-     &                                    E,info)
+      SUBROUTINE ppm_mg_res_fine_3D_vec_s(topo_id,u,f,c1,c2,c3,c4,c5,E,info)
 #elif  __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_mg_res_fine_3D_vec_d(topo_id,u,f,c1,c2,c3,c4,c5,&
-     &                                    E,info)
+      SUBROUTINE ppm_mg_res_fine_3D_vec_d(topo_id,u,f,c1,c2,c3,c4,c5,E,info)
 #endif
 #endif
 #endif
@@ -66,7 +64,7 @@
       !-----------------------------------------------------------------------
 #include "ppm_define.h"
       !-------------------------------------------------------------------
-      !  Modules 
+      !  Modules
       !-----------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_mg
@@ -82,7 +80,7 @@
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-----------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
@@ -102,21 +100,21 @@
 #endif
 #endif
 #if  __MESH_DIM == __2D
-      REAL(MK),                  INTENT(IN)      ::  c1,c2,c3,c4 
+      REAL(MK),                  INTENT(IN)      ::  c1,c2,c3,c4
 #elif __MESH_DIM == __3D
-      REAL(MK),                  INTENT(IN)      ::  c1,c2,c3,c4,c5 
+      REAL(MK),                  INTENT(IN)      ::  c1,c2,c3,c4,c5
 #endif
       REAL(MK),                  INTENT(OUT)     ::  E
       INTEGER,                   INTENT(INOUT)   ::  info
       INTEGER,                   INTENT(IN   )   ::  topo_id
       !---------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-----------------------------------------------------------------------
       CHARACTER(LEN=256) :: cbuf
       INTEGER                                    ::  i,j,isub,color
       INTEGER                                    ::  ilda,isweep,count
       INTEGER                                    ::  aa,bb,cc,dd,ee,gg
-      REAL(MK)                                   ::  c11,c22,c33,c44,c55 
+      REAL(MK)                                   ::  c11,c22,c33,c44,c55
       INTEGER                                    ::  k,idom
       REAL(MK)                                   ::  x,y
       REAL(MK)                                   ::  res
@@ -264,7 +262,7 @@
                           ELSEIF (iface.EQ.4) THEN
                           dd=1
                       ENDIF
-                  ENDIF 
+                  ENDIF
               ENDDO !iface
           ENDIF !periodic
           DO j=start(2,isub,1)+cc,istop(2,isub,1)-dd
@@ -310,7 +308,7 @@
                           ELSEIF (iface.EQ.6) Then
                           gg=1
                       ENDIF
-                  ENDIF 
+                  ENDIF
               ENDDO !iface
           ENDIF !periodic
           DO k=start(3,isub,1)+ee,istop(3,isub,1)-gg
@@ -381,7 +379,7 @@
                               ELSEIF (iface.EQ.6) Then
                               gg=1
                           ENDIF
-                      ENDIF 
+                      ENDIF
                   ENDDO !iface
               ENDIF !periodic
           ENDDO
@@ -428,7 +426,7 @@
 #endif
 #endif
       !----------------------------------------------------------------------
-      !  Return 
+      !  Return
       !-----------------------------------------------------------------------
 9999    CONTINUE
       CALL substop('ppm_mg_res',t0,info)

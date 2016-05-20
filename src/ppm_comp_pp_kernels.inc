@@ -5,7 +5,7 @@
       !
       !  INPUT:   dij is the squared distance between particles i and j
       !           All kernel parameters need to be passed in kpar(:).
-      !           dx, dy and dz are the components of the inter particle vector. 
+      !           dx, dy and dz are the components of the inter particle vector.
       !  OUTPUT:  eta is the kernel value for the given distance
       !
       !  Remark: Should SXF90 stop to unfold the loops (swap IF and DO)
@@ -74,7 +74,7 @@
           !     eta(delta^2) = -945/32/Pi/cutoff^9*(cutoff^2-r^2)^2*z
           !---------------------------------------------------------------------
           factor = kpar(1) - dij
-          eta    = -9.400088826365_MK * kpar(2) * dz
+          eta    = -9.400088826365_MK * kpar(2)*dz
           eta    = eta * factor * factor
       ELSEIF (kernel .EQ. ppm_param_kernel_fast3d_lap) THEN
           !---------------------------------------------------------------------
@@ -121,25 +121,24 @@
           !     kpar(5)     dh3  (particle volume)
           !     kpar(6)     piinv  (1/PI, the math constant)
           !     kpar(7)     kappa (discretisation correction factor)
-          !--------------------------------------------------------------------- 
+          !---------------------------------------------------------------------
           factor = kpar(3)*kpar(6)
           dij2    = dij*kpar(3)
           dij     = sqrt( dij2 )
-  
+
           IF (dij.LT.2.5_MK) THEN
              IF (dij.LT.1.5_MK) THEN
-            IF (dij.LT.0.5_MK) THEN
+                IF (dij.LT.0.5_MK) THEN
                    eta =  0.3_MK*dij2*dij2 - 0.75_MK*dij2 + 0.71875_MK
                 ELSE
-               eta = -0.2_MK*dij2*dij2 + dij2*dij - 1.5_MK*dij2 &
-        &                                             + 0.25_MK*dij+0.6875_MK 
-            ENDIF
-         ELSE
-        dij4  = 2.5_MK - dij
-            eta   = 0.05_MK*dij4*dij4*dij4*dij4
+                   eta = -0.2_MK*dij2*dij2 + dij2*dij - 1.5_MK*dij2 + 0.25_MK*dij+0.6875_MK
+                ENDIF
+             ELSE
+                dij4  = 2.5_MK - dij
+                eta   = 0.05_MK*dij4*dij4*dij4*dij4
              ENDIF
-          ELSE 
-                eta   = 0.0_MK
+          ELSE
+             eta   = 0.0_MK
           ENDIF
           eta  = eta*factor*kpar(7)
       ELSEIF (kernel .EQ. ppm_param_kernel_dx_sph2d_p2 ) THEN
@@ -152,28 +151,29 @@
           !     kpar(5)     dh3  (particle volume)
           !     kpar(6)     piinv  (1/PI, the math constant)
           !     kpar(7)     kappa (discretisation correction factor)
-          !--------------------------------------------------------------------- 
+          !---------------------------------------------------------------------
           factor = kpar(3)*kpar(6)
           dij2    = dij*kpar(3)
           dij     = sqrt( dij2 )
-  
+
           IF ( dij.LT.2.5_MK .AND. dij>0.0_MK ) THEN
              IF (dij.LT.1.5_MK) THEN
                 IF (dij.LT.0.5_MK) THEN
                    eta =  1.2_MK*dij2*dij - 1.5_MK*dij
                 ELSE
-                   eta = -0.8_MK*dij2*dij + 3_MK*dij2 - 3_MK*dij + 0.25_MK 
+                   eta = -0.8_MK*dij2*dij + 3_MK*dij2 - 3_MK*dij + 0.25_MK
                 ENDIF
              ELSE
                 dij4  =  2.5_MK - dij
-        eta   = -0.2_MK*dij4*dij4*dij4
-         ENDIF
-          ELSE 
-        eta   = 0.0_MK
-      ENDIF
-         eta  = eta*factor*kpar(7)*kpar(2)/dij*dx
-!          eta  = eta*factor*kpar(7)*kpar(2)/dij
-       ELSE
+                eta   = -0.2_MK*dij4*dij4*dij4
+             ENDIF
+          ELSE
+             eta   = 0.0_MK
+          ENDIF
+
+          eta  = eta*factor*kpar(7)*kpar(2)/dij*dx
+!         eta  = eta*factor*kpar(7)*kpar(2)/dij
+      ELSE
           !---------------------------------------------------------------------
           !  This ELSE is needed to avoid funny action when an invalid
           !  kernel is specified (and to make SXF90 unfold the loops).

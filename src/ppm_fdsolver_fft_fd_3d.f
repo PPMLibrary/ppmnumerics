@@ -6,14 +6,14 @@
       !                 using the precomputed plans in ppm_fdsolver_init
       !
       !  Input        : data_in(:,:,:)  (F) 3d data array to be transformed
-      !                                
+      !
       !  Input/output : lda(:)          (I) size of data
       !
       !  Output       : data_out(:,:,:) (F) transformed data
       !                 info            (I) return status. =0 if no error.
       !
-      !  Remarks      : 
-      !                                                  
+      !  Remarks      :
+      !
       !  References   :
       !
       !  Revisions    :
@@ -41,16 +41,16 @@
       !
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -102,13 +102,13 @@
       USE ppm_module_error
       USE ppm_module_alloc
       IMPLICIT NONE
-#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
+#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif __KIND ==__SINGLE_PRECISION_COMPLEX_Z 
+#elif __KIND ==__SINGLE_PRECISION_COMPLEX_Z
       INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX 
+#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_double
-#elif __KIND ==__DOUBLE_PRECISION_COMPLEX_Z 
+#elif __KIND ==__DOUBLE_PRECISION_COMPLEX_Z
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
@@ -118,7 +118,7 @@
       INCLUDE "fftw3.f"
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       ! input data
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
@@ -134,15 +134,15 @@
       COMPLEX(MK), DIMENSION(:,:,:) , POINTER       :: data_out
       INTEGER                       , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! timer
       REAL(MK)                                :: t0
       ! counters
       INTEGER                                 :: i,j,k,iopt
-      ! size of the data_in 
+      ! size of the data_in
       INTEGER                                 :: Nx_in, Ny_in, Nz_in
-      ! size of the data_out 
+      ! size of the data_out
       INTEGER                                 :: Nx_out, Ny_out, Nz_out
 #ifdef __FFTW
       ! FFTW Plan
@@ -161,12 +161,12 @@
       !scale of the transformation
       REAL(MK)                                :: scale_fft
       ! working storage
-      REAL(MK), DIMENSION(:),POINTER          :: table, work
+      REAL(MK), DIMENSION(:),POINTER          :: work
       ! the size of the working storage
       INTEGER, DIMENSION(1)                   :: lda_table, lda_work
 #endif
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
 
       !-------------------------------------------------------------------------
@@ -186,7 +186,7 @@
       CALL ppm_error(ppm_err_noMathKeisan,'ppm_fdsolver_fft_fd_3d',  &
      &    'PPM was compiled without MATHKEISAN support',__LINE__,info)
 #endif
-      GOTO 9999      
+      GOTO 9999
 #else
       !-------------------------------------------------------------------------
       !  Check arguments
@@ -229,9 +229,9 @@
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       Nx_out = Nx_in/2 + 1
 #elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
-      Nx_out = Nx_in     
+      Nx_out = Nx_in
 #elif __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND == __DOUBLE_PRECISION_COMPLEX_Z
-      Nx_out = Nx_in     
+      Nx_out = Nx_in
 #endif
       Ny_out = Ny_in
       Nz_out = Nz_in
@@ -270,6 +270,7 @@
       !-------------------------------------------------------------------------
       !  Allocate working storage
       !-------------------------------------------------------------------------
+      NULLIFY(work)
       lda_work = 4*Nx_in
       CALL ppm_alloc(work,lda_work,ppm_param_alloc_fit,info)
       IF (info .NE. 0) THEN
@@ -279,7 +280,7 @@
           GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
-      !  Forward FFT 
+      !  Forward FFT
       !-------------------------------------------------------------------------
       scale_fft = 1
       isign_fft = -1
@@ -294,23 +295,23 @@
      &                                 data_out(1,j,k), table_fd_d, work, isys)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
             CALL  cfft(isign_fft, Nx_in, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table_fd_c_y, lda_table_y, & 
+     &               data_out(1,j,k), incy, table_fd_c_y, lda_table_y, &
      &              work, lda_work(1),isys)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
             CALL  zfft(isign_fft, Nx_in, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table_fd_cc_y, lda_table_y, & 
+     &               data_out(1,j,k), incy, table_fd_cc_y, lda_table_y, &
      &               work, lda_work(1),isys)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX_Z
             CALL  cfft(isign_fft, Nx_in, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table_fd_c_z, lda_table_z, & 
+     &               data_out(1,j,k), incy, table_fd_c_z, lda_table_z, &
      &              work, lda_work(1),isys)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX_Z
             CALL  zfft(isign_fft, Nx_in, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table_fd_cc_z, lda_table_z, & 
+     &               data_out(1,j,k), incy, table_fd_cc_z, lda_table_z, &
      &               work, lda_work(1),isys)
 #endif
 
-         ENDDO      
+         ENDDO
       ENDDO
       !-------------------------------------------------------------------------
       !  Deallocate Memory
@@ -351,7 +352,7 @@
 #endif
 #endif
 #endif
-#endif 
+#endif
 #if __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       !-------------------------------------------------------------------------
       !  Copy margin to conform with PPM convention
@@ -360,7 +361,7 @@
          DO k=1,Nz_out
             data_out(lda(1),j,k) = data_out(1,j,k)
          ENDDO
-      ENDDO     
+      ENDDO
 #endif
 
 #if __KIND == __SINGLE_PRECISION_COMPLEX_Z | __KIND == __DOUBLE_PRECISION_COMPLEX_Z
@@ -371,14 +372,14 @@
          DO k=1,Nz_out
             data_out(lda(1),j,k) = data_out(1,j,k)
          ENDDO
-      ENDDO     
+      ENDDO
 #endif
 #if __CASE == __SLAB
       DO i=1,Nx_out
          DO k=1,Nz_out
             data_out(i,lda(2),k) = data_out(i,1,k)
          ENDDO
-      ENDDO     
+      ENDDO
 #endif
       !-------------------------------------------------------------------------
       !  Return

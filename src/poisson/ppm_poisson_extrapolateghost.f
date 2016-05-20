@@ -100,6 +100,7 @@
       !-------------------------------------------------------------------------
       ! Get topology
       !-------------------------------------------------------------------------
+      NULLIFY(topology)
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
          CALL ppm_write(ppm_rank,'ppm_poisson_extrapolateghost',&
@@ -110,7 +111,7 @@
 
       !-------------------------------------------------------------------------
       ! Extrapolate field into ghost layer
-      ! The indicies of subs_bc represent: 
+      ! The indicies of subs_bc represent:
       ! west,east(x),south,north(y),bottom,top(z)
       !@ Some more unrolling here would be nice
       !-------------------------------------------------------------------------

@@ -1,16 +1,16 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :               ppm_comp_pp_correct
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -294,6 +294,7 @@
           ENDDO
           summ = summ*dh(1)*dh(2)*dh(3)
       ELSE
+          dz=0.0_MK
           DO i=-lhx,lhx
               dx = REAL(i,MK)*dh(1)
               DO j=-lhy,lhy

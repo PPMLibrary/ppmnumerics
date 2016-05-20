@@ -1,20 +1,20 @@
       !-------------------------------------------------------------------------
       !     Subroutine   :                 ppm_hamjac_reinit_ref_3d
       !-------------------------------------------------------------------------
-      !     
+      !
       !     Purpose      : Solve Hamilton-Jacobi for Gowas reinit in ref spc
-      !      
-      !     Input        : 
-      !                    
-      !     Input/Output : 
-      !                    
-      !     Output       : 
-      !      
-      !     Remarks      : 
-      !                    
-      !     
+      !
+      !     Input        :
+      !
+      !     Input/Output :
+      !
+      !     Output       :
+      !
+      !     Remarks      :
+      !
+      !
       !     References   :
-      !     
+      !
       !     Revisions    :
       !-------------------------------------------------------------------------
       !     $Log: ppm_hamjac_reinit_ref_3d.f,v $
@@ -41,11 +41,11 @@
            &                     topo_id, mesh_id, ghostsize, info)
 #endif
 #elif __MODE == __VEC
-#error VECTOR NOT IMPLEMENTED       
+#error VECTOR NOT IMPLEMENTED
 #endif
 
         USE ppm_module_data
-        
+
         USE ppm_module_error
         USE ppm_module_write
         USE ppm_module_substart
@@ -59,7 +59,7 @@
 
 #if    __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
 
@@ -81,11 +81,10 @@
         REAL(mk), DIMENSION(:,:,:,:), POINTER :: tphi
         INTEGER                               :: nsublist
         INTEGER, DIMENSION(:,:), POINTER      :: ndata
-        INTEGER                               :: topoid,meshid
         REAL(MK), DIMENSION(:), POINTER       :: min_phys, max_phys
         TYPE(ppm_t_topo),      POINTER        :: topo
         TYPE(ppm_t_equi_mesh), POINTER        :: mesh
-        
+
         !-----------------------------------------------------
         !  standard stuff
         !-----------------------------------------------------
@@ -96,20 +95,19 @@
         CHARACTER(LEN=ppm_char)               :: cbuf
 
         CALL substart('ppm_hamjac_reinit_ref_3d',t0,info)
-        
+
         !-----------------------------------------------------
         !  Get the mesh data
         !-----------------------------------------------------
         topo => ppm_topo(topo_id)%t
         mesh => topo%mesh(mesh_id)
-        meshid = mesh%ID
         nsublist = topo%nsublist
         ndata    => mesh%nnodes
         isublist => topo%isublist
 #if    __KIND == __SINGLE_PRECISION
         min_phys => topo%min_physs
         max_phys => topo%max_physs
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         min_phys => topo%min_physd
         max_phys => topo%max_physd
 #endif
@@ -133,6 +131,7 @@
         ldu(3)   = ndata_max(3) + ghostsize(3)
         ldu(4)   = nsublist
         iopt     = ppm_param_alloc_fit
+        NULLIFY(tphi)
         CALL ppm_alloc(tphi,ldl,ldu,iopt,info)
         IF(info.NE.0) THEN
            info = ppm_error_fatal
@@ -146,7 +145,7 @@
         CALL ppm_map_field_push(topo_id,mesh_id,chi,3,info)
         CALL ppm_map_field_send(info)
         CALL ppm_map_field_pop(topo_id,mesh_id,chi,3,ghostsize,info)
-           
+
 
         !--- COMMENT Thu May 26 21:05:23 PDT 2005:  simple euler here, do TVD
         DO istep=1,maxstep
@@ -194,15 +193,15 @@
 9999    CONTINUE
 
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_ref_3ds 
+      END SUBROUTINE ppm_hamjac_reinit_ref_3ds
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_ref_3dd 
+      END SUBROUTINE ppm_hamjac_reinit_ref_3dd
 #endif
 
 
-        
-           
 
-        
-        
+
+
+
+
 

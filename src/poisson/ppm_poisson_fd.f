@@ -6,7 +6,7 @@
       !
       !-------------------------------------------------------------------------
       SUBROUTINE __ROUTINE(topoid,meshid,fieldin,fieldout,dtype,info)
-      !!! This routine computes the finite difference gradients, curl etc of 
+      !!! This routine computes the finite difference gradients, curl etc of
       !!! fieldin and outputs to fieldout. Both in and out fields are on
       !!! the mesh with meshid belonging to the topology with id topoid.
       !!! The finite difference to be carried out is determined by dtype which
@@ -71,6 +71,7 @@
       !-------------------------------------------------------------------------
       ! Get topology and mesh values
       !-------------------------------------------------------------------------
+      NULLIFY(topology)
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
         CALL ppm_write(ppm_rank,'ppm_poisson_init_predef','Failed to get topology.',isub)

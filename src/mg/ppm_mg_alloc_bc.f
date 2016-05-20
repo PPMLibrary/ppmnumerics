@@ -52,16 +52,16 @@
       !  Needed for my type allocation
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -130,18 +130,18 @@
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-#if __KIND ==__SINGLE_PRECISION 
+#if __KIND ==__SINGLE_PRECISION
       TYPE(bc_value_2d_sca_s), DIMENSION(:), POINTER :: field
 #elif __KIND == __DOUBLE_PRECISION
       TYPE(bc_value_2d_sca_d), DIMENSION(:), POINTER :: field
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND ==__SINGLE_PRECISION
-      TYPE(bc_value_3d_sca_s), DIMENSION(:), POINTER :: field 
+      TYPE(bc_value_3d_sca_s), DIMENSION(:), POINTER :: field
 #elif __KIND == __DOUBLE_PRECISION
       TYPE(bc_value_3d_sca_d), DIMENSION(:), POINTER  :: field
 #endif
@@ -165,7 +165,7 @@
       INTEGER, INTENT(IN   ) :: iopt
       INTEGER, INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       INTEGER               :: i
       INTEGER, DIMENSION(1) :: ldc
@@ -173,14 +173,14 @@
       LOGICAL            :: lcopy,lalloc,lrealloc,ldealloc
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-#if __KIND ==__SINGLE_PRECISION 
+#if __KIND ==__SINGLE_PRECISION
       TYPE(bc_value_2d_sca_s), DIMENSION(:), POINTER :: work_field
 #elif __KIND == __DOUBLE_PRECISION
       TYPE(bc_value_2d_sca_d), DIMENSION(:), POINTER :: work_field
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND ==__SINGLE_PRECISION
-      TYPE(bc_value_3d_sca_s), DIMENSION(:), POINTER ::  work_field 
+      TYPE(bc_value_3d_sca_s), DIMENSION(:), POINTER ::  work_field
 #elif __KIND == __DOUBLE_PRECISION
       TYPE(bc_value_3d_sca_d), DIMENSION(:), POINTER  :: work_field
 #endif
@@ -201,11 +201,11 @@
 #endif
 #endif
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
-      
+
       !-------------------------------------------------------------------------
-      !  Initialise 
+      !  Initialise
       !-------------------------------------------------------------------------
       CALL substart('ppm_mg_alloc_bc',t0,info)
       !-------------------------------------------------------------------------
@@ -359,7 +359,7 @@
           field => work_field
       ENDIF
       !-------------------------------------------------------------------------
-      !  Return 
+      !  Return
       !-------------------------------------------------------------------------
  9999 CONTINUE
       CALL substop('ppm_mg_alloc_bc',t0,info)

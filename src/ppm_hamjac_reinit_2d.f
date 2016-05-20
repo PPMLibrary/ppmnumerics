@@ -1,20 +1,20 @@
       !-------------------------------------------------------------------------
       !     Subroutine   :                 ppm_hamjac_reinit_2d
       !-------------------------------------------------------------------------
-      !     
+      !
       !     Purpose      : Solve Hamilton-Jacobi for Gowas reinit
-      !      
-      !     Input        : 
-      !                    
-      !     Input/Output : 
-      !                    
-      !     Output       : 
-      !      
-      !     Remarks      : 
-      !                    
-      !     
+      !
+      !     Input        :
+      !
+      !     Input/Output :
+      !
+      !     Output       :
+      !
+      !     Remarks      :
+      !
+      !
       !     References   :
-      !     
+      !
       !     Revisions    :
       !-------------------------------------------------------------------------
       !     $Log: ppm_hamjac_reinit_2d.f,v $
@@ -41,11 +41,11 @@
            &                     topo_id, mesh_id, ghostsize, info)
 #endif
 #elif __MODE == __VEC
-#error VECTOR NOT IMPLEMENTED       
+#error VECTOR NOT IMPLEMENTED
 #endif
 
         USE ppm_module_data
-        
+
         USE ppm_module_error
         USE ppm_module_write
         USE ppm_module_substart
@@ -58,7 +58,7 @@
 
 #if    __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
 
@@ -79,11 +79,10 @@
         REAL(mk), DIMENSION(:,:,:  ), POINTER :: tphi
         INTEGER                               :: nsublist
         INTEGER, DIMENSION(:,:), POINTER      :: ndata
-        INTEGER                               :: topoid,meshid
         REAL(MK), DIMENSION(:), POINTER       :: min_phys, max_phys
         TYPE(ppm_t_topo),      POINTER        :: topo
         TYPE(ppm_t_equi_mesh), POINTER        :: mesh
-        
+
         !-----------------------------------------------------
         !  standard stuff
         !-----------------------------------------------------
@@ -94,20 +93,19 @@
         CHARACTER(len=256)                    :: msg
 
         CALL substart('ppm_hamjac_reinit_2d',t0,info)
-        
+
         !-----------------------------------------------------
         !  Get the mesh data
         !-----------------------------------------------------
         topo => ppm_topo(topo_id)%t
         mesh => topo%mesh(mesh_id)
-        meshid = mesh%ID
         nsublist = topo%nsublist
         ndata    => mesh%nnodes
         isublist => topo%isublist
 #if    __KIND == __SINGLE_PRECISION
         min_phys => topo%min_physs
         max_phys => topo%max_physs
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         min_phys => topo%min_physd
         max_phys => topo%max_physd
 #endif
@@ -128,6 +126,7 @@
         ldu(2)   = ndata_max(2) + ghostsize(2)
         ldu(3)   = nsublist
         iopt     = ppm_param_alloc_fit
+        NULLIFY(tphi)
         CALL ppm_alloc(tphi,ldl,ldu,iopt,info)
         IF(info.NE.0) THEN
            info = ppm_error_fatal
@@ -144,7 +143,7 @@
            CALL ppm_map_field_push(topo_id,mesh_id,phi,info)
            CALL ppm_map_field_send(info)
            CALL ppm_map_field_pop(topo_id,mesh_id,phi,ghostsize,info)
-           
+
            CALL ppm_hamjac_reinit_step(phi,tphi,trgt,res,topo_id,mesh_id&
                 &,                  ghostsize,info)
            DO isub=1,nsublist
@@ -155,7 +154,7 @@
            END DO
            WRITE(msg,*) 'iteration #',istep,' res=',res
            IF(MOD(istep,10).EQ.0) CALL ppm_write(ppm_Rank,'ppm_hamjac',msg,info)
-           
+
            IF(res.LT.tol) GOTO 666
         END DO
 
@@ -179,15 +178,15 @@
         CALL substop('ppm_hamjac_reinit_2d',t0,info)
 
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_2ds 
+      END SUBROUTINE ppm_hamjac_reinit_2ds
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_reinit_2dd 
+      END SUBROUTINE ppm_hamjac_reinit_2dd
 #endif
 
 
-        
-           
 
-        
-        
+
+
+
+
 

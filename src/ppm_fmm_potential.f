@@ -7,13 +7,13 @@
       !                 In the parallel case:
       !                 Calls ppm_fmm_pretraverse and ppm_fmm_expchange
       !                 Maps the target points onto the leaf topolgy
-      !                 
+      !
       !  Input        : xpunord(:,:) (F) the position of the field points
       !                 wpunord(:)   (F) the strength of the field points
       !                 tp(:,:)      (F) the target points
       !                 theta        (F) acceptance factor
       !
-      !  Input/output :     
+      !  Input/output :
       !                 Np           (I) the number of field points.
       !                 Ntp          (I) the number of target points
       !
@@ -22,7 +22,7 @@
       !                                  size 1:Np
       !                 info         (I) return status. 0 upon success.
       !
-      !  Remarks      :  
+      !  Remarks      :
       !
       !  References   :
       !
@@ -108,7 +108,7 @@
       !  bugfix in allocating an array
       !
       !  Revision 1.5  2005/07/21 08:26:09  polasekb
-      !  changed function call, now different target 
+      !  changed function call, now different target
       !  points and field points can be
       !  specified by the user
       !
@@ -129,16 +129,16 @@
       !  start
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -169,7 +169,7 @@
                  &                      potential,target_topoid,info)
 #endif
       !-------------------------------------------------------------------------
-      !  Modules 
+      !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_fmm
@@ -197,14 +197,14 @@
 #endif
       !-------------------------------------------------------------------------
       !  Precision
-      !-------------------------------------------------------------------------      
+      !-------------------------------------------------------------------------
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
 #else
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       REAL(MK), DIMENSION(:,:), POINTER       :: xpunord
       INTEGER                 , INTENT(INOUT) :: Np
@@ -222,7 +222,7 @@
       REAL(MK), DIMENSION(:,:), POINTER       :: potential
 #endif
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       LOGICAL                              :: check,drct,OK
       INTEGER                              :: i,j,k,l,cnt,iopt,m,n
@@ -232,13 +232,12 @@
       INTEGER                              :: stackpointer,curbox
       INTEGER                              :: pexp,isymm
       INTEGER ,DIMENSION(1)                :: ldu1
-      INTEGER ,DIMENSION(2)                :: ldu2 
+      INTEGER ,DIMENSION(2)                :: ldu2
       INTEGER ,DIMENSION(:  ), POINTER     :: newlpdx,stack
-      REAL(MK)                             :: thetap,eps,angle,reci 
-      REAL(MK)                             :: sine,cosine,val,prod 
+      REAL(MK)                             :: thetap,eps,angle,reci
+      REAL(MK)                             :: sine,cosine,val,prod
       REAL(MK),DIMENSION(1)                :: curboxrho,curboxphi,curboxtheta
       REAL(MK),DIMENSION(:,:),     POINTER :: min_box,max_box
-      REAL(MK),DIMENSION(:,:),     POINTER :: min_sub,max_sub
       COMPLEX(MK),PARAMETER                :: CI=(0.0_MK,1.0_MK)
       CHARACTER(LEN=ppm_char)              :: cbuf
       REAL(MK)                             :: dx,dy,dz,dist,rad
@@ -246,28 +245,28 @@
       REAL(MK)                             :: t0,ghostsize,cutoff
       INTEGER                              :: topoid
       INTEGER ,DIMENSION(:  ), POINTER     :: part_subtop
-      ! fmm 
+      ! fmm
       REAL(MK),DIMENSION(:  ),     POINTER :: fracfac,boxcost
       REAL(MK),DIMENSION(:,:),     POINTER :: sqrtfac,xp,Anm
       REAL(MK),DIMENSION(:  ), POINTER     :: radius
-      REAL(MK),DIMENSION(:,:), POINTER     :: Pnm,centerofbox 
-      COMPLEX(MK),DIMENSION(:,:),  POINTER :: Ynm 
-      COMPLEX(MK),DIMENSION(:,:),  POINTER :: Outer             
+      REAL(MK),DIMENSION(:,:), POINTER     :: Pnm,centerofbox
+      COMPLEX(MK),DIMENSION(:,:),  POINTER :: Ynm
+      COMPLEX(MK),DIMENSION(:,:),  POINTER :: Outer
 #if   __DIM == __SFIELD
-      REAL ,DIMENSION(:  ), POINTER        :: wp      
+      REAL ,DIMENSION(:  ), POINTER        :: wp
       COMPLEX(MK),DIMENSION(:,:,:),POINTER :: expansion
-#else 
+#else
       REAL ,DIMENSION(:,:), POINTER          :: wp
-      COMPLEX(MK),DIMENSION(:,:,:,:),POINTER :: expansion           
-#endif     
+      COMPLEX(MK),DIMENSION(:,:,:,:),POINTER :: expansion
+#endif
       !-------------------------------------------------------------------------
-      !  Initialize 
+      !  Initialize
       !-------------------------------------------------------------------------
       CALL substart('ppm_fmm_potential',t0,info)
       !-------------------------------------------------------------------------
       !  Check arguments
       !-------------------------------------------------------------------------
-      IF (ppm_debug.GT.0) THEN  
+      IF (ppm_debug.GT.0) THEN
             IF (Np .LT. 0) THEN
                info = ppm_error_error
                CALL ppm_error(ppm_err_argument,'ppm_fmm_potential',   &
@@ -282,6 +281,7 @@
             ENDIF
 
       ENDIF
+
       !-------------------------------------------------------------------------
       ! Check precision and pointing tree data to correct variables
       !-------------------------------------------------------------------------
@@ -295,7 +295,7 @@
       expansion    => expansion_s_sf
 #else
       expansion    => expansion_s_vf
-#endif      
+#endif
       sqrtfac      => sqrtfac_s
       fracfac      => fracfac_s
       Anm          => Anm_s
@@ -322,6 +322,9 @@
       Pnm          => Pnm_d
       Outer        => Outer_d
 #endif
+
+      NULLIFY(newlpdx,stack,part_subtop,xp,wp)
+
       IF (ppm_nproc .GT. 1) THEN
       !choose lowest level of the tree as topology
       topoid = topoidlist(nlevel)
@@ -330,7 +333,7 @@
       !-------------------------------------------------------------------------
 #if   __DIM == __SFIELD
       CALL ppm_fmm_expchange(t0,info)
-#else      
+#else
       CALL ppm_fmm_expchange(lda,t0,info)
 #endif
       IF (info .NE. 0) THEN
@@ -404,7 +407,7 @@
           GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
-      ! Push the weights and boxpart 
+      ! Push the weights and boxpart
       !-------------------------------------------------------------------------
       isymm  = 0
       cutoff = 1.0_MK ! can be any number > 0
@@ -412,9 +415,9 @@
       CALL ppm_map_part_ghost_get(topoid,xpunord,ppm_dim,Np,isymm,cutoff,info)
 #if   __DIM == __SFIELD
       CALL ppm_map_part_push(wpunord,Np,info) !strengths
-#else      
+#else
       CALL ppm_map_part_push(wpunord,lda,Np,info) !strengths
-#endif      
+#endif
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to push strengths.',info)
@@ -437,12 +440,12 @@
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to push strengths.',info)
           GOTO 9999
-      ENDIF      
-#if   __DIM == __SFIELD      
+      ENDIF
+#if   __DIM == __SFIELD
       CALL ppm_map_part_pop(wpunord,Np,Mpart,info) !strengths
 #else
       CALL ppm_map_part_pop(wpunord,lda,Np,Mpart,info) !strengths
-#endif      
+#endif
       IF (info .NE. 0) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_potential', &
           &    'Failed to pop strengths.',info)
@@ -461,7 +464,7 @@
           CALL ppm_write(ppm_rank,'ppm_fmm_potential',cbuf,info)
       ENDIF
       !-------------------------------------------------------------------------
-      ! Sort new (ghost) particles 
+      ! Sort new (ghost) particles
       !-------------------------------------------------------------------------
       ldu1(1) = Mpart
       CALL ppm_alloc(newlpdx,ldu1,ppm_param_alloc_fit,info)
@@ -526,7 +529,7 @@
       DO i=1,Ntp
          potential(i) = 0.0_MK
       ENDDO
-#else 
+#else
       DO i=1,Ntp
          DO j=1,lda
             potential(j,i) = 0.0_MK
@@ -555,8 +558,8 @@
          ldu1(1) = Np
       ENDIF
       CALL ppm_alloc(wp,ldu1,iopt,info)
-#else 
-      ldu2(1) = lda     
+#else
+      ldu2(1) = lda
       IF (ppm_nproc .GT. 1) THEN
          ldu2(2) = Mpart
       ELSE
@@ -589,7 +592,7 @@
       ! top level of tree (parallel)
       !-------------------------------------------------------------------------
 #ifdef   __VECTOR
-      IF (ppm_nproc .GT. 1) THEN        
+      IF (ppm_nproc .GT. 1) THEN
          ! finding top level
          DO i=1,nlevel
            IF (nbpl(i) .GE. ppm_nproc) THEN
@@ -608,7 +611,7 @@
         ENDIF
       ENDIF
 #else
-      IF (ppm_nproc .GT. 1) THEN        
+      IF (ppm_nproc .GT. 1) THEN
          ! finding top level
          DO i=1,nlevel
            IF (nbpl(i) .GE. ppm_nproc) THEN
@@ -681,7 +684,7 @@
             ENDDO
          ENDIF
       ENDIF
-#else 
+#else
       IF(ppm_dim.EQ.2)THEN
          IF (ppm_nproc .GT. 1) THEN
             DO i=1,nbox
@@ -744,7 +747,7 @@
       ! Ntp: number of target points
       !-------------------------------------------------------------------------
       DO i=1,Ntp
-         IF (ppm_nproc .GT. 1) THEN        
+         IF (ppm_nproc .GT. 1) THEN
 	   ! init stack parallel
            stackpointer = 1
            cnt = 0
@@ -753,7 +756,7 @@
            !--------------------------------------------------------------------
 	   DO j=1,nbox
              IF (blevel(j) .EQ. level) THEN
-	       stack(stackpointer) = j 
+	       stack(stackpointer) = j
                stackpointer = stackpointer + 1
                cnt = cnt +1
 	       IF (cnt .EQ. nbpl(level)) THEN
@@ -894,7 +897,7 @@
                   stack(stackpointer) = child(j,curbox)
                   stackpointer = stackpointer + 1
                 ENDDO
-	       
+
              ELSE
              !------------------------------------------------------------------
              !  no children, direct computation
@@ -914,19 +917,19 @@
                  dz = xp(3,j) - tp(3,i)
                  rad = dx*dx + dy*dy + dz*dz
                  IF(rad.GT.eps)THEN
-	            rad = 1.0_MK/SQRT(rad)                  
+	            rad = 1.0_MK/SQRT(rad)
 #if                 __DIM == __SFIELD
 		    potential(i) = potential(i) + wp(j)*rad
 #else
                     DO l=1,lda
-                       potential(l,i) = potential(l,i) + wp(l,j)*rad 
+                       potential(l,i) = potential(l,i) + wp(l,j)*rad
                     ENDDO
 #endif
                 ENDIF
               ENDDO
             ENDIF
-          ENDIF       
-        ENDDO 
+          ENDIF
+        ENDDO
       ENDDO
       !-------------------------------------------------------------------------
       !  Nullify data pointers

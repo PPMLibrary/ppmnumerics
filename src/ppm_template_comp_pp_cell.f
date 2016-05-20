@@ -32,7 +32,7 @@
       !                        clist and Nm to your client program and
       !                        add them as arguments to this routine. This
       !                        makes it possible to use several sets of
-      !                        lists. 
+      !                        lists.
       !                    (11)Optional: Remove the imode=-1 and imode=1
       !                        cases from this routine and build/destroy
       !                        the lists directly in your client program by
@@ -61,7 +61,7 @@
       !                                output from the interaction (i.e.
       !                                potential energy)
       !
-      !  Output       : dpd(:,:)   (F) Change of particle data (pdata) due to 
+      !  Output       : dpd(:,:)   (F) Change of particle data (pdata) due to
       !                                interaction.
       !                 info       (I) return status. =0 if no error.
       !
@@ -82,7 +82,7 @@
       !                 routine with imode=-1 to free the memory of the
       !                 cell lists. Failure to do so will result in a
       !                 memory leak in your program.
-      !   
+      !
       !                 If the CYCLE command is a problem on your hardware
       !                 (e.g. prevents vectorization), split the DO-loop in
       !                 two parts as:
@@ -103,16 +103,16 @@
       !  Revision 1.2  2004/02/04 17:20:48  ivos
       !  Revision 1.1  2004/01/26 17:24:35  ivos
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -149,7 +149,7 @@
 !     INTEGER, PARAMETER :: MK = ppm_kind_single
       INTEGER, PARAMETER :: MK = ppm_kind_double
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       REAL(MK), DIMENSION(:,:), INTENT(IN   ) :: xp
       REAL(MK), DIMENSION(:,:), INTENT(IN   ) :: pdata
@@ -162,7 +162,7 @@
       REAL(MK), DIMENSION(:),   INTENT(INOUT) :: params
       INTEGER                 , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! counters
       INTEGER                                    :: i,idom,ibox,jbox
@@ -179,24 +179,24 @@
       ! box size for cell list
       REAL(MK), DIMENSION(3)                     :: bsize
       ! cell list
-      ! USER: if allocation of the following varaible fails due to stack 
+      ! USER: if allocation of the following varaible fails due to stack
       ! size limitations, try putting it in a module and add a USE
       ! statement for it above. In order to use several Cell lists, move
       ! these declarations to the client program and add clist and Nm
       ! to the argument list of this routine.
-      TYPE(ppm_type_ptr_to_clist), DIMENSION(:), POINTER, SAVE :: clist
+      TYPE(ppm_type_ptr_to_clist), DIMENSION(:), POINTER, SAVE :: clist => NULL()
       ! number of cells in all directions
-      INTEGER, DIMENSION(:,:), POINTER, SAVE     :: Nm
+      INTEGER, DIMENSION(:,:), POINTER, SAVE     :: Nm => NULL()
       ! cell neighbor lists
-      INTEGER, DIMENSION(:,:), POINTER, SAVE     :: inp,jnp
+      INTEGER, DIMENSION(:,:), POINTER, SAVE     :: inp => NULL(),jnp => NULL()
       ! number of interactions for each cell
       INTEGER, SAVE                              :: nnp
       ! cell offsets for box index
       INTEGER                                    :: n1,n2,nz
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
-      
+
       !-------------------------------------------------------------------------
       !  Initialise
       !-------------------------------------------------------------------------
@@ -226,9 +226,9 @@
       !  just here as a template.
       !-------------------------------------------------------------------------
       IF (imode .EQ. -1) THEN
-          CALL ppm_clist_destroy(clist,info)
-          DEALLOCATE(inp,jnp,Nm,STAT=info)
-          GOTO 9999
+         CALL ppm_clist_destroy(clist,info)
+         DEALLOCATE(inp,jnp,Nm,STAT=info)
+         GOTO 9999
       ENDIF
 
       !-------------------------------------------------------------------------
@@ -261,7 +261,7 @@
           ENDIF
 
           !---------------------------------------------------------------------
-          !  Generate cell neighbor lists 
+          !  Generate cell neighbor lists
           !---------------------------------------------------------------------
           CALL ppm_neighlist_MkNeighIdx(lsymm,inp,jnp,nnp,info)
           GOTO 9999
@@ -280,7 +280,7 @@
               IF (dimens .EQ. 2) THEN
                   n2 = 0
                   nz = 2
-              ENDIF 
+              ENDIF
               ! loop over all REAL cells (the -2 in the end does this)
               DO k=0,nz-2
                   DO j=0,Nm(2,idom)-2
@@ -301,7 +301,7 @@
                               iend   = clist(idom)%lhbx(ibox+1)-1
                               IF (iend .LT. istart) CYCLE
                               !-------------------------------------------------
-                              !  Within the box itself use symmetry and avoid 
+                              !  Within the box itself use symmetry and avoid
                               !  adding the particle itself to its own list
                               !-------------------------------------------------
                               IF (ibox .EQ. jbox) THEN
@@ -335,7 +335,7 @@
                               !  For the other boxes check all particles
                               !-------------------------------------------------
                               ELSE
-                                  ! get pointers to first and last particle 
+                                  ! get pointers to first and last particle
                                   jstart = clist(idom)%lhbx(jbox)
                                   jend   = clist(idom)%lhbx(jbox+1)-1
                                   ! skip this iinter if empty
@@ -343,7 +343,7 @@
                                   ! loop over all particles inside this cell
                                   DO ipart=istart,iend
                                       ip = clist(idom)%lpdx(ipart)
-                                      ! check against all particles 
+                                      ! check against all particles
                                       ! in the other cell
                                       DO jpart=jstart,jend
                                           jp = clist(idom)%lpdx(jpart)
@@ -387,7 +387,7 @@
               IF (dimens .EQ. 2) THEN
                   n2 = 0
                   nz = 2
-              ENDIF 
+              ENDIF
               ! loop over all REAL cells (the -2 in the end does this)
               DO k=1,nz-2
                   DO j=1,Nm(2,idom)-2
@@ -442,7 +442,7 @@
                               !  Do interactions with all neighboring boxes
                               !-------------------------------------------------
                               ELSE
-                                  ! get pointers to first and last particle 
+                                  ! get pointers to first and last particle
                                   jstart = clist(idom)%lhbx(jbox)
                                   jend   = clist(idom)%lhbx(jbox+1)-1
                                   ! skip this iinter if empty
@@ -450,7 +450,7 @@
                                   ! loop over all particles inside this cell
                                   DO ipart=istart,iend
                                       ip = clist(idom)%lpdx(ipart)
-                                      ! check against all particles 
+                                      ! check against all particles
                                       ! in the other cell
                                       DO jpart=jstart,jend
                                           jp = clist(idom)%lpdx(jpart)

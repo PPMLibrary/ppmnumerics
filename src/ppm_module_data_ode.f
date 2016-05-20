@@ -5,9 +5,9 @@
       !
       !  Purpose      : ode module
       !
-      !  Remarks      : 
+      !  Remarks      :
       !
-      !  References   : 
+      !  References   :
       !
       !  Revisions    :
       !-------------------------------------------------------------------------
@@ -38,16 +38,16 @@
       !
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -80,7 +80,7 @@
         ! implemented schemes
         !-----------------------------------------------------------------------
         ! have been moved to ppm_param.h
-        
+
         !-----------------------------------------------------------------------
         ! scheme stuff
         ! _o : order
@@ -96,39 +96,39 @@
         DATA ppm_ode_scheme_m /1,2,2,4,2,1,0/
         DATA ppm_ode_scheme_s /1,2,2,4,2,3,999999/
         DATA ppm_ode_scheme_k /1,2,2,4,2,6,7/
-        
-        
+
+
         !-----------------------------------------------------------------------
         ! what scheme for which mode
         !-----------------------------------------------------------------------
-        INTEGER, DIMENSION(:), POINTER :: ppm_ode_ischeme
-        INTEGER, DIMENSION(:), POINTER :: ppm_ode_kscheme
+        INTEGER, DIMENSION(:), POINTER :: ppm_ode_ischeme => NULL()
+        INTEGER, DIMENSION(:), POINTER :: ppm_ode_kscheme => NULL()
         !-----------------------------------------------------------------------
         ! use an adaptive timestep
         !-----------------------------------------------------------------------
-        LOGICAL, DIMENSION(:), POINTER :: ppm_ode_adaptive
+        LOGICAL, DIMENSION(:), POINTER :: ppm_ode_adaptive => NULL()
         !-----------------------------------------------------------------------
         ! number of stages a mode uses
         !-----------------------------------------------------------------------
-        INTEGER, DIMENSION(:), POINTER :: ppm_ode_stages
+        INTEGER, DIMENSION(:), POINTER :: ppm_ode_stages => NULL()
         !-----------------------------------------------------------------------
         ! state of a mode
         !-----------------------------------------------------------------------
-        INTEGER, DIMENSION(:), POINTER :: ppm_ode_state
+        INTEGER, DIMENSION(:), POINTER :: ppm_ode_state => NULL()
         !-----------------------------------------------------------------------
         ! number of sent stages
         !-----------------------------------------------------------------------
-        INTEGER, DIMENSION(:), POINTER :: ppm_ode_sent
+        INTEGER, DIMENSION(:), POINTER :: ppm_ode_sent => NULL()
         !-----------------------------------------------------------------------
         ! size of the buffer
         !-----------------------------------------------------------------------
-        INTEGER, DIMENSION(:), POINTER :: ppm_ode_bfrsize
+        INTEGER, DIMENSION(:), POINTER :: ppm_ode_bfrsize => NULL()
         !-----------------------------------------------------------------------
         ! id lists
         !-----------------------------------------------------------------------
-        INTEGER, DIMENSION(:), POINTER :: ppm_user_mid
-        INTEGER, DIMENSION(:), POINTER :: ppm_internal_mid
-        
+        INTEGER, DIMENSION(:), POINTER :: ppm_user_mid => NULL()
+        INTEGER, DIMENSION(:), POINTER :: ppm_internal_mid => NULL()
+
 
         !-----------------------------------------------------------------------
         ! some stages for ppm_ode_state
@@ -137,8 +137,8 @@
         INTEGER, PARAMETER :: ppm_ode_state_kickoff   = 2
         INTEGER, PARAMETER :: ppm_ode_state_running   = 1
         INTEGER, PARAMETER :: ppm_ode_state_inited    = 0
-        
-        
+
+
         !-----------------------------------------------------------------------
         ! number of modes
         !-----------------------------------------------------------------------

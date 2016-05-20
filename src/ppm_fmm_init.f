@@ -1,16 +1,16 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                    ppm_fmm_init
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -47,7 +47,7 @@
       !!! [TIP]
       !!! only useful for freespace boundary conditions
       !-------------------------------------------------------------------------
-      !  Modules 
+      !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_tree
       USE ppm_module_data
@@ -74,16 +74,16 @@
 #endif
       !-------------------------------------------------------------------------
       !  Precision
-      !-------------------------------------------------------------------------      
+      !-------------------------------------------------------------------------
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
 #else
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
-#if   __DIM == __SFIELD      
+#if   __DIM == __SFIELD
       REAL(MK), DIMENSION(:  ), POINTER       :: wp
       !!! field particle strenghts
 #elif __DIM == __VFIELD
@@ -113,14 +113,14 @@
       INTEGER                 , INTENT(  OUT) :: info
       !!! return status, 0 upon success
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       LOGICAL                             :: pruneboxes,OK
       LOGICAL                             :: TopoExists
       LOGICAL,DIMENSION(3)                :: fixed
       INTEGER,DIMENSION(1)                :: ldu1
       INTEGER,DIMENSION(2)                :: ldu2
-      INTEGER,DIMENSION(3)                :: ldu3         
+      INTEGER,DIMENSION(3)                :: ldu3
       INTEGER                             :: iopt,i,j,k,l
       CHARACTER(LEN=ppm_char)             :: cbuf
       INTEGER                             :: box,first,last,nrpbox
@@ -129,7 +129,7 @@
       REAL(MK),DIMENSION(3)               :: diagvec
 #if   __DIM == __SFIELD
       INTEGER,DIMENSION(3)                :: ldu,ldl
-#else 
+#else
       INTEGER,DIMENSION(4)                :: ldu,ldl
 #endif
       INTEGER                             :: treetype,minboxes
@@ -138,36 +138,40 @@
       REAL(MK),DIMENSION(3,2)             :: weights
       REAL(MK),DIMENSION(3  )             :: minboxsize
       REAL(MK),DIMENSION(:,:), POINTER    :: min_box,max_box
-      REAL(MK),DIMENSION(:),   POINTER    :: boxcost       
+      REAL(MK),DIMENSION(:),   POINTER    :: boxcost
       REAL(MK),DIMENSION(:)  , POINTER    :: fac,fracfac
       REAL(MK),DIMENSION(:,:), POINTER    :: Anm,sqrtfac
       INTEGER                             :: n,m,level
-      INTEGER,DIMENSION(:),    POINTER    :: box2proc,boxid 
+      INTEGER,DIMENSION(:),    POINTER    :: box2proc,boxid
       REAL(MK),DIMENSION(:),   POINTER    :: cost
       REAL(MK)                            :: ghostsize
       INTEGER                             :: decomp,assig
       INTEGER,DIMENSION(6)                :: bcdef
-      REAL(MK),DIMENSION(:,:), POINTER    :: min_sub,max_sub 
+      REAL(MK),DIMENSION(:,:), POINTER    :: min_sub,max_sub
       INTEGER                             :: nsubs,topoid
       INTEGER,DIMENSION(:),    POINTER    :: new_subs2proc,subs2proc
       INTEGER                             :: Mpart
-      INTEGER                             :: istat         
+      INTEGER                             :: istat
       REAL(MK),DIMENSION(:  ), POINTER    :: radius,totalmass
-      REAL(MK),DIMENSION(:,:), POINTER    :: centerofbox      
+      REAL(MK),DIMENSION(:,:), POINTER    :: centerofbox
       REAL(MK),DIMENSION(:,:), POINTER    :: treepart
-#if   __DIM == __SFIELD              
+#if   __DIM == __SFIELD
       REAL(MK),DIMENSION(:  ), POINTER    :: treewp
 #elif __DIM == __VFIELD
       REAL(MK),DIMENSION(:,:), POINTER    :: treewp
 #endif
       !-------------------------------------------------------------------------
-      !  Initialize 
+      !  Initialize
       !-------------------------------------------------------------------------
       CALL substart('ppm_fmm_init',t0,info)
+
+      NULLIFY(box2proc,boxid,cost,min_sub,max_sub)
+      NULLIFY(new_subs2proc,subs2proc,treepart,treewp)
+
       !-------------------------------------------------------------------------
       !  Check arguments
       !-------------------------------------------------------------------------
-      IF (ppm_debug.GT.0) THEN  
+      IF (ppm_debug.GT.0) THEN
          DO i=1,ppm_dim
             IF (min_dom(i) .GT. max_dom(i)) THEN
                info = ppm_error_error
@@ -186,7 +190,7 @@
       !-------------------------------------------------------------------------
       order        = ord
       !-------------------------------------------------------------------------
-      ! Set tree input variables 
+      ! Set tree input variables
       !-------------------------------------------------------------------------
       treetype     = ppm_param_tree_oct
       minboxes     = ppm_nproc
@@ -197,7 +201,7 @@
       weights(:,1) = (/1.0_MK,0.0_MK,0.0_MK/)
       weights(:,2) = (/0.0_MK,0.0_MK,1.0_MK/)
       maxlevels    = 20
-#if   __KIND == __SINGLE_PRECISION      
+#if   __KIND == __SINGLE_PRECISION
       !-------------------------------------------------------------------------
       ! Build the tree - single precision
       !-------------------------------------------------------------------------
@@ -227,7 +231,7 @@
           GOTO 9999
       ENDIF
       nrofbox = nbox
-      IF (ppm_debug.GT.0) THEN  
+      IF (ppm_debug.GT.0) THEN
          CALL ppm_write(ppm_rank,'ppm_fmm_init', &
          &    'calling tree successful',info)
          WRITE (cbuf,'(A,I6)') 'nbox = ',nbox
@@ -377,7 +381,7 @@
       ! Loop over the levels of the tree and register each level as topology
       !-------------------------------------------------------------------------
       assig      = ppm_param_assign_user_defined
-      
+
       DO i=level+1,nlevel
 
         !-----------------------------------------------------------------------
@@ -420,7 +424,7 @@
         DO j=1,SIZE(boxid)
            ppm_subid(boxid(j),i)   = j
         ENDDO
-      ENDDO 
+      ENDDO
       !-------------------------------------------------------------------------
       ! Map for the lowest level (leafs of tree)
       !-------------------------------------------------------------------------
@@ -438,8 +442,8 @@
       ENDIF
       !-------------------------------------------------------------------------
       !  Push along the strength of the particles and the boxpart
-      !-------------------------------------------------------------------------      
-#if   __DIM == __SFIELD      
+      !-------------------------------------------------------------------------
+#if   __DIM == __SFIELD
       CALL ppm_map_part_push(wp,Np,info)   ! strengths
 #else
       CALL ppm_map_part_push(wp,lda,Np,info)   ! strengths
@@ -469,7 +473,7 @@
           &    'Failed to push strengths.',info)
           GOTO 9999
       ENDIF
-#if   __DIM == __SFIELD      
+#if   __DIM == __SFIELD
       CALL ppm_map_part_pop(wp,Np,Mpart,info)   ! strengths
 #else
       CALL ppm_map_part_pop(wp,lda,Np,Mpart,info)   ! strengths
@@ -487,7 +491,7 @@
           GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
-      !  Update and store and new number of particles 
+      !  Update and store and new number of particles
       !-------------------------------------------------------------------------
       Np = Mpart
       IF (ppm_debug .GT. 0) THEN
@@ -495,7 +499,7 @@
         &             'Done mapping particles.',info)
         WRITE(cbuf,'(A,I6)') 'Local number of particles is now: ',Np
         CALL ppm_write(ppm_rank,'ppm_fmm_init',cbuf,info)
-      ENDIF 
+      ENDIF
       !-------------------------------------------------------------------------
       !  Check that particles have been mapped correctly
       !-------------------------------------------------------------------------
@@ -504,10 +508,10 @@
          CALL ppm_write(ppm_rank,'ppm_fmm_init', &
          &    'Failed to check topology.',info)
       ENDIF
-      
+
       IF (.NOT.OK) THEN
           CALL ppm_write(ppm_rank,'ppm_fmm_init', &
-          &    'Particles not mapped correctly!',info) 
+          &    'Particles not mapped correctly!',info)
           GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
@@ -656,7 +660,7 @@
          CALL ppm_error(ppm_err_alloc,'ppm_fmm_init', &
       &       'error allocating expansion',__LINE__,info)
          GOTO 9999
-      ENDIF  
+      ENDIF
       DO j=0,order
          DO k=-order,order
             DO i=1,nbox
@@ -664,7 +668,7 @@
             ENDDO
          ENDDO
       ENDDO
-#elif (__KIND == __DOUBLE_PRECISION && __DIM == __SFIELD)      
+#elif (__KIND == __DOUBLE_PRECISION && __DIM == __SFIELD)
       ldl(1)  = 1
       ldl(2)  = 0
       ldl(3)  = -order
@@ -710,7 +714,7 @@
             ENDDO
          ENDDO
       ENDDO
-#elif (__KIND == __DOUBLE_PRECISION && __DIM == __VFIELD)      
+#elif (__KIND == __DOUBLE_PRECISION && __DIM == __VFIELD)
       ldl(1)  = 1
       ldl(2)  = 1
       ldl(3)  = 0
@@ -718,7 +722,7 @@
       ldu(1)  = lda
       ldu(2)  = nbox
       ldu(3)  = order
-      ldu(4)  = order   
+      ldu(4)  = order
       CALL ppm_alloc(expansion_d_vf,ldl,ldu,iopt,info)
       IF (info .NE. 0) THEN
          info = ppm_error_fatal
@@ -735,10 +739,10 @@
             ENDDO
          ENDDO
       ENDDO
-#endif      
+#endif
       !-------------------------------------------------------------------------
-      ! Allocate multipole coefficient variables      
-      ! Pnm, Ynm, fac, rho, theta, phi      
+      ! Allocate multipole coefficient variables
+      ! Pnm, Ynm, fac, rho, theta, phi
       !-------------------------------------------------------------------------
 #if   __KIND == __SINGLE_PRECISION
       ldl(1) = 0
@@ -912,7 +916,7 @@
       !-------------------------------------------------------------------------
       ! Allocate Cnm
       !-------------------------------------------------------------------------
-#if   (__KIND == __SINGLE_PRECISION && __DIM == __SFIELD)      
+#if   (__KIND == __SINGLE_PRECISION && __DIM == __SFIELD)
       ldl(1) = 0
       ldl(2) = -order
       ldu(1) = order
@@ -924,7 +928,7 @@
          &    'error allocating Cnm',__LINE__,info)
          GOTO 9999
       ENDIF
-#elif (__KIND == __DOUBLE_PRECISION && __DIM == __SFIELD)      
+#elif (__KIND == __DOUBLE_PRECISION && __DIM == __SFIELD)
       ldl(1) = 0
       ldl(2) = -order
       ldu(1) = order
@@ -936,7 +940,7 @@
          &    'error allocating Cnm',__LINE__,info)
          GOTO 9999
       ENDIF
-#elif (__KIND == SINGLE_PRECISION && __DIM == __VFIELD) 
+#elif (__KIND == SINGLE_PRECISION && __DIM == __VFIELD)
       ldl(1) = 1
       ldl(2) = 0
       ldl(3) = -order
@@ -950,7 +954,7 @@
          &    'error allocating Cnm',__LINE__,info)
          GOTO 9999
       ENDIF
-#elif (__KIND == __DOUBLE_PRECISION && __DIM == __VFIELD)      
+#elif (__KIND == __DOUBLE_PRECISION && __DIM == __VFIELD)
       ldl(1) = 1
       ldl(2) = 0
       ldl(3) = -order
@@ -964,7 +968,7 @@
          &    'error allocating Cnm',__LINE__,info)
          GOTO 9999
       ENDIF
-#endif      
+#endif
       !-------------------------------------------------------------------------
       ! Allocate radius (single/double)
       !-------------------------------------------------------------------------
@@ -1005,7 +1009,7 @@
       ldu2(1) = ppm_dim
       ldu2(2) = nbox
       CALL ppm_alloc(centerofbox_d,ldu2,iopt,info)
-      IF (info .NE. 0) THEN 
+      IF (info .NE. 0) THEN
           info = ppm_error_fatal
           CALL ppm_error(ppm_err_alloc,'ppm_fmm_init', &
           &    'error allocating centerofbox',__LINE__,info)
@@ -1027,14 +1031,14 @@
 #else
       ldu1 = nbox
       CALL ppm_alloc(totalmass_d,ldu1,iopt,info)
-      IF (info .NE. 0) THEN 
+      IF (info .NE. 0) THEN
           info = ppm_error_fatal
           CALL ppm_error(ppm_err_alloc,'ppm_fmm_init', &
           &    'error allocating totalmass',__LINE__,info)
           GOTO 9999
       ENDIF
 #endif
-      IF (ppm_debug.GT.0) THEN  
+      IF (ppm_debug.GT.0) THEN
          CALL ppm_write(ppm_rank,'ppm_fmm_init','alloc data successful' &
          &    ,info)
       ENDIF
@@ -1071,7 +1075,7 @@
       &       'error allocating treepart',__LINE__,info)
          GOTO 9999
       ENDIF
-#if   __DIM == __SFIELD            
+#if   __DIM == __SFIELD
       ldu1 = Np
       CALL ppm_alloc(treewp,ldu1,iopt,info)
       IF (info .NE. 0) THEN
@@ -1089,8 +1093,8 @@
          CALL ppm_error(ppm_err_alloc,'ppm_fmm_init', &
       &       'error allocating treewp',__LINE__,info)
          GOTO 9999
-      ENDIF  
-#endif      
+      ENDIF
+#endif
       !-------------------------------------------------------------------------
       ! Loop over the boxes to compute the centerofbox of each
       !-------------------------------------------------------------------------
@@ -1109,31 +1113,31 @@
             IF(ppm_dim.EQ.3)THEN
                treepart(3,j) = xp(3,lpdx(j))
             ENDIF
-#if         __DIM == __SFIELD        
+#if         __DIM == __SFIELD
             treewp(j)   = wp(lpdx(j))
 #else
             DO i=1,lda
                treewp(i,j) = wp(i,lpdx(j))
             ENDDO
-#endif 
+#endif
          ENDDO
          !----------------------------------------------------------------------
          ! Computing the total mass
          !----------------------------------------------------------------------
-#if      __DIM == __SFIELD         
+#if      __DIM == __SFIELD
          totalmass(box) = 0.0_MK
          DO i=first,last
             totalmass(box) = totalmass(box) + ABS(treewp(i))
          ENDDO
-#else 
+#else
          totalmass(box) = 0.0_MK
          DO i=first,last
             DO j=1,lda
                totalmass(box) = totalmass(box) + treewp(j,i)*treewp(j,i)
             ENDDO
-         ENDDO 
+         ENDDO
          totalmass(box) = SQRT(totalmass(box))
-#endif 
+#endif
          !----------------------------------------------------------------------
          ! Compute the centers of the leaf boxes
          !----------------------------------------------------------------------
@@ -1221,7 +1225,7 @@
             ENDIF
          ENDIF
       ENDDO
-      IF (ppm_debug.GT.0) THEN  
+      IF (ppm_debug.GT.0) THEN
          CALL ppm_write(ppm_rank,'ppm_fmm_init','computed centers',info)
       ENDIF
       !-------------------------------------------------------------------------
@@ -1242,7 +1246,7 @@
                tmp = SQRT(tmp)
                IF (tmp .GT. radius(box)) THEN
                   radius(box) = tmp
-               ENDIF  
+               ENDIF
             ENDDO
          ENDDO
       ENDIF
@@ -1260,11 +1264,11 @@
                tmp = SQRT(tmp)
                IF (tmp .GT. radius(box)) THEN
                   radius(box) = tmp
-               ENDIF  
+               ENDIF
             ENDDO
          ENDDO
       ENDIF
-      IF (ppm_debug.GT.0) THEN  
+      IF (ppm_debug.GT.0) THEN
          CALL ppm_write(ppm_rank,'ppm_fmm_init','computed radius',info)
       ENDIF
       !-------------------------------------------------------------------------
@@ -1321,4 +1325,4 @@
 #elif (__KIND == __DOUBLE_PRECISION && __DIM == __VFIELD)
       END SUBROUTINE ppm_fmm_init_d_vf
 #endif
-      
+

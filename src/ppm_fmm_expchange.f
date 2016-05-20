@@ -4,18 +4,18 @@
       !
       !  Purpose      : This routine exchanges the expansion coefficents,
       !                 the radius and the centerofboxes between all processores
-      !                 by all to all communication    
-      !                
+      !                 by all to all communication
       !
-      !  Input        : 
+      !
+      !  Input        :
       !                 prec         (F) : dummy to determine precision
       !                 lda          (I) leading dimension of vector case
-      !                                    
+      !
       !  Output       : info         (I) : return status, 0 on success
       !
       !  Remarks      : This routine has 3 separate sendrecv, ie. the data is
       !                        not packed before  sending
-      !                       (no pack data -send - unpack data ) 
+      !                       (no pack data -send - unpack data )
       !
       !  References   :
       !
@@ -70,16 +70,16 @@
       !
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -106,7 +106,7 @@
       SUBROUTINE ppm_fmm_expchange_d_vf(lda,prec,info)
 #endif
       !-------------------------------------------------------------------------
-      !  Modules 
+      !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_fmm
@@ -125,22 +125,22 @@
 #endif
       !-------------------------------------------------------------------------
       !  Precision
-      !------------------------------------------------------------------------- 
+      !-------------------------------------------------------------------------
 #if    __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
 #else
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
 #if   __DIM == __VFIELD
       INTEGER                 , INTENT(IN   ) :: lda
-#endif      
+#endif
       REAL(MK)                , INTENT(IN   ) :: prec
       INTEGER                 , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! auxiliary variables
       INTEGER                              :: i,j,k,isub,m,n,l
@@ -154,27 +154,27 @@
       INTEGER, DIMENSION(1)                :: ldu1
       INTEGER, DIMENSION(2)                :: ldu2
       INTEGER, DIMENSION(3)                :: ldu3
-      INTEGER, DIMENSION(4)                :: ldu4      
+      INTEGER, DIMENSION(4)                :: ldu4
       REAL(MK)                             :: t0
       TYPE(ppm_t_topo), POINTER            :: topo
       ! parallelisation
 #ifdef __MPI
       INTEGER, DIMENSION(MPI_STATUS_SIZE)  :: status
 #endif
-      ! fmm      
+      ! fmm
       REAL(MK),DIMENSION(:  ),     POINTER :: radius,recvrad,sendrad
-      REAL(MK),DIMENSION(:,:),     POINTER :: recvcen,sendcen,centerofbox 
-#if   __DIM == __SFIELD       
+      REAL(MK),DIMENSION(:,:),     POINTER :: recvcen,sendcen,centerofbox
+#if   __DIM == __SFIELD
       COMPLEX(MK),DIMENSION(:,:,:),POINTER :: expansion,recvexp,sendexp
 #else
       COMPLEX(MK),DIMENSION(:,:,:,:),POINTER :: expansion,recvexp,sendexp
 #endif
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
-      
+
       !-------------------------------------------------------------------------
-      !  Initialise 
+      !  Initialise
       !-------------------------------------------------------------------------
       CALL substart('ppm_fmm_expchange',t0,info)
       !-------------------------------------------------------------------------
@@ -184,7 +184,7 @@
 #if   __DIM == __SFIELD
       expansion   => expansion_s_sf
 #else
-      expansion   => expansion_s_vf     
+      expansion   => expansion_s_vf
 #endif
       centerofbox => centerofbox_s
       radius      => radius_s
@@ -192,7 +192,7 @@
 #if   __DIM == __SFIELD
       expansion   => expansion_d_sf
 #else
-      expansion   => expansion_d_vf     
+      expansion   => expansion_d_vf
 #endif
       centerofbox => centerofbox_d
       radius      => radius_d
@@ -242,7 +242,7 @@
       nsendexp = 0
       DO i=level,nlevel
          topoid = topoidlist(i)
-         topo   = ppm_topo(topoid)%t
+         topo   => ppm_topo(topoid)%t
 
          nsendexp = nsendexp + topo%nsublist
          nsendcen = nsendexp
@@ -252,7 +252,8 @@
       !   Set up own lists for sending to other processors
       !-------------------------------------------------------------------------
       ! expansion
-#if   __DIM == __SFIELD      
+      NULLIFY(sendexp)
+#if   __DIM == __SFIELD
       ldu3(1) = nsendexp
       ldu3(2) = order+1
       ldu3(3) = 2*order+1
@@ -263,14 +264,15 @@
       ldu4(3) = order+1
       ldu4(4) = 2*order+1
       CALL ppm_alloc(sendexp,ldu4,iopt,info)
-#endif 
+#endif
       IF (info .NE. 0) THEN
          info = ppm_error_fatal
          CALL ppm_error(ppm_err_alloc,'ppm_fmm_expchange', &
       &       'error allocating sendexp',__LINE__,info)
       GOTO 9999
-      ENDIF 
+      ENDIF
       ! centerofbox
+      NULLIFY(sendcen)
       ldu2(1) = 3
       ldu2(2) = nsendcen
       CALL ppm_alloc(sendcen,ldu2,iopt,info)
@@ -279,24 +281,25 @@
          CALL ppm_error(ppm_err_alloc,'ppm_fmm_expchange', &
       &       'error allocating sendcen',__LINE__,info)
       GOTO 9999
-      ENDIF 
+      ENDIF
       ! radius
+      NULLIFY(sendrad)
       ldu1(1) = nsendrad
       CALL ppm_alloc(sendrad,ldu1,iopt,info)
-      
+
       IF (info .NE. 0) THEN
          info = ppm_error_fatal
          CALL ppm_error(ppm_err_alloc,'ppm_fmm_expchange', &
       &       'error allocating sendrad',__LINE__,info)
       GOTO 9999
-      ENDIF 
+      ENDIF
       !-------------------------------------------------------------------------
       !  loop over levels of tree
       !-------------------------------------------------------------------------
       cnt = 0
       DO i=level,nlevel
          topoid = topoidlist(i)
-         topo   = ppm_topo(topoid)%t
+         topo   => ppm_topo(topoid)%t
 
          !----------------------------------------------------------------------
          !   loop over local subs and store in sendexp,sendcen,sendrad
@@ -307,14 +310,14 @@
 #if         __DIM == __SFIELD
 	    DO n=1,ldu3(2)
                DO m=1,ldu3(3)
-                  sendexp(cnt,n,m) = expansion(box,n-1,m-order-1)       
+                  sendexp(cnt,n,m) = expansion(box,n-1,m-order-1)
                ENDDO
             ENDDO
 #else
             DO n=1,ldu4(2)
                DO m=1,ldu4(3)
                   DO l=1,ldu4(1)
-                     sendexp(l,cnt,n,m) = expansion(l,box,n-1,m-order-1)       
+                     sendexp(l,cnt,n,m) = expansion(l,box,n-1,m-order-1)
                   ENDDO
                ENDDO
             ENDDO
@@ -349,18 +352,18 @@
          !  compute the next processor
          !----------------------------------------------------------------------
 	 sendrank = sendrank + 1
-         IF (sendrank.GT.ppm_nproc-1) sendrank = sendrank - ppm_nproc 
+         IF (sendrank.GT.ppm_nproc-1) sendrank = sendrank - ppm_nproc
          recvrank = recvrank - 1
-         IF (recvrank.LT.          0) recvrank = recvrank + ppm_nproc 
+         IF (recvrank.LT.          0) recvrank = recvrank + ppm_nproc
 	 !----------------------------------------------------------------------
          !  Store the processor to which we will send to
          !----------------------------------------------------------------------
-	 ppm_nsendlist                = ppm_nsendlist + 1 
+	 ppm_nsendlist                = ppm_nsendlist + 1
          ppm_isendlist(ppm_nsendlist) = sendrank
          !----------------------------------------------------------------------
          !  Store the processor to which we will recv from
          !----------------------------------------------------------------------
-	 ppm_nrecvlist                = ppm_nrecvlist + 1 
+	 ppm_nrecvlist                = ppm_nrecvlist + 1
          ppm_irecvlist(ppm_nrecvlist) = recvrank
 	 !----------------------------------------------------------------------
          !  reset counter for nr of exp.coeff.,rad,centers to be received
@@ -369,15 +372,15 @@
          nrecvcen                     = 0
          nrecvrad                     = 0
 	 !----------------------------------------------------------------------
-         !  loop over all topologies and check all subs 
+         !  loop over all topologies and check all subs
          !----------------------------------------------------------------------
          DO j=level,nlevel
             topoid = topoidlist(j)
-            topo   = ppm_topo(topoid)%t
+            topo   => ppm_topo(topoid)%t
 
             DO isub=1,topo%nsubs
               !-----------------------------------------------------------------
-              !  Check if they belong to the processor from where we will 
+              !  Check if they belong to the processor from where we will
               !  receive data
               !-----------------------------------------------------------------
               IF (topo%sub2proc(isub) .EQ. recvrank) THEN
@@ -391,7 +394,7 @@
                  !--------------------------------------------------------------
                  !  will be exchanged in another round
                  !--------------------------------------------------------------
-              ENDIF 
+              ENDIF
            ENDDO
          ENDDO
 	 !----------------------------------------------------------------------
@@ -399,6 +402,7 @@
          !----------------------------------------------------------------------
          iopt   = ppm_param_alloc_fit
 	 ! expansion
+	 NULLIFY(recvexp)
 #if      __DIM == __SFIELD
          ldu3(1) = nrecvexp
          ldu3(2) = order+1
@@ -418,6 +422,7 @@
          GOTO 9999
          ENDIF
 	 ! centerofbox
+         NULLIFY(recvcen)
          ldu2(1) = 3
          ldu2(2) = nrecvcen
          CALL ppm_alloc(recvcen,ldu2,iopt,info)
@@ -428,6 +433,7 @@
          GOTO 9999
          ENDIF
 	 ! radius
+         NULLIFY(recvrad)
          ldu1(1) = nrecvrad
          CALL ppm_alloc(recvrad,ldu1,iopt,info)
          IF (info .NE. 0) THEN
@@ -464,7 +470,7 @@
 #endif
          !----------------------------------------------------------------------
          !  receive the radius
-         !---------------------------------------------------------------------- 
+         !----------------------------------------------------------------------
 	 nsend = nsendrad
          nrecv = nrecvrad
 #ifdef __MPI
@@ -479,10 +485,10 @@
          cnt = 0
          DO j=level,nlevel
             topoid = topoidlist(j)
-            topo   = ppm_topo(topoid)%t
+            topo   => ppm_topo(topoid)%t
             DO isub=1,topo%nsubs
               !-----------------------------------------------------------------
-              !  Check if the sub belongs to the processor from where we 
+              !  Check if the sub belongs to the processor from where we
               !  received data
               !-----------------------------------------------------------------
 	      IF (topo%sub2proc(isub) .EQ. recvrank) THEN
@@ -546,7 +552,7 @@
          &    'sendexp',__LINE__,info)
       ENDIF
       !-------------------------------------------------------------------------
-      !  Return 
+      !  Return
       !-------------------------------------------------------------------------
  9999 CONTINUE
       CALL substop('ppm_fmm_expchange',t0,info)

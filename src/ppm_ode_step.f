@@ -24,9 +24,9 @@
       !
       !  Output       : info                   (I) return status
       !
-      !  Remarks      : 
+      !  Remarks      :
       !
-      !  References   : 
+      !  References   :
       !
       !  Revisions    :
       !-------------------------------------------------------------------------
@@ -102,16 +102,16 @@
       !  initial implementation.
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -131,18 +131,18 @@
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_ode_step_ss(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
+      &          rhsfunc, ipackdata, rpackdata, lpackdata, info)
 #elif __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_ode_step_ds(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
+      &          rhsfunc, ipackdata, rpackdata, lpackdata, info)
 #endif
 #elif __MODE == __VEC
 #if   __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_ode_step_sv(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
+      &          rhsfunc, ipackdata, rpackdata, lpackdata, info)
 #elif __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_ode_step_dv(odeid,xp,up,dup,lda,Npart,bfr,istage,time,&
-      & rhsfunc, ipackdata, rpackdata, lpackdata, info)
+      &          rhsfunc, ipackdata, rpackdata, lpackdata, info)
 #endif
 #endif
         !-----------------------------------------------------------------------
@@ -161,110 +161,114 @@
         USE ppm_module_alloc
         USE ppm_module_numerics_data
         IMPLICIT NONE
+
 #if     __KIND == __SINGLE_PRECISION
-        INTEGER, PARAMETER :: mk = ppm_kind_single
+        INTEGER, PARAMETER :: MK = ppm_KIND_single
 #else
-        INTEGER, PARAMETER :: mk = ppm_kind_double
+        INTEGER, PARAMETER :: MK = ppm_KIND_double
 #endif
-#ifdef __F2003
-#if     __KIND == __SINGLE_PRECISION
-#if     __MODE == __SCA
-        PROCEDURE(rhsfunc_ss)                               :: rhsfunc
-#elif   __MODE == __VEC
-        PROCEDURE(rhsfunc_sv)                               :: rhsfunc
-#endif
-#else
-#if     __MODE == __SCA
-        PROCEDURE(rhsfunc_ds)                               :: rhsfunc
-#elif   __MODE == __VEC
-        PROCEDURE(rhsfunc_dv)                               :: rhsfunc
-#endif
-#endif
-#else
-#if     __KIND == __SINGLE_PRECISION
-        INTERFACE
-           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
-             INTEGER                          , INTENT(IN)  :: topoid
-             INTEGER                          , INTENT(IN)  :: lda,npart
-             INTEGER                          , INTENT(OUT) :: info
-#if     __MODE == __SCA
-             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: xp
-             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER     :: up
-             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER     :: dup
-#elif   __MODE == __VEC
-             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: xp,up
-             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER     :: dup
-#endif
-             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
-             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
-             REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
-        END INTERFACE
-#else
-        INTERFACE
-           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
-             INTEGER                          , INTENT(IN)  :: topoid
-             INTEGER                          , INTENT(IN)  :: lda,npart
-             INTEGER                          , INTENT(OUT) :: info
-#if     __MODE == __SCA
-             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: xp
-             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER     :: up
-             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER     :: dup
-#elif   __MODE == __VEC
-             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: xp,up
-             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER     :: dup
-#endif
-             INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
-             LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
-             REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
-           END FUNCTION rhsfunc
-        END INTERFACE
-#endif
-#endif
+
         !-----------------------------------------------------------------------
         !  Arguments
         !-----------------------------------------------------------------------
-        INTEGER,                    INTENT(  out) :: info
-        INTEGER,                    INTENT(in   ) :: odeid
+        INTEGER,                  INTENT(IN   )            :: odeid
+        REAL(MK), DIMENSION(:,:), POINTER                  :: xp
 #if     __MODE == __SCA
-        REAL(mk), DIMENSION(:  ), POINTER         :: up,dup        
-#elif   __MODE == __VEC        
-        REAL(mk), DIMENSION(:,:), POINTER         :: up,dup
-#endif        
-        REAL(mk), DIMENSION(:,:), POINTER         :: xp
-        REAL(mk), DIMENSION(:,:), POINTER         :: bfr
-        INTEGER,                    INTENT(in   ) :: istage
-        REAL(mk), DIMENSION(4),     INTENT(inout) :: time
-        INTEGER,                    INTENT(in   )   :: lda, Npart
-        INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipackdata
-        REAL(mk), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpackdata
-        LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpackdata
+        REAL(MK), DIMENSION(:  ), POINTER                  :: up,dup
+#elif   __MODE == __VEC
+        REAL(MK), DIMENSION(:,:), POINTER                  :: up,dup
+#endif
+        INTEGER,                  INTENT(IN   )            :: lda
+        INTEGER,                  INTENT(IN   )            :: Npart
+        REAL(MK), DIMENSION(:,:), POINTER                  :: bfr
+        INTEGER,                  INTENT(IN   )            :: istage
+        REAL(MK), DIMENSION(4),   INTENT(INOUT)            :: time
+#ifdef __F2003
+#if     __KIND == __SINGLE_PRECISION
+#if     __MODE == __SCA
+        PROCEDURE(rhsfunc_ss)                              :: rhsfunc
+#elif   __MODE == __VEC
+        PROCEDURE(rhsfunc_sv)                              :: rhsfunc
+#endif
+#else
+#if     __MODE == __SCA
+        PROCEDURE(rhsfunc_ds)                              :: rhsfunc
+#elif   __MODE == __VEC
+        PROCEDURE(rhsfunc_dv)                              :: rhsfunc
+#endif
+#endif
+#else
+        !-----------------------------------------------------------------------
+        !  INTERFACES
+        !-----------------------------------------------------------------------
+#if     __KIND == __SINGLE_PRECISION
+        INTERFACE
+           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,lpack,rpack,info)
+             INTEGER                          , INTENT(IN)           :: topoid
+             INTEGER                          , INTENT(IN)           :: lda,npart
+             INTEGER                          , INTENT(OUT)          :: info
+#if     __MODE == __SCA
+             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER              :: xp
+             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER              :: up
+             REAL(KIND(1.0E0)), DIMENSION(:),   POINTER              :: dup
+#elif   __MODE == __VEC
+             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER              :: xp,up
+             REAL(KIND(1.0E0)), DIMENSION(:,:), POINTER              :: dup
+#endif
+             INTEGER,           DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
+             LOGICAL,           DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
+             REAL(KIND(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
+             INTEGER                                                 :: rhsfunc
+           END FUNCTION rhsfunc
+        END INTERFACE
+#else
+        INTERFACE
+           FUNCTION rhsfunc(topoid,xp,up,dup,lda,npart,ipack,lpack,rpack,info)
+             INTEGER                          , INTENT(IN)           :: topoid
+             INTEGER                          , INTENT(IN)           :: lda,npart
+             INTEGER                          , INTENT(OUT)          :: info
+#if     __MODE == __SCA
+             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER              :: xp
+             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER              :: up
+             REAL(KIND(1.0D0)), DIMENSION(:),   POINTER              :: dup
+#elif   __MODE == __VEC
+             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER              :: xp,up
+             REAL(KIND(1.0D0)), DIMENSION(:,:), POINTER              :: dup
+#endif
+             INTEGER,           DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
+             LOGICAL,           DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
+             REAL(KIND(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
+             INTEGER                                                 :: rhsfunc
+           END FUNCTION rhsfunc
+        END INTERFACE
+#endif
+#endif
+        INTEGER,  DIMENSION(:,:), INTENT(IN   ), OPTIONAL :: ipackdata
+        REAL(MK), DIMENSION(:,:), INTENT(IN   ), OPTIONAL :: rpackdata
+        LOGICAL,  DIMENSION(:,:), INTENT(IN   ), OPTIONAL :: lpackdata
+        INTEGER,                  INTENT(  OUT)           :: info
         !-----------------------------------------------------------------------
         !  Local Variables
         !-----------------------------------------------------------------------
-        REAL(mk)                                  :: t, dt
+        REAL(MK)                                  :: t, dt
         INTEGER                                   :: scheme, throwaway, i, j
         INTEGER                                   :: umidmin, umidmax
         INTEGER                                   :: mid, ilda
-        REAL(mk)                                  :: M_PI
+        REAL(MK)                                  :: M_PI
         INTEGER                                   :: stsn
-        REAL(mk), DIMENSION(20)                   :: stsnu
-        REAL(mk)                                  :: tau
+        REAL(MK), DIMENSION(20)                   :: stsnu
+        REAL(MK)                                  :: tau
         INTEGER                                   :: topoid
         LOGICAL                                   :: topo_valid
         !-----------------------------------------------------------------------
         !  fill the nu parameters for the sts scheme
         !-----------------------------------------------------------------------
         M_PI = ACOS(-1.0_MK)
-        stsnu(1)  = 0.0_mk
-        stsnu(5)  = 0.04_mk
-        stsnu(7)  = 0.0015_mk
-        stsnu(9)  = 0.04_mk
-        stsnu(20) = 0.006_mk
+        stsnu(1)  = 0.0_MK
+        stsnu(5)  = 0.04_MK
+        stsnu(7)  = 0.0015_MK
+        stsnu(9)  = 0.04_MK
+        stsnu(20) = 0.006_MK
         !-----------------------------------------------------------------------
         !  call substart
         !-----------------------------------------------------------------------
@@ -305,7 +309,7 @@
                  ! user mid does not exist
                  !--------------------------------------------------------------
                  info = ppm_error_error
-                 CALL ppm_error(ppm_err_argument,'ppm_ode_step',& 
+                 CALL ppm_error(ppm_err_argument,'ppm_ode_step',&
                       & 'ODEID does not exist',__LINE__,info)
                  GOTO 9999
               END IF
@@ -325,7 +329,7 @@
                    & 'LDA must be >00',__LINE__,info)
               GOTO 9999
            END IF
-           IF(time(4).LE.0.0_mk) THEN
+           IF(time(4).LE.0.0_MK) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_ode_step', &
                    & 'dt must be >=0',__LINE__,info)
@@ -395,7 +399,7 @@
         ! bail out
         !-----------------------------------------------------------------------
         IF(ppm_ode_stages(mid).LT.istage) GOTO 9999
-        
+
         !-----------------------------------------------------------------------
         ! get times and scheme
         !-----------------------------------------------------------------------
@@ -427,7 +431,7 @@
            ! call right hand side and do an euler step
            !--------------------------------------------------------------------
 #include "ppm_ode_rhsfunc_macro.h"
-#if      __MODE == __SCA           
+#if      __MODE == __SCA
            DO j=1,npart
               up(j) = up(j) + dt * dup(j)
            END DO
@@ -437,7 +441,7 @@
                  up(i,j) = up(i,j) + dt * dup(i,j)
               END DO
            END DO
-#endif 
+#endif
            t  = t  + dt
            IF(ppm_ode_state(mid).EQ.ppm_ode_state_kickoff) THEN
               ppm_ode_state(mid) = ppm_ode_state_running
@@ -450,9 +454,9 @@
               !-----------------------------------------------------
               stsn = ipackdata(1,1)
               if(present(rpackdata)) stsnu(stsn) = rpackdata(1,1)
-              tau = dt/((stsnu(stsn)-1.0_mk)*&
-             & COS((2.0_mk*REAL(istage,mk)-1.0_mk)/REAL(stsn,mk)*M_PI*0.5_mk)&
-             & +1.0_mk+stsnu(stsn))
+              tau = dt/((stsnu(stsn)-1.0_MK)*&
+             & COS((2.0_MK*REAL(istage,MK)-1.0_MK)/REAL(stsn,MK)*M_PI*0.5_MK)&
+             & +1.0_MK+stsnu(stsn))
               !-----------------------------------------------------------------
               !=======
               !  euler:
@@ -461,7 +465,7 @@
               !  call right hand side and do an euler step
               !-----------------------------------------------------------------
 #include "ppm_ode_rhsfunc_macro.h"
-#if      __MODE == __SCA           
+#if      __MODE == __SCA
            DO j=1,npart
               up(j) = up(j) + tau * dup(j)
            END DO
@@ -496,7 +500,7 @@
                  up(i) = up(i) + dt*dup(i)
               END DO
 #elif    __MODE == __VEC
-              DO i=1,Npart             
+              DO i=1,Npart
                  DO j=1,lda
                     bfr(j,i) = up(j,i)
                     up(j,i) = up(j,i) + dt*dup(j,i)
@@ -504,7 +508,7 @@
               END DO
 #endif
               ppm_ode_sent(mid) = 1
-           CASE(2) 
+           CASE(2)
               !-----------------------------------------------------------------
               ! call rhs, and do another euler step
               !-----------------------------------------------------------------
@@ -525,15 +529,15 @@
               !-----------------------------------------------------------------
 #if      __MODE == __SCA
               DO i=1,Npart
-                 up(i)   = 0.5_mk * (up(i)   + bfr(1,i)    )
+                 up(i)   = 0.5_MK * (up(i)   + bfr(1,i)    )
               END DO
 #elif    __MODE == __VEC
-              DO i=1,Npart                 
+              DO i=1,Npart
                  DO j=1,lda
-                 up(j,i) = 0.5_mk * (up(j,i) + bfr(j,i))
+                 up(j,i) = 0.5_MK * (up(j,i) + bfr(j,i))
               END DO
            END DO
-#endif      
+#endif
               t = t + dt
               ppm_ode_sent(mid) = 0
               IF(ppm_ode_state(mid).EQ.ppm_ode_state_kickoff) THEN
@@ -549,24 +553,24 @@
            SELECT CASE(istage)
            CASE(1)
               !-----------------------------------------------------------------
-              ! 
+              !
               !-----------------------------------------------------------------
 #include "ppm_ode_rhsfunc_macro.h"
 #if      __MODE == __SCA
               DO i=1,Npart
                  bfr(1,i)     = up(i)
-                 up(i) = up(i) + 0.5_mk* dt * dup(i)
+                 up(i) = up(i) + 0.5_MK* dt * dup(i)
               END DO
 #elif    __MODE == __VEC
               DO j=1,lda
-                 DO i=1,Npart           
+                 DO i=1,Npart
                     bfr(j,i) = up(j,i)
-                    up(j,i) = up(j,i) + 0.5_mk*dt*dup(j,i)
+                    up(j,i) = up(j,i) + 0.5_MK*dt*dup(j,i)
                  END DO
               END DO
 #endif
               ppm_ode_sent(mid) = 1
-           CASE(2) 
+           CASE(2)
 #include "ppm_ode_rhsfunc_macro.h"
 #if      __MODE == __SCA
               DO i=1,Npart
@@ -578,7 +582,7 @@
                     up(j,i) = bfr(j,i) + dt * dup(j,i)
                  END DO
               END DO
-#endif                 
+#endif
               t = t + dt
               ppm_ode_sent(mid) = 0
               IF(ppm_ode_state(mid).EQ.ppm_ode_state_kickoff) THEN
@@ -599,22 +603,22 @@
 #if      __MODE == __SCA
                  bfr(1,i)     =  up(i)
                  bfr(2,i)     = dup(i) ! k1
-#elif    __MODE == __VEC             
+#elif    __MODE == __VEC
                  bfr(1:lda,i) = up(:,i)
                  bfr((lda+1):2*lda,i) = dup(:,i) !k1
 #endif
               END DO
               DO i=1,Npart
 #if      __MODE == __SCA
-                 up(i) = up(i) + 0.5_mk* dt * dup(i)
+                 up(i) = up(i) + 0.5_MK* dt * dup(i)
 #elif    __MODE == __VEC
                  DO ilda=1,lda
-                    up(ilda,i) = up(ilda,i) + 0.5_mk*dt*dup(ilda,i)
+                    up(ilda,i) = up(ilda,i) + 0.5_MK*dt*dup(ilda,i)
                  END DO
-#endif       
+#endif
               END DO
               ppm_ode_sent(mid) = 2
-           CASE(2) 
+           CASE(2)
               !-----------------------------------------------------------------
 #include "ppm_ode_rhsfunc_macro.h"
               !-----------------------------------------------------------------
@@ -623,23 +627,23 @@
               DO i=1,Npart
 #if      __MODE == __SCA
                  bfr(3,i)     = dup(i) !k2
-#elif    __MODE == __VEC             
+#elif    __MODE == __VEC
                  DO ilda=1,lda
                     bfr((2*lda+ilda),i) = dup(ilda,i) !k2
                  END DO
-#endif                 
+#endif
 #if      __MODE == __SCA
-                 up(i)   = bfr(1,i) + 0.5_mk* dt * dup(i)
-#elif    __MODE == __VEC                 
+                 up(i)   = bfr(1,i) + 0.5_MK* dt * dup(i)
+#elif    __MODE == __VEC
                  DO ilda=1,lda
-                    up(ilda,i) = bfr(ilda,i) + 0.5_mk*dt * dup(ilda,i)
+                    up(ilda,i) = bfr(ilda,i) + 0.5_MK*dt * dup(ilda,i)
                  END DO
-#endif                 
+#endif
               END DO
               ppm_ode_sent(mid) = 3
-           CASE(3) 
+           CASE(3)
               !-----------------------------------------------------------------
-              ! 
+              !
               !-----------------------------------------------------------------
 #include "ppm_ode_rhsfunc_macro.h"
               !-----------------------------------------------------------------
@@ -652,17 +656,17 @@
                  DO ilda=1,lda
                     bfr((3*lda+ilda),i) = dup(ilda,i) !k3
                  END DO
-#endif                 
+#endif
 #if      __MODE == __SCA
                  up(i)   = bfr(1,i) + dt * dup(i)
-#elif    __MODE == __VEC                 
+#elif    __MODE == __VEC
                  DO ilda=1,lda
                     up(ilda,i) = bfr(ilda,i) + dt * dup(ilda,i)
                  END DO
-#endif                 
+#endif
               END DO
               ppm_ode_sent(mid) = 4
-           CASE(4) 
+           CASE(4)
               !-----------------------------------------------------------------
 #include "ppm_ode_rhsfunc_macro.h"
               !-----------------------------------------------------------------
@@ -678,7 +682,7 @@
            &            (bfr((lda+ilda),i) + 2.0_MK*bfr((2*lda+ilda),i) +  &
            &            2.0_MK*bfr((3*lda+ilda),i)+ dup(ilda,i))
         END DO
-#endif                 
+#endif
       END DO
               t = t + dt
               ppm_ode_sent(mid) = 0
@@ -698,7 +702,7 @@
         IF(time(3).GE.time(2)) THEN
            ppm_ode_state(mid) = ppm_ode_state_finished
         END IF
-9999    CONTINUE        
+9999    CONTINUE
         !-----------------------------------------------------------------------
         ! substop
         !-----------------------------------------------------------------------

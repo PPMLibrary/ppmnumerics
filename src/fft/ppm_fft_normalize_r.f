@@ -57,16 +57,16 @@
       ! Local variables
       !-------------------------------------------------------------------------
       !timer
-      INTEGER,PARAMETER             :: MK = ppm_kind_double
-      REAL(__PREC)                  :: t0
+      INTEGER,PARAMETER              :: MK = ppm_kind_double
+      REAL(__PREC)                   :: t0
       !normalization factor
-      REAL(MK)                      :: fac
-      INTEGER                       :: i,j,k
-      INTEGER                       :: isub,isubl
-      INTEGER                       :: nsubs
-      INTEGER,DIMENSION(:),POINTER  :: isublist
-      TYPE(ppm_t_topo),POINTER      :: topology
-      TYPE(ppm_t_equi_mesh)         :: mesh
+      REAL(MK)                       :: fac
+      INTEGER                        :: i,j,k
+      INTEGER                        :: isub,isubl
+      INTEGER                        :: nsubs
+      INTEGER,DIMENSION(:),  POINTER :: isublist
+      TYPE(ppm_t_topo),      POINTER :: topology
+      TYPE(ppm_t_equi_mesh), POINTER :: mesh
 
       !-------------------------------------------------------------------------
       ! Initialise routine
@@ -76,6 +76,7 @@
       !-------------------------------------------------------------------------
       ! Get topology and mesh values
       !-------------------------------------------------------------------------
+      NULLIFY(topology)
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
          CALL ppm_write(ppm_rank,'ppm_fft_plan','Failed to get topology.',isub)
@@ -86,7 +87,7 @@
       DO isub=1,nsubs
         isublist(isub) = topology%isublist(isub)
       ENDDO
-      mesh  = topology%mesh(meshid)
+      mesh => topology%mesh(meshid)
 
       DO isub=1,nsubs
          isubl=isublist(isub)

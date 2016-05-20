@@ -5,7 +5,7 @@
       !                    Center for Fluid Dynamics (DTU)
       !
       ! This modules contains routines for creating FFTW plans and executing them
-      ! Plan routines are required for 
+      ! Plan routines are required for
       !  z   means fft in x (1D)
       !  xy  means fft in xy (2D)
       !  xyz means fft in xyz (3D)
@@ -102,7 +102,7 @@
          INTEGER                         :: rank
          !!!number of points along each direction of the piece to be transformed
          !!!index is for rank and subs
-         INTEGER,DIMENSION(:,:),POINTER  :: nx
+         INTEGER,DIMENSION(:,:),POINTER  :: nx => NULL()
          !!!the direction of the transform (forward/backward)
          INTEGER                         :: sign
          !!!the method to setup the optimal plan
@@ -110,9 +110,9 @@
          !!!the number of components to transform
          INTEGER                         :: howmany
          !!!the size of the input array, index is for rank
-         INTEGER,DIMENSION(:),POINTER    :: inembed
+         INTEGER,DIMENSION(:),POINTER    :: inembed => NULL()
          !!!the size of the output array, index is for rank
-         INTEGER,DIMENSION(:),POINTER    :: onembed
+         INTEGER,DIMENSION(:),POINTER    :: onembed => NULL()
          !!!istride tells how same component data points are spaced in memory
          INTEGER                         :: istride
          INTEGER                         :: ostride

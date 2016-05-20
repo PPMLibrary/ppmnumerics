@@ -1,16 +1,16 @@
       !------------------------------------------------------------------------
-      !  Subroutine   :                  ppm_mg_solv 
+      !  Subroutine   :                  ppm_mg_solv
       !------------------------------------------------------------------------
-      ! Copyright (c) 2011 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2011 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -27,7 +27,7 @@
       ! CH-8092 Zurich, Switzerland
       !-------------------------------------------------------------------------
 
-       
+
 #if   __DIM   == __SFIELD
 #if   __MESH_DIM   == __2D
 #if    __KIND == __SINGLE_PRECISION
@@ -38,7 +38,7 @@
       SUBROUTINE ppm_mg_solv_2d_sca_d(topo_id,u,f,&
       &                               initsweep,finsweep,restrsweep,prolsweep,&
       &                               Eu,info)
-#endif 
+#endif
 #elif __MESH_DIM   == __3D
 #if    __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_mg_solv_3d_sca_s(topo_id,u,f,&
@@ -48,8 +48,8 @@
       SUBROUTINE ppm_mg_solv_3d_sca_d(topo_id,u,f,&
       &                               initsweep,finsweep,restrsweep,prolsweep,&
       &                               Eu,info)
-#endif 
-#endif 
+#endif
+#endif
 #elif __DIM == __VFIELD
 #if   __MESH_DIM   == __2D
 #if    __KIND == __SINGLE_PRECISION
@@ -63,13 +63,11 @@
 #endif
 #elif __MESH_DIM   == __3D
 #if    __KIND == __SINGLE_PRECISION
-      SUBROUTINE ppm_mg_solv_3d_vec_s(topo_id,u,f,lda,&
-      &                               initsweep,finsweep,restrsweep,prolsweep,&
-      &                               Eu,info)
+      SUBROUTINE ppm_mg_solv_3d_vec_s(topo_id,u,f,lda,initsweep,finsweep, &
+      &          restrsweep,prolsweep,Eu,info)
 #elif  __KIND == __DOUBLE_PRECISION
-      SUBROUTINE ppm_mg_solv_3d_vec_d(topo_id,u,f,lda,&
-      &                               initsweep,finsweep,restrsweep,prolsweep,&
-      &                               Eu,info)
+      SUBROUTINE ppm_mg_solv_3d_vec_d(topo_id,u,f,lda,initsweep,finsweep, &
+      &          restrsweep,prolsweep,Eu,info)
 #endif
 #endif
 #endif
@@ -78,7 +76,7 @@
 
 #include "ppm_define.h"
          !---------------------------------------------------------------------
-         !  Modules 
+         !  Modules
          !----------------------------------------------------------------------
         USE ppm_module_data
         USE ppm_module_data_mg
@@ -103,7 +101,7 @@
          INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
          !----------------------------------------------------------------------
-         !  Arguments (for u and f index: local mesh locations and isub) 
+         !  Arguments (for u and f index: local mesh locations and isub)
          !----------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
@@ -143,26 +141,26 @@
          !!! IMPORTANT: This parameter is considere important
          INTEGER,                   INTENT(IN)   ::  prolsweep
          !!! Number of smoothing sweeps after each prolongation step
-         REAL(MK),                  INTENT(OUT)  ::  Eu  
+         REAL(MK),                  INTENT(OUT)  ::  Eu
          INTEGER,                   INTENT(INOUT)   ::  info
          INTEGER,                   INTENT(IN   )   ::  topo_id
          !----------------------------------------------------------------------
-         !  Local variables 
+         !  Local variables
          !----------------------------------------------------------------------
          REAL(MK)                             :: t0
          REAL(MK)                             :: E,res
          INTEGER                              :: iface,count,k
-         INTEGER                              :: ix,iy  
+         INTEGER                              :: ix,iy
          CHARACTER(LEN=256)                   :: cbuf
          INTEGER                              :: mlev,color,it
          INTEGER                              :: ncalls=0
-         REAL(MK)                             :: c1,c2,c3,c4  
+         REAL(MK)                             :: c1,c2,c3,c4
          INTEGER                              :: isub,i,j
          REAL(MK)                             :: x,y
-         REAL(MK)                             :: gEu 
+         REAL(MK)                             :: gEu
          INTEGER                              :: MPI_PREC
-         TYPE(ppm_t_topo),      POINTER       :: topo => NULL()
-         TYPE(ppm_t_equi_mesh), POINTER       :: mesh => NULL()
+         TYPE(ppm_t_topo),      POINTER       :: topo
+         TYPE(ppm_t_equi_mesh), POINTER       :: mesh
 #if __MESH_DIM == __3D
          REAL(MK)                             :: c5,dz,rdz2
          INTEGER,DIMENSION(4)                 :: ldl4,ldu4
@@ -179,64 +177,64 @@
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-         TYPE(mg_field_2d_sca_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_2d_sca_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-         TYPE(mg_field_2d_sca_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_2d_sca_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-         TYPE(mg_field_3d_sca_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_3d_sca_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-         TYPE(mg_field_3d_sca_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_3d_sca_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-         TYPE(mg_field_2d_vec_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_2d_vec_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-         TYPE(mg_field_2d_vec_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_2d_vec_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-         TYPE(mg_field_3d_vec_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_3d_vec_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-         TYPE(mg_field_3d_vec_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+         TYPE(mg_field_3d_vec_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #endif
 #endif
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-         REAL(MK),DIMENSION(:,:,:),POINTER :: uc_dummy => NULL()
+         REAL(MK),DIMENSION(:,:,:),POINTER :: uc_dummy
 #elif __MESH_DIM == __3D
-         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy => NULL()
+         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
-         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy => NULL()
+         REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy
 #elif __MESH_DIM == __3D
-         REAL(MK),DIMENSION(:,:,:,:,:),POINTER :: uc_dummy => NULL()
+         REAL(MK),DIMENSION(:,:,:,:,:),POINTER :: uc_dummy
 #endif
 #endif
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-     REAL(MK),DIMENSION(:,:),POINTER :: tuc => NULL()
+     REAL(MK),DIMENSION(:,:),POINTER :: tuc
 #elif __MESH_DIM == __3D
-     REAL(MK),DIMENSION(:,:,:),POINTER :: tuc => NULL()
+     REAL(MK),DIMENSION(:,:,:),POINTER :: tuc
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
-     REAL(MK),DIMENSION(:,:,:),POINTER :: tuc => NULL()
+     REAL(MK),DIMENSION(:,:,:),POINTER :: tuc
 #elif __MESH_DIM == __3D
-     REAL(MK),DIMENSION(:,:,:,:),POINTER :: tuc => NULL()
+     REAL(MK),DIMENSION(:,:,:,:),POINTER :: tuc
 #endif
 #endif
          !----------------------------------------------------------------------
-         !  Externals 
+         !  Externals
          !----------------------------------------------------------------------
 
          !----------------------------------------------------------------------
-         !  Initialize 
+         !  Initialize
          !----------------------------------------------------------------------
          CALL substart('ppm_mg_solv',t0,info)
 #ifdef __MPI
@@ -249,6 +247,8 @@
         topoid=topo_id
         topo => ppm_topo(topo_id)%t
         mesh => topo%mesh(mg_meshid(1))
+
+
         !----------------------------------------------------------------------
         !  Check arguments
         !----------------------------------------------------------------------
@@ -261,9 +261,9 @@
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
 #if __DIM == __SFIELD
-        mgfield=>mgfield_2d_sca_s
+        mgfield => mgfield_2d_sca_s
 #elif __DIM == __VFIELD
-        mgfield=>mgfield_2d_vec_s
+        mgfield => mgfield_2d_vec_s
 #endif
         rdx2=rdx2_s
         rdy2=rdy2_s
@@ -271,9 +271,9 @@
         dy=dy_s
 #elif __KIND == __DOUBLE_PRECISION
 #if __DIM == __SFIELD
-        mgfield=>mgfield_2d_sca_d
+        mgfield => mgfield_2d_sca_d
 #elif __DIM == __VFIELD
-        mgfield=>mgfield_2d_vec_d
+        mgfield => mgfield_2d_vec_d
 #endif
         rdx2=rdx2_d
         rdy2=rdy2_d
@@ -283,9 +283,9 @@
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
 #if __DIM == __SFIELD
-        mgfield=>mgfield_3d_sca_s
-#elif __DIM == __VFIELD 
-        mgfield=>mgfield_3d_vec_s
+        mgfield => mgfield_3d_sca_s
+#elif __DIM == __VFIELD
+        mgfield => mgfield_3d_vec_s
 #endif
         rdx2=rdx2_s
         rdy2=rdy2_s
@@ -295,9 +295,9 @@
         dz=dz_s
 #elif __KIND == __DOUBLE_PRECISION
 #if __DIM == __SFIELD
-        mgfield=>mgfield_3d_sca_d
+        mgfield => mgfield_3d_sca_d
 #elif __DIM == __VFIELD
-        mgfield=>mgfield_3d_vec_d
+        mgfield => mgfield_3d_vec_d
 #endif
         rdx2=rdx2_d
         rdy2=rdy2_d
@@ -309,6 +309,7 @@
 #endif
      topoid=topo_id
      ncalls=ncalls+1
+     NULLIFY(uc_dummy)
      IF (ncalls.EQ.1) THEN
         DO i=1,maxlev
 #if __DIM == __SFIELD
@@ -458,14 +459,14 @@
         ncalls=ncalls+1
       ENDIF
         !----------------------------------------------------------------------
-        ! DO initial sweeps in the finest mesh with the smoother to get the 
-        ! initial solution 
+        ! DO initial sweeps in the finest mesh with the smoother to get the
+        ! initial solution
         !----------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-        c1 = 1.0_MK/(2.0_MK*(rdx2+rdy2))  
+        c1 = 1.0_MK/(2.0_MK*(rdx2+rdy2))
         c2 = rdx2
-        c3 = rdy2     
+        c3 = rdy2
         c4 = 2.0_MK*c2+2.0_MK*c3
         count = 0
         CALL ppm_mg_smooth_sca(topo_id,u,f,initsweep,1,c1,c2,c3,info)
@@ -477,10 +478,10 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-      IF (info .NE. 0) THEN 
+      IF (info .NE. 0) THEN
          GOTO 9999
-      ENDIF 
-      IF (ppm_debug.NE.0) THEN 
+      ENDIF
+      IF (ppm_debug.NE.0) THEN
         WRITE(cbuf,*) 'initial sweep Eu:',E
         CALL PPM_Write(ppm_rank,'mg_solv_serial',cbuf,info)
       ENDIF
@@ -489,7 +490,7 @@
         !----------------------------------------------------------------------
         DO mlev=2,maxlev
            DO isub=1,nsubs
-              tuc=>mgfield(isub,mlev)%uc
+              tuc => mgfield(isub,mlev)%uc
               DO j=start(2,isub,mlev),istop(2,isub,mlev)
                  DO i=start(1,isub,mlev),istop(1,isub,mlev)
                        tuc(i,j)=0.0_MK
@@ -502,10 +503,10 @@
         ! prologongation cycles)
         !----------------------------------------------------------------------
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_core_2d_sca_s(topo_id,2,restrsweep,prolsweep,info)  
+        CALL ppm_mg_core_2d_sca_s(topo_id,2,restrsweep,prolsweep,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_2d_sca_d(topo_id,2,restrsweep,prolsweep,info)  
-#endif   
+        CALL ppm_mg_core_2d_sca_d(topo_id,2,restrsweep,prolsweep,info)
+#endif
         !----------------------------------------------------------------------
         !PROLONG the solution to the finest grid
         !----------------------------------------------------------------------
@@ -518,11 +519,11 @@
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-           !tuc=>mgfield(isub,mlev)%uc
-           tuc=>mgfield(isub,1)%uc
-           DO j=start(2,isub,1),istop(2,isub,1)   
+           !tuc => mgfield(isub,mlev)%uc
+           tuc => mgfield(isub,1)%uc
+           DO j=start(2,isub,1),istop(2,isub,1)
               DO i=start(1,isub,1),istop(1,isub,1)
-                    u(i,j,isub)=tuc(i,j) 
+                    u(i,j,isub)=tuc(i,j)
               ENDDO
            ENDDO
         ENDDO
@@ -534,10 +535,10 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-      IF (info .NE. 0) THEN 
+      IF (info .NE. 0) THEN
          GOTO 9999
-      ENDIF 
-      IF (ppm_debug.NE.0) THEN 
+      ENDIF
+      IF (ppm_debug.NE.0) THEN
         WRITE(cbuf,*) 'V cycle Eu:',E
         CALL PPM_Write(ppm_rank,'mg_solv_serial',cbuf,info)
       ENDIF
@@ -552,10 +553,10 @@
 #else
         Eu=E
 #endif
-      IF (info .NE. 0) THEN 
+      IF (info .NE. 0) THEN
          GOTO 9999
-      ENDIF 
-      IF (ppm_debug.NE.0) THEN 
+      ENDIF
+      IF (ppm_debug.NE.0) THEN
         WRITE(cbuf,*) 'final sweeps Eu:',Eu
         CALL PPM_Write(ppm_rank,'mg_solv_serial',cbuf,info)
       ENDIF
@@ -563,7 +564,7 @@
         c1 = 1.0_MK/(2.0_MK*(rdx2+rdy2+rdz2))
         c2 = rdx2
         c3 = rdy2
-        c4 = rdz2 
+        c4 = rdz2
         c5 = 2.0_MK*c2+2.0_MK*c3+2.0_MK*c4
         CALL ppm_mg_smooth_sca(topo_id,u,f,initsweep,1,c1,c2,c3,c4,info)
         !----------------------------------------------------------------------
@@ -574,7 +575,7 @@
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-      IF (ppm_debug.NE.0) THEN 
+      IF (ppm_debug.NE.0) THEN
         WRITE(cbuf,*) 'Eu:',E
         CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
       ENDIF
@@ -583,8 +584,8 @@
         !----------------------------------------------------------------------
         DO mlev=2,maxlev
            DO isub=1,nsubs
-              tuc=>mgfield(isub,mlev)%uc
-              DO k=start(3,isub,mlev),istop(3,isub,mlev) 
+              tuc => mgfield(isub,mlev)%uc
+              DO k=start(3,isub,mlev),istop(3,isub,mlev)
                  DO j=start(2,isub,mlev),istop(2,isub,mlev)
                     DO i=start(1,isub,mlev),istop(1,isub,mlev)
                           tuc(i,j,k)=0.0_MK
@@ -613,8 +614,8 @@
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-              !tuc=>mgfield(isub,mlev)%uc
-              tuc=>mgfield(isub,1)%uc
+              !tuc => mgfield(isub,mlev)%uc
+              tuc => mgfield(isub,1)%uc
            DO k=start(3,isub,1),istop(3,isub,1)
               DO j=start(2,isub,1),istop(2,isub,1)
                  DO i=start(1,isub,1),istop(1,isub,1)
@@ -637,21 +638,21 @@
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
-        c1 = 1.0_MK/(2.0_MK*(rdx2+rdy2))  
+        c1 = 1.0_MK/(2.0_MK*(rdx2+rdy2))
         c2 = rdx2
-        c3 = rdy2     
+        c3 = rdy2
         c4 = 2.0_MK*c2+2.0_MK*c3
         count = 0
-        CALL ppm_mg_smooth_vec(topo_id,u,f,initsweep,1,c1,c2,c3,info) 
+        CALL ppm_mg_smooth_vec(topo_id,u,f,initsweep,1,c1,c2,c3,info)
         !----------------------------------------------------------------------
         ! Compute residual
         !----------------------------------------------------------------------
-        CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,E,info)   
+        CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,E,info)
 #ifdef __MPI
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         E=gEu
 #endif
-        IF (ppm_debug.GT.0) THEN 
+        IF (ppm_debug.GT.0) THEN
          WRITE(cbuf,*) 'Eu:',E
          CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
         ENDIF
@@ -661,12 +662,12 @@
         !----------------------------------------------------------------------
         DO mlev=2,maxlev
            DO isub=1,nsubs
-              tuc=>mgfield(isub,mlev)%uc
+              tuc => mgfield(isub,mlev)%uc
               DO j=start(2,isub,mlev),istop(2,isub,mlev)
                  DO i=start(1,isub,mlev),istop(1,isub,mlev)
                   DO ilda=1,vecdim
                        tuc(ilda,i,j)=0.0_MK
-                  ENDDO 
+                  ENDDO
                  ENDDO
               ENDDO
            ENDDO
@@ -675,10 +676,10 @@
         !CALL THE MULTIGRID TO DO NICE STUFF TO OUR FUNCTION
         !----------------------------------------------------------------------
 #if __KIND == __SINGLE_PRECISION
-        CALL ppm_mg_core_2d_vec_s(topo_id,2,restrsweep,prolsweep,info)  
+        CALL ppm_mg_core_2d_vec_s(topo_id,2,restrsweep,prolsweep,info)
 #elif __KIND == __DOUBLE_PRECISION
-        CALL ppm_mg_core_2d_vec_d(topo_id,2,restrsweep,prolsweep,info)  
-#endif   
+        CALL ppm_mg_core_2d_vec_d(topo_id,2,restrsweep,prolsweep,info)
+#endif
         !----------------------------------------------------------------------
         !PROLONG the solution to the finest grid
         !----------------------------------------------------------------------
@@ -686,18 +687,18 @@
         CALL ppm_mg_prolong_2d_vec_s(1,info)
 #elif __KIND == __DOUBLE_PRECISION
         CALL ppm_mg_prolong_2d_vec_d(1,info)
-#endif   
+#endif
         !----------------------------------------------------------------------
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-           !tuc=>mgfield(isub,mlev)%uc
-           tuc=>mgfield(isub,1)%uc
-           DO j=start(2,isub,1),istop(2,isub,1)   
+           !tuc => mgfield(isub,mlev)%uc
+           tuc => mgfield(isub,1)%uc
+           DO j=start(2,isub,1),istop(2,isub,1)
               DO i=start(1,isub,1),istop(1,isub,1)
                DO ilda=1,vecdim
                     u(ilda,i,j,isub)=tuc(ilda,i,j)
-               ENDDO 
+               ENDDO
               ENDDO
            ENDDO
         ENDDO
@@ -705,11 +706,11 @@
         !DO the final sweeps
         !--------------------------------------------------------------------
         CALL ppm_mg_smooth_vec(topo_id,u,f,finsweep,1,c1,c2,c3,info)
-        CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,E,info)   
+        CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,E,info)
 
 #ifdef __MPI
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
-        Eu=gEu        
+        Eu=gEu
 #else
         Eu=E
 #endif
@@ -717,7 +718,7 @@
         c1 = 1.0_MK/(2.0_MK*(rdx2+rdy2+rdz2))
         c2 = rdx2
         c3 = rdy2
-        c4 = rdz2 
+        c4 = rdz2
         c5 = 2.0_MK*c2+2.0_MK*c3+2.0_MK*c4
         CALL ppm_mg_smooth_vec(topo_id,u,f,initsweep,1,c1,c2,c3,c4,info)
         !-----------------------------------------------------------------
@@ -727,9 +728,9 @@
         CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,c5,E,info)
 #ifdef __MPI
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
-        E=gEu        
+        E=gEu
 #endif
-        IF (ppm_debug.GT.0) THEN 
+        IF (ppm_debug.GT.0) THEN
          WRITE(cbuf,*) 'Eu:',E
          CALL PPM_WRITE(ppm_rank,'mg_solv',cbuf,info)
         ENDIF
@@ -738,8 +739,8 @@
         !----------------------------------------------------------------------
         DO mlev=2,maxlev
            DO isub=1,nsubs
-              tuc=>mgfield(isub,mlev)%uc
-              DO k=start(3,isub,mlev),istop(3,isub,mlev) 
+              tuc => mgfield(isub,mlev)%uc
+              DO k=start(3,isub,mlev),istop(3,isub,mlev)
                  DO j=start(2,isub,mlev),istop(2,isub,mlev)
                     DO i=start(1,isub,mlev),istop(1,isub,mlev)
 #ifdef __VECTOR
@@ -747,7 +748,7 @@
                           tuc(2,i,j,k)=0.0_MK
                           tuc(3,i,j,k)=0.0_MK
 #else
-                     DO ilda=1,vecdim 
+                     DO ilda=1,vecdim
                           tuc(ilda,i,j,k)=0.0_MK
                      ENDDO
 #endif
@@ -776,8 +777,8 @@
         !UPDATE THE FUNCTION
         !----------------------------------------------------------------------
         DO isub=1,nsubs
-           !tuc=>mgfield(isub,mlev)%uc
-           tuc=>mgfield(isub,1)%uc
+           !tuc => mgfield(isub,mlev)%uc
+           tuc => mgfield(isub,1)%uc
            DO k=start(3,isub,1),istop(3,isub,1)
               DO j=start(2,isub,1),istop(2,isub,1)
                  DO i=start(1,isub,1),istop(1,isub,1)
@@ -798,7 +799,7 @@
         !DO the final sweeps
         !--------------------------------------------------------------------
         CALL ppm_mg_smooth_vec(topo_id,u,f,finsweep,1,c1,c2,c3,c4,info)
-        CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,c5,E,info)   
+        CALL ppm_mg_res_vec(topo_id,u,f,c1,c2,c3,c4,c5,E,info)
 #ifdef __MPI
         CALL MPI_AllReduce(E,gEu,1,MPI_PREC,MPI_MAX,ppm_comm,info)
         Eu=gEu
@@ -808,7 +809,7 @@
 #endif
 #endif
         !----------------------------------------------------------------------
-        !  Return 
+        !  Return
         !----------------------------------------------------------------------
 9999    CONTINUE
         CALL substop('ppm_mg_solv',t0,info)
@@ -816,13 +817,13 @@
         CONTAINS
 
         SUBROUTINE check
-        
-#if __DIM == __SFIELD        
-#if __MESH_DIM == __2D        
+
+#if __DIM == __SFIELD
+#if __MESH_DIM == __2D
            IF (SIZE(u,3) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains',__LINE__,info)        
+     &             'solution exist on nsubs subdomains',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs
@@ -831,8 +832,8 @@
      &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 8888    
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
               ENDIF
               IF (SIZE(u(:,:,i),2).LT.mesh%nnodes(2,idom) &
      &                                             +2*ghostsize(2)) THEN
@@ -845,7 +846,7 @@
            IF (SIZE(f,3) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs
@@ -867,7 +868,7 @@
            IF (SIZE(u,4) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains!',__LINE__,info)        
+     &             'solution exist on nsubs subdomains!',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs
@@ -876,8 +877,8 @@
      &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 8888    
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
               ENDIF
               IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(2,idom)+ &
      &                                              2*ghostsize(1)) THEN
@@ -897,7 +898,7 @@
            IF (SIZE(f,4) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs
@@ -923,11 +924,11 @@
            ENDDO
 #endif
 #elif __DIM == __VFIELD
-#if __MESH_DIM == __2D        
+#if __MESH_DIM == __2D
            IF (SIZE(u,4) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains',__LINE__,info)        
+     &             'solution exist on nsubs subdomains',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs
@@ -935,8 +936,8 @@
               IF (SIZE(u(:,:,:,i),2).LT.mesh%nnodes(1,idom)+2) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 8888    
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
               ENDIF
               IF (SIZE(u(:,:,:,i),3).LT.mesh%nnodes(2,idom)+2) THEN
                  info = ppm_error_error
@@ -948,7 +949,7 @@
            IF (SIZE(f,4) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs
@@ -970,7 +971,7 @@
            IF (SIZE(u,5) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution exist on nsubs subdomains!',__LINE__,info)        
+     &             'solution exist on nsubs subdomains!',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs
@@ -979,8 +980,8 @@
      &                                              2*ghostsize(1)) THEN
                  info = ppm_error_error
                  CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'solution mess with mesh points in x-dir!',__LINE__,info)  
-                 GOTO 8888    
+     &             'solution mess with mesh points in x-dir!',__LINE__,info)
+                 GOTO 8888
               ENDIF
               IF (SIZE(u(:,:,:,:,i),3).LT.mesh%nnodes(2,idom)+ &
      &                                              2*ghostsize(1)) THEN
@@ -1000,7 +1001,7 @@
            IF (SIZE(f,5) .LT. nsubs) THEN
               info = ppm_error_error
               CALL ppm_error(ppm_err_argument,'ppm_mg_solv',  &
-     &             'rhs exist on nsubs subdomains!',__LINE__,info)  
+     &             'rhs exist on nsubs subdomains!',__LINE__,info)
               GOTO 8888
            ENDIF
            DO i=1,nsubs

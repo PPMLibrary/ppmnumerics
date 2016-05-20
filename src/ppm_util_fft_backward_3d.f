@@ -2,19 +2,19 @@
       !  Subroutine   :               ppm_util_fft_backward_3d
       !-------------------------------------------------------------------------
       !
-      !  Purpose      : This routine performs inverse Fast Fourier Transform 
+      !  Purpose      : This routine performs inverse Fast Fourier Transform
       !                 using FFTW in the first (x) dimension
       !
-      !  Input        : data_in(:,:,:)  (F) data to be transformed 
-      !                                
-      !  Input/output : lda(:)          (I) size of data               
-      !                                
+      !  Input        : data_in(:,:,:)  (F) data to be transformed
+      !
+      !  Input/output : lda(:)          (I) size of data
+      !
       !
       !  Output       : data_out(:,:,:) (F) transformed data
       !                 info            (I) return status. =0 if no error.
       !
-      !  Remarks      : 
-      !                                                  
+      !  Remarks      :
+      !
       !  References   :
       !
       !  Revisions    :
@@ -69,21 +69,21 @@
       !  Bugfix: arguments are now checked BEFORE they are assigned to Nx_in...
       !
       !  Revision 1.2  2004/02/11 10:13:23  hiebers
-      !  changed arguments, included test on info, included ppm_define.h, 
-      !  shortened lines to 80 characters, excluded module_mesh, 
+      !  changed arguments, included test on info, included ppm_define.h,
+      !  shortened lines to 80 characters, excluded module_mesh,
       !  included fftw3.f
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -122,9 +122,9 @@
       USE ppm_module_error
       USE ppm_module_alloc
       IMPLICIT NONE
-#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
+#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX 
+#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
@@ -134,34 +134,34 @@
       INCLUDE "fftw3.f"
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       ! input data
       COMPLEX(MK), DIMENSION(:,:,:) , INTENT(IN   ) :: data_in
       ! size of data
       INTEGER, DIMENSION(:)         , INTENT(INOUT) :: lda
       ! output data, inverse fast fourier transformed
-#if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION 
+#if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       REAL(MK), DIMENSION(:,:,:)    , POINTER       :: data_out
 #elif __KIND == __SINGLE_PRECISION_COMPLEX| __KIND == __DOUBLE_PRECISION_COMPLEX
-      COMPLEX(MK), DIMENSION(:,:,:) , POINTER       :: data_out 
+      COMPLEX(MK), DIMENSION(:,:,:) , POINTER       :: data_out
 #endif
       INTEGER                       , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! timer
       REAL(MK)                                :: t0
       ! counters
       INTEGER                                 :: i,j,k,iopt
-      ! size of the data_in 
+      ! size of the data_in
       INTEGER                                 :: Nx_in, Ny_in, Nz_in
-      ! size of the data_out 
+      ! size of the data_out
       INTEGER                                 :: Nx_out, Ny_out, Nz_out
 #ifdef __FFTW
       ! FFTW Plan
       INTEGER*8                        :: Plan
-      INTEGER                          :: mbistride, mbrank, mbidist, mbiembed 
+      INTEGER                          :: mbistride, mbrank, mbidist, mbiembed
       INTEGER                          :: mboembed, mbhowmany, mbodist
 #endif
 
@@ -180,7 +180,7 @@
 
 #endif
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
 
       !-------------------------------------------------------------------------
@@ -201,7 +201,7 @@
       CALL ppm_error(ppm_err_noMathKeisan,'ppm_util_fft_forward_2d',  &
      &    'PPM was compiled without MATHKEISAN support',__LINE__,info)
 #endif
-      GOTO 9999      
+      GOTO 9999
 #else
       !-------------------------------------------------------------------------
       !  Check arguments
@@ -241,7 +241,7 @@
 #if   __KIND == __SINGLE_PRECISION         | __KIND == __DOUBLE_PRECISION
       Nx_out = (Nx_in-1)*2
 #elif __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
-      Nx_out = Nx_in-1       
+      Nx_out = Nx_in-1
 #endif
       Ny_out=Ny_in
       Nz_out=Nz_in
@@ -265,6 +265,7 @@
       !-------------------------------------------------------------------------
       !  Allocate working storage
       !-------------------------------------------------------------------------
+      NULLIFY(table,work)
       lda_table = 2*Nx_out + 64
       CALL ppm_alloc(table,lda_table,ppm_param_alloc_fit,info)
       IF (info .NE. 0) THEN
@@ -303,17 +304,17 @@
       incx = 1
       incy = 1
       CALL  cfft(isign_fft, Nx_out, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table, lda_table(1), & 
+     &               data_out(1,j,k), incy, table, lda_table(1), &
      &              work, lda_work(1),isys)
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
       incx = 1
       incy = 1
       CALL  zfft(isign_fft, Nx_out, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table, lda_table(1), & 
+     &               data_out(1,j,k), incy, table, lda_table(1), &
      &              work, lda_work(1),isys)
 #endif
       !-------------------------------------------------------------------------
-      !  Forward FFT 
+      !  Forward FFT
       !-------------------------------------------------------------------------
       isign_fft = 1
       DO k=1,Nz_in
@@ -326,15 +327,15 @@
      &                                data_out(1,j,k), table, work, isys)
 #elif __KIND == __SINGLE_PRECISION_COMPLEX
             CALL  cfft(isign_fft, Nx_out, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table, lda_table(1), & 
+     &               data_out(1,j,k), incy, table, lda_table(1), &
      &              work, lda_work(1),isys)
 
 #elif __KIND == __DOUBLE_PRECISION_COMPLEX
             CALL  zfft(isign_fft, Nx_out, scale_fft, data_in(1,j,k), incx, &
-     &               data_out(1,j,k), incy, table, lda_table(1), & 
+     &               data_out(1,j,k), incy, table, lda_table(1), &
      &               work, lda_work(1),isys)
 #endif
-         ENDDO      
+         ENDDO
       ENDDO
       !-------------------------------------------------------------------------
       !  Deallocate Memory
@@ -388,7 +389,7 @@
          DO k=1,Nz_out
             data_out(lda(1),j,k) = data_out(1,j,k)
          ENDDO
-      ENDDO     
+      ENDDO
       !-------------------------------------------------------------------------
       !  Return
       !-------------------------------------------------------------------------

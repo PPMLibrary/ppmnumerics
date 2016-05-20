@@ -9,9 +9,9 @@
       !                 prec         (I) not used dummy argument
       !                                  to determine precision
       !
-      !  Input/output :     
+      !  Input/output :
       !
-      !  Output       : 
+      !  Output       :
       !                 info         (I) return status. 0 upon success
       !
       !  Remarks      : The recurrences will not vectorize
@@ -78,16 +78,16 @@
       !  start
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -111,10 +111,10 @@
 #elif (__KIND == __SINGLE_PRECISION && __DIM == __VFIELD)
       RECURSIVE SUBROUTINE ppm_fmm_traverse_s_vf(root,lda,prec,info)
 #elif (__KIND == __DOUBLE_PRECISION && __DIM == __VFIELD)
-      RECURSIVE SUBROUTINE ppm_fmm_traverse_d_vf(root,lda,prec,info) 
+      RECURSIVE SUBROUTINE ppm_fmm_traverse_d_vf(root,lda,prec,info)
 #endif
       !-------------------------------------------------------------------------
-      !  Modules 
+      !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_fmm
@@ -136,38 +136,38 @@
 #endif
       !-------------------------------------------------------------------------
       !  Precision
-      !-------------------------------------------------------------------------      
+      !-------------------------------------------------------------------------
 #if   __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
 #else
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       INTEGER                 , INTENT(IN   ) :: root
       REAL(MK)                , INTENT(IN   ) :: prec !dummy arg for prec.
       INTEGER                 , INTENT(  OUT) :: info
 #if   __DIM == __VFIELD
-      INTEGER                 , INTENT(IN   ) :: lda       
+      INTEGER                 , INTENT(IN   ) :: lda
 #endif
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
-      ! auxiliary variables 
+      ! auxiliary variables
       LOGICAL                              :: onlocalproc
       INTEGER                              :: m,n,l,j,i,p,iopt
       INTEGER                              :: fir,las,box,istat,topoid
       INTEGER                              :: first,last
       REAL(MK)                             :: sine,cosine,val,prod
       REAL(MK)                             :: angle,reci,t0
-      REAL(MK)                             :: dx,dy,dz,tmp  
+      REAL(MK)                             :: dx,dy,dz,tmp
       REAL(MK),DIMENSION(:  ),POINTER      :: box_rho,box_theta,box_phi
       COMPLEX(MK)                          :: csum
       COMPLEX(MK),PARAMETER                :: CI=(0.0_MK,1.0_MK)
       CHARACTER(LEN=ppm_char)              :: cbuf
       TYPE(ppm_t_topo), POINTER            :: topo
-      ! fmm 
+      ! fmm
       REAL(MK),DIMENSION(:  ),POINTER      :: fracfac,totalmass,radius
       REAL(MK),DIMENSION(:,:),POINTER      :: Pnm,Anm,sqrtfac,centerofbox
       COMPLEX(MK),DIMENSION(:,:),POINTER   :: Inner,Ynm
@@ -177,7 +177,7 @@
       COMPLEX(MK),DIMENSION(:,:,:,:),POINTER :: expansion
 #endif
       !-------------------------------------------------------------------------
-      !  Initialize 
+      !  Initialize
       !-------------------------------------------------------------------------
       CALL substart('ppm_fmm_traverse',t0,info)
       !-------------------------------------------------------------------------
@@ -185,12 +185,12 @@
       !-------------------------------------------------------------------------
 #if   __KIND == __SINGLE_PRECISION
       centerofbox  => centerofbox_s
-      totalmass    => totalmass_s    
-#if   __DIM == __SFIELD      
+      totalmass    => totalmass_s
+#if   __DIM == __SFIELD
       expansion    => expansion_s_sf
 #else
       expansion    => expansion_s_vf
-#endif           
+#endif
       radius       => radius_s
       Anm          => Anm_s
       sqrtfac      => sqrtfac_s
@@ -204,11 +204,11 @@
 #else
       centerofbox  => centerofbox_d
       totalmass    => totalmass_d
-#if   __DIM == __SFIELD      
+#if   __DIM == __SFIELD
       expansion    => expansion_d_sf
 #else
       expansion    => expansion_d_vf
-#endif 
+#endif
       radius       => radius_d
       Anm          => Anm_d
       sqrtfac      => sqrtfac_d
@@ -224,7 +224,7 @@
       ! Check if current root is a leaf,
       ! if yes, no shifting has to be done
       !-------------------------------------------------------------------------
-      IF (nchld(root) .EQ. 0) THEN 
+      IF (nchld(root) .EQ. 0) THEN
           IF (ppm_debug .GT. 0) THEN
             CALL ppm_write(ppm_rank,'ppm_fmm_traverse','leaf box',info)
           ENDIF
@@ -252,9 +252,9 @@
          ENDIF
 	 IF (onlocalproc) THEN
             DO i=1,nchld(root)
-#if         __DIM == __SFIELD	 
+#if         __DIM == __SFIELD
                CALL ppm_fmm_traverse(child(i,root),prec,info)
-#else 
+#else
                CALL ppm_fmm_traverse(child(i,root),lda,prec,info)
 #endif
                IF (ppm_debug .GT. 0) THEN

@@ -1,20 +1,20 @@
       !-------------------------------------------------------------------------
       !     Subroutine   :              ppm_hamjac_ext_step_3d
       !-------------------------------------------------------------------------
-      !     
+      !
       !     Purpose      : Extension
-      !      
-      !     Input        : 
-      !                    
-      !     Input/Output : 
-      !                    
-      !     Output       : 
-      !      
-      !     Remarks      : 
-      !                    
-      !     
+      !
+      !     Input        :
+      !
+      !     Input/Output :
+      !
+      !     Output       :
+      !
+      !     Remarks      :
+      !
+      !
       !     References   :
-      !     
+      !
       !     Revisions    :
       !-------------------------------------------------------------------------
       !     $Log: ppm_hamjac_ext_step_3d.f,v $
@@ -54,7 +54,7 @@
 #endif
 #endif
         USE ppm_module_data
-        
+
         USE ppm_module_substart
         USE ppm_module_substop
         USE ppm_module_error
@@ -63,7 +63,7 @@
         IMPLICIT NONE
 #if    __KIND == __SINGLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
         !-----------------------------------------------------
@@ -86,7 +86,6 @@
         INTEGER, DIMENSION(:),    POINTER     :: isublist
         INTEGER                               :: nsublist
         INTEGER, DIMENSION(:,:),  POINTER     :: ndata
-        INTEGER                               :: meshid
         REAL(mk), DIMENSION(:), POINTER       :: min_phys, max_phys
         TYPE(ppm_t_topo),      POINTER        :: topo
         TYPE(ppm_t_equi_mesh), POINTER        :: mesh
@@ -105,7 +104,7 @@
         REAL(MK) :: dphi_dt
 #elif  __MODE == __VEC
         REAL(mk) :: dphi_dt(10)
-#endif        
+#endif
         INTEGER  :: ilap
         INTEGER, PARAMETER, DIMENSION(3,3) :: offs &
              & = RESHAPE((/2,1,0,1,0,-1,0,-1,-2/),(/3,3/))
@@ -117,14 +116,13 @@
         !-----------------------------------------------------
         topo => ppm_topo(topo_id)%t
         mesh => topo%mesh(mesh_id)
-        meshid = mesh%ID
         nsublist = topo%nsublist
         ndata    => mesh%nnodes
         isublist => topo%isublist
 #if    __KIND == __SINGLE_PRECISION
         min_phys => topo%min_physs
         max_phys => topo%max_physs
-#elif  __KIND == __DOUBLE_PRECISION       
+#elif  __KIND == __DOUBLE_PRECISION
         min_phys => topo%min_physd
         max_phys => topo%max_physd
 #endif
@@ -174,7 +172,7 @@
                          & MAX(n(3)*sij,0.0_mk)*dxi(3)*          &
                          & (psi(i,j,k,isub)-psi(i,j,k-1,isub)) + &
                          & MIN(n(3)*sij,0.0_mk)*dxi(3)*          &
-                         & (psi(i,j,k+1,isub)-psi(i,j,k,isub)) 
+                         & (psi(i,j,k+1,isub)-psi(i,j,k,isub))
                     tpsi(i,j,k,isub) = psi(i,j,k,isub) - wenotau * dphi_dt
                     rms = MAX(rms,ABS(dphi_dt))
 #elif __MODE == __VEC
@@ -190,7 +188,7 @@
                          & MAX(n(3)*sij,0.0_mk)*dxi(3)*          &
                          & (psi(1:lda,i,j,k,isub)-psi(1:lda,i,j,k-1,isub)) + &
                          & MIN(n(3)*sij,0.0_mk)*dxi(3)*          &
-                         & (psi(1:lda,i,j,k+1,isub)-psi(1:lda,i,j,k,isub)) 
+                         & (psi(1:lda,i,j,k+1,isub)-psi(1:lda,i,j,k,isub))
                     tpsi(1:lda,i,j,k,isub) = psi(1:lda,i,j,k,isub) &
                          & - wenotau * dphi_dt(1:lda)
                     rms = MAX(rms,SUM(ABS(dphi_dt)))
@@ -204,14 +202,14 @@
         CALL substop('ppm_hamjac_ext_step_3d',t0,info)
 #if   __MODE == __SCA
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_ext_step_3ds 
+      END SUBROUTINE ppm_hamjac_ext_step_3ds
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_ext_step_3dd 
+      END SUBROUTINE ppm_hamjac_ext_step_3dd
 #endif
 #elif __MODE == __VEC
 #if   __KIND == __SINGLE_PRECISION
-      END SUBROUTINE ppm_hamjac_ext_step_3dsv 
+      END SUBROUTINE ppm_hamjac_ext_step_3dsv
 #elif __KIND == __DOUBLE_PRECISION
-      END SUBROUTINE ppm_hamjac_ext_step_3ddv 
+      END SUBROUTINE ppm_hamjac_ext_step_3ddv
 #endif
 #endif

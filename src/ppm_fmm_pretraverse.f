@@ -1,24 +1,24 @@
       !-------------------------------------------------------------------------
-      !  Subroutine   :                  ppm_fmm_pretraverse 
+      !  Subroutine   :                  ppm_fmm_pretraverse
       !-------------------------------------------------------------------------
       !
       !  Purpose      :    Do a pretraversal for the target points, to determine
-      !                    which particles are needed for the computation. 
+      !                    which particles are needed for the computation.
       !
       !  Input        :    tp(:,:)      (F)  :  position of target points
       !                    Ntp          (I)  :  number of target points
       !                    tolevel      (I)  :  level      onto which particles
       !                                         are mapped to
-      !                    
       !
-      !  Input/Output :  
-      !                     
-      !  Output       :   
+      !
+      !  Input/Output :
+      !
+      !  Output       :
       !                    ccount             (I) : length of coeff_subtop
       !                    part_subtop(:)     (I) : array containing needed
       !                                             particles from other procs
       !                                             1st index: subid
-      !                    pcount             (I) : length of part_subtop      
+      !                    pcount             (I) : length of part_subtop
       !                    info               (I) : return status
       !
       !  Remarks      :
@@ -93,16 +93,16 @@
       !  start.
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -126,8 +126,8 @@
       SUBROUTINE ppm_fmm_pretraverse_d(tp,Ntp,tolevel,theta, &
       &          ccount,part_subtop,pcount,info)
 #endif
-      !------------------------------------------------------------------------- 
-      !  Modules 
+      !-------------------------------------------------------------------------
+      !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_fmm
@@ -148,32 +148,32 @@
 #endif
       !-------------------------------------------------------------------------
       !  Precision
-      !-------------------------------------------------------------------------      
+      !-------------------------------------------------------------------------
 #if   __KIND == __SINGLE_PRECISION
       INTEGER, PARAMETER :: MK = ppm_kind_single
 #else
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments 
+      !  Arguments
       !-------------------------------------------------------------------------
       REAL(MK), DIMENSION(:,:),     POINTER        :: tp
       INTEGER,                      INTENT(IN   )  :: Ntp
       INTEGER,                      INTENT(IN   )  :: tolevel
       REAL(MK),                     INTENT(IN   )  :: theta
-      INTEGER,                      INTENT(  OUT)  :: ccount      
+      INTEGER,                      INTENT(  OUT)  :: ccount
       INTEGER, DIMENSION(:  ),      POINTER        :: part_subtop
-      INTEGER,                      INTENT(  OUT)  :: pcount    
-      INTEGER,                      INTENT(  OUT)  :: info      
+      INTEGER,                      INTENT(  OUT)  :: pcount
+      INTEGER,                      INTENT(  OUT)  :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! auxiliary variables
       LOGICAL                              :: drct
       LOGICAL,DIMENSION(:),   POINTER      :: flagcoeff,flagpart
       INTEGER                              :: i,j,cnt,level
       INTEGER                              :: root,iopt,istat
-      REAL(MK)                             :: dx,dy,dz,dist,rad,t0 
+      REAL(MK)                             :: dx,dy,dz,dist,rad,t0
       INTEGER                              :: stackpointer,curbox,cursub
       INTEGER,DIMENSION(:),   POINTER      :: stack
       INTEGER,DIMENSION(1)                 :: ldu1
@@ -186,10 +186,10 @@
       INTEGER,DIMENSION(:),   POINTER      :: lpart_subtop
       INTEGER,DIMENSION(:,:), POINTER      :: lcoeff_subtop
       ! fmm
-      REAL(MK),DIMENSION(:),  POINTER      :: radius      
+      REAL(MK),DIMENSION(:),  POINTER      :: radius
       REAL(MK),DIMENSION(:,:),POINTER      :: centerofbox
       !-------------------------------------------------------------------------
-      !  Initialize 
+      !  Initialize
       !-------------------------------------------------------------------------
       CALL substart('ppm_fmm_pretraverse',t0,info)
       !-------------------------------------------------------------------------
@@ -225,7 +225,7 @@
               ENDIF
            ENDDO
         ENDIF
-      ENDIF      
+      ENDIF
 #else
       IF (ppm_nproc .GT. 1) THEN
          ! finding top level
@@ -253,6 +253,7 @@
       !-------------------------------------------------------------------------
       !  Allocate and initialize local variables
       !-------------------------------------------------------------------------
+      NULLIFY(stack,lpart_subtop,flagcoeff,flagpart,lcoeff_subtop)
       iopt  = ppm_param_alloc_fit
       istat = 0
       ldu1(1) = nbox
@@ -285,7 +286,7 @@
       !-------------------------------------------------------------------------
       ! Traverse tree and build list part_subtop and coeff_subtop
       !-------------------------------------------------------------------------
-      DO i=1,Ntp      
+      DO i=1,Ntp
          IF (ppm_nproc .GT. 1) THEN
 	   ! initialise stack parallel
            stackpointer = 1
@@ -301,7 +302,7 @@
 	       IF (cnt .EQ. nbpl(level)) THEN
                   EXIT
                ENDIF
-             
+
 	     ENDIF
            ENDDO
          ELSE
@@ -354,28 +355,28 @@
                         &         'stack overflow',info)
                ENDIF
              ELSE
-               cursub = ppm_subid(curbox,tolevel) 
+               cursub = ppm_subid(curbox,tolevel)
                !no children, direct computation
                !particles only needed on the finest topology
                topo => ppm_topo(topoid)%t
                IF (ppm_rank .NE. topo%sub2proc(cursub)) THEN
                  IF (.NOT. flagpart(curbox)) THEN
-                   pcount               = pcount +1               
+                   pcount               = pcount +1
                    lpart_subtop(pcount) = cursub
                    flagpart(curbox)     = .TRUE.
                  ENDIF
                ENDIF
              ENDIF
-           ENDIF       
-         ENDDO 
-      ENDDO     
+           ENDIF
+         ENDDO
+      ENDDO
       !-------------------------------------------------------------------------
-      !  Allocate the correct size of return variables 
+      !  Allocate the correct size of return variables
       !-------------------------------------------------------------------------
       iopt = ppm_param_alloc_fit
       ldu1(1) = pcount
       CALL ppm_alloc(part_subtop,ldu1,iopt,info)
-      IF (info .NE. 0) THEN 
+      IF (info .NE. 0) THEN
           info = ppm_error_fatal
           CALL ppm_error(ppm_err_alloc,'ppm_fmm_pretraverse', &
       &        'error allocating part_subtop',__LINE__,info)
@@ -407,7 +408,7 @@
       GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
-      !  Return 
+      !  Return
       !-------------------------------------------------------------------------
 9999  CONTINUE
       CALL substop('ppm_fmm_pretraverse',t0,info)

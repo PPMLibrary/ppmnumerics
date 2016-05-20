@@ -3,9 +3,9 @@
       !-------------------------------------------------------------------------
       !
       !  Purpose      : This module contains all data structures and
-      !                 definitions that are PRIVATE to the group 
+      !                 definitions that are PRIVATE to the group
       !                 marching method routines.
-      !                
+      !
       !  Remarks      :
       !
       !  References   :
@@ -45,9 +45,9 @@
          !----------------------------------------------------------------------
          !  Modules
          !----------------------------------------------------------------------
-         USE ppm_module_data, ONLY: ppm_kind_single, ppm_kind_double 
+         USE ppm_module_data, ONLY: ppm_kind_single, ppm_kind_double
          PRIVATE :: ppm_kind_single, ppm_kind_double
-         
+
          !----------------------------------------------------------------------
          !  Parameters
          !----------------------------------------------------------------------
@@ -66,29 +66,30 @@
          INTEGER                  :: incr,maxxhi,maxyhi,maxzhi
          ! topoID and meshID on which the GMM operates
          INTEGER                  :: gmm_topoid,gmm_meshid
-         
+
          !----------------------------------------------------------------------
          !  Sparse matrix structure as workspace
          !----------------------------------------------------------------------
          ! locations (mesh indices) of the data points. Sparse structure.
-         INTEGER              , DIMENSION(:,:)  , POINTER   :: gmm_ipos
+         INTEGER              , DIMENSION(:,:)  , POINTER   :: gmm_ipos => NULL()
          ! values at these locations. Sparse structure.
-         REAL(ppm_kind_double), DIMENSION(:  )  , POINTER   :: gmm_phid
-         REAL(ppm_kind_single), DIMENSION(:  )  , POINTER   :: gmm_phis
+         REAL(ppm_kind_double), DIMENSION(:  )  , POINTER   :: gmm_phid => NULL()
+         REAL(ppm_kind_single), DIMENSION(:  )  , POINTER   :: gmm_phis => NULL()
          ! length of the sparse structure (i.e. number of points in ipos)
          INTEGER                                            :: gmm_lsiz = -1
          ! positions of the closest points on the interface (for CPT)
-         REAL(ppm_kind_double), DIMENSION(:,:)  , POINTER   :: gmm_clod
-         REAL(ppm_kind_single), DIMENSION(:,:)  , POINTER   :: gmm_clos
-         REAL(ppm_kind_double), DIMENSION(:,:)  , POINTER   :: gmm_clod2
-         REAL(ppm_kind_single), DIMENSION(:,:)  , POINTER   :: gmm_clos2
+         REAL(ppm_kind_double), DIMENSION(:,:)  , POINTER   :: gmm_clod => NULL()
+         REAL(ppm_kind_single), DIMENSION(:,:)  , POINTER   :: gmm_clos => NULL()
+         REAL(ppm_kind_double), DIMENSION(:,:)  , POINTER   :: gmm_clod2 => NULL()
+         REAL(ppm_kind_single), DIMENSION(:,:)  , POINTER   :: gmm_clos2 => NULL()
          ! states of the mesh points (PARAMETER flags above)
-         INTEGER              , DIMENSION(:,:,:,:), POINTER :: gmm_state3d
-         INTEGER              , DIMENSION(:,:,:), POINTER   :: gmm_state2d
+         INTEGER              , DIMENSION(:,:,:,:), POINTER :: gmm_state3d => NULL()
+         INTEGER              , DIMENSION(:,:,:), POINTER   :: gmm_state2d => NULL()
          ! list of mesh points closest to the interface
-         INTEGER              , DIMENSION(:,:)  , POINTER   :: iptstmp
-         INTEGER              , DIMENSION(:,:)  , POINTER   :: iptstmp2
+         INTEGER              , DIMENSION(:,:)  , POINTER   :: iptstmp => NULL()
+         INTEGER              , DIMENSION(:,:)  , POINTER   :: iptstmp2 => NULL()
          ! index and sort key for ranking of points
-         INTEGER              , DIMENSION(:  )  , POINTER   :: idx,key
+         INTEGER              , DIMENSION(:  )  , POINTER   :: idx => NULL()
+         INTEGER              , DIMENSION(:  )  , POINTER   :: key => NULL()
 
       END MODULE ppm_module_data_gmm

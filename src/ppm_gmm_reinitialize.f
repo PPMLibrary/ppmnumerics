@@ -1,16 +1,16 @@
       !-------------------------------------------------------------------------
       !  Subroutine   :                ppm_gmm_reinitialize
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -33,7 +33,7 @@
 #elif  __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_gmm_reinitialize_2dd(fdata,tol,width,   &
      &    order,info,thresh,chi,MaxIter)
-#endif 
+#endif
 #elif  __DIM == __3D
 #if    __KIND == __SINGLE_PRECISION
       SUBROUTINE ppm_gmm_reinitialize_3ds(fdata,tol,width,   &
@@ -41,7 +41,7 @@
 #elif  __KIND == __DOUBLE_PRECISION
       SUBROUTINE ppm_gmm_reinitialize_3dd(fdata,tol,width,   &
      &    order,info,thresh,chi,MaxIter)
-#endif 
+#endif
 #endif
       !!! This routine re-initializes a signed distance level function with the
       !!! zero level representing the interface. Shift accordingly if other
@@ -56,10 +56,10 @@
       !-------------------------------------------------------------------------
 #include "ppm_define.h"
       !-------------------------------------------------------------------------
-      !  Modules 
+      !  Modules
       !-------------------------------------------------------------------------
       USE ppm_module_data
-      
+
       USE ppm_module_data_gmm
       USE ppm_module_gmm_init
       USE ppm_module_gmm_kickoff
@@ -76,7 +76,7 @@
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
 #if   __DIM == __2D
       REAL(MK), DIMENSION(:,:,:  )   , POINTER             :: fdata
@@ -127,14 +127,14 @@
       !!! could cause infinite loops. In each iteration at least one point is
       !!! computed.
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       INTEGER                     :: xhi,i,isub,Nminit,MaxIt
       REAL(MK)                    :: t0,th
-      LOGICAL                     :: lok  
+      LOGICAL                     :: lok
       TYPE(ppm_t_topo), POINTER   :: topo
       !-------------------------------------------------------------------------
-      !  Initialise 
+      !  Initialise
       !-------------------------------------------------------------------------
       CALL substart('ppm_gmm_reinitialize',t0,info)
       topo => ppm_topo(gmm_topoid)%t
@@ -249,7 +249,7 @@
           GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
-      !  Return 
+      !  Return
       !-------------------------------------------------------------------------
  9999 CONTINUE
       CALL substop('ppm_gmm_reinitialize',t0,info)
@@ -259,11 +259,11 @@
       END SUBROUTINE ppm_gmm_reinitialize_2ds
 #elif  __KIND == __DOUBLE_PRECISION
       END SUBROUTINE ppm_gmm_reinitialize_2dd
-#endif 
+#endif
 #elif  __DIM == __3D
 #if    __KIND == __SINGLE_PRECISION
       END SUBROUTINE ppm_gmm_reinitialize_3ds
 #elif  __KIND == __DOUBLE_PRECISION
       END SUBROUTINE ppm_gmm_reinitialize_3dd
-#endif 
+#endif
 #endif

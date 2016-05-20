@@ -2,7 +2,7 @@
       !  Module       :               ppm_module_gmm_extend
       !-------------------------------------------------------------------------
       !
-      !  Purpose      : This module includes the source code for the 
+      !  Purpose      : This module includes the source code for the
       !                 extend routine of the marching method.
       !
       !  Remarks      :
@@ -28,16 +28,16 @@
       !  Initial implementation.
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -54,7 +54,7 @@
       ! CH-8092 Zurich, Switzerland
 
       !-------------------------------------------------------------------------
-     
+
       !-------------------------------------------------------------------------
       !  Define types
       !-------------------------------------------------------------------------
@@ -72,16 +72,16 @@
          !----------------------------------------------------------------------
          !  Modules
          !----------------------------------------------------------------------
-         USE ppm_module_data, ONLY: ppm_kind_single, ppm_kind_double 
+         USE ppm_module_data, ONLY: ppm_kind_single, ppm_kind_double
          PRIVATE :: ppm_kind_single, ppm_kind_double
-         
+
          !----------------------------------------------------------------------
          !  Work memory
          !----------------------------------------------------------------------
-         REAL(ppm_kind_single), DIMENSION(:,:,:  ), POINTER :: ext_wrk_2ds
-         REAL(ppm_kind_single), DIMENSION(:,:,:,:), POINTER :: ext_wrk_3ds
-         REAL(ppm_kind_double), DIMENSION(:,:,:  ), POINTER :: ext_wrk_2dd
-         REAL(ppm_kind_double), DIMENSION(:,:,:,:), POINTER :: ext_wrk_3dd
+         REAL(ppm_kind_single), DIMENSION(:,:,:  ), POINTER :: ext_wrk_2ds => NULL()
+         REAL(ppm_kind_single), DIMENSION(:,:,:,:), POINTER :: ext_wrk_3ds => NULL()
+         REAL(ppm_kind_double), DIMENSION(:,:,:  ), POINTER :: ext_wrk_2dd => NULL()
+         REAL(ppm_kind_double), DIMENSION(:,:,:,:), POINTER :: ext_wrk_3dd => NULL()
 
          !----------------------------------------------------------------------
          !  Define interfaces to ppm_gmm_extend
@@ -113,7 +113,7 @@
          END INTERFACE
 
          !----------------------------------------------------------------------
-         !  include the source 
+         !  include the source
          !----------------------------------------------------------------------
          CONTAINS
 

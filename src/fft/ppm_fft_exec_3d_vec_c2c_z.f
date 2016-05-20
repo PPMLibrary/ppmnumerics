@@ -4,7 +4,7 @@
       ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
-      ! FFTW execute wrapper for 3d arrays, 1d complex to complex 
+      ! FFTW execute wrapper for 3d arrays, 1d complex to complex
       ! (forward and backward) FFT in the z direction
       ! The routine does not work with fields that include ghost layers
       !-------------------------------------------------------------------------
@@ -16,7 +16,7 @@
 #define __PREC ppm_kind_double
 #endif
       SUBROUTINE __ROUTINE(topoid,meshid,ppmplan,infield,outfield,info)
-      !!! FFTW execute wrapper for 3d arrays, 1d complex to complex 
+      !!! FFTW execute wrapper for 3d arrays, 1d complex to complex
       !!! (forward and backward) FFT in the z direction
       !!! Before calling this routine a ppm_fft_plan_ routine must be called
       !!! The routine does not work with fields that include ghost layers
@@ -54,13 +54,13 @@
       !-------------------------------------------------------------------------
       ! Local variables
       !-------------------------------------------------------------------------
-      REAL(__PREC)                  :: t0
-      INTEGER                       :: i,j
-      INTEGER                       :: isub,isubl
-      INTEGER                       :: nsubs
-      INTEGER,DIMENSION(:),POINTER  :: isublist
-      TYPE(ppm_t_topo),POINTER      :: topology
-      TYPE(ppm_t_equi_mesh)         :: mesh
+      REAL(__PREC)                   :: t0
+      INTEGER                        :: i,j
+      INTEGER                        :: isub,isubl
+      INTEGER                        :: nsubs
+      INTEGER,DIMENSION(:),  POINTER :: isublist
+      TYPE(ppm_t_topo),      POINTER :: topology
+      TYPE(ppm_t_equi_mesh), POINTER :: mesh
 
       !-------------------------------------------------------------------------
       ! Initialise routine
@@ -70,6 +70,7 @@
       !-------------------------------------------------------------------------
       ! Get topology and mesh values
       !-------------------------------------------------------------------------
+      NULLIFY(topology)
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
          CALL ppm_write(ppm_rank,'ppm_fft_exec','Failed to get topology.',isub)
@@ -80,7 +81,7 @@
       DO isub=1,nsubs
         isublist(isub) = topology%isublist(isub)
       ENDDO
-      mesh  = topology%mesh(meshid)
+      mesh  => topology%mesh(meshid)
 
       !outfield = 0.0_ppm_kind_double !@
       !-------------------------------------------------------------------------

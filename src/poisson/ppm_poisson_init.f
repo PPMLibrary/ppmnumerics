@@ -22,7 +22,7 @@
       !!! functions such that more general convolutions can be performed.
       !!! green should be expanded to include more buildin Greens functions.
       !!!
-      !!! The routine should eventually accept an optional flag to toggle 
+      !!! The routine should eventually accept an optional flag to toggle
       !!! deallocation of work arrays between calls to ppm_poisson_solve.
 
 
@@ -82,7 +82,7 @@
       !!! curl=curl, grad=gradient,lapl=laplace operator,div=divergence
       !!! sp=spectrally, fd2=2nd order finite differences, fd4=4th order FD
       !!!
-      !!!The spectral derivatives can only be computed in this routine. Since 
+      !!!The spectral derivatives can only be computed in this routine. Since
       !!!the flag exists finite difference derivatives have also been included.
 
 
@@ -90,8 +90,8 @@
       ! Local variables
       !-------------------------------------------------------------------------
       REAL(__PREC)                            :: t0
-      REAL(__PREC),DIMENSION(:,:),POINTER     :: xp=>NULL()      !particle positions
-      TYPE(ppm_t_topo),POINTER                :: topology=>NULL()
+      REAL(__PREC),DIMENSION(:,:),POINTER     :: xp     !particle positions
+      TYPE(ppm_t_topo),POINTER                :: topology
       TYPE(ppm_t_equi_mesh)                   :: mesh
       INTEGER ,DIMENSION(__DIM)               :: indl,indu
       INTEGER,PARAMETER                       :: MK = __PREC
@@ -154,6 +154,7 @@
       NULLIFY(ppmpoisson%planbz%plan)
       NULLIFY(dummynmxy)
       NULLIFY(dummynmz)
+      NULLIFY(topology)
 
       !-------------------------------------------------------------------------
       ! Get topology and mesh values of input/output
@@ -247,7 +248,7 @@
 
 
       !-------------------------------------------------------------------------
-      ! Create spectral scaling components always. Just in case some 
+      ! Create spectral scaling components always. Just in case some
       ! reprojection comes up
       ! The conditionals need to be for not just the Poisson equation
       !-------------------------------------------------------------------------
@@ -299,8 +300,8 @@
       ! Get additional xy-mesh information
       !-------------------------------------------------------------------------
       CALL ppm_topo_get_meshinfo(ppmpoisson%topoidxy,ppmpoisson%meshidxy, &
-         & dummynmxy,ppmpoisson%istartxy,ppmpoisson%ndataxy,maxndataxy, &
-         & ppmpoisson%isublistxy,ppmpoisson%nsublistxy,info)
+      &    dummynmxy,ppmpoisson%istartxy,ppmpoisson%ndataxy,maxndataxy, &
+      &    ppmpoisson%isublistxy,ppmpoisson%nsublistxy,info)
 
 
       !-------------------------------------------------------------------------
@@ -454,7 +455,7 @@
       ! PSI                              = 1/(4*pi2)*1/(kx2 + ky2 + kz2)OMEGA
       !-------------------------------------------------------------------------
       IF (green .EQ. ppm_poisson_grn_pois_per) THEN
-        ! Scaling the spectral coefficients... 
+        ! Scaling the spectral coefficients...
         ! one minus due to (i*k)^2 and another due to the Poisson equation
         normfac = 1.0_MK/(4.0_MK*PI*PI * &
                 !and normalisation of FFTs (full domain) !vertex

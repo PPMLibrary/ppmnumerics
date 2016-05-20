@@ -4,9 +4,9 @@
       !
       !  Purpose      : procedure module for ppm_ode_step
       !
-      !  Remarks      : 
+      !  Remarks      :
       !
-      !  References   : 
+      !  References   :
       !
       !  Revisions    :
       !-------------------------------------------------------------------------
@@ -31,16 +31,16 @@
       !
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -85,12 +85,10 @@
         !-----------------------------------------------------
 
         ABSTRACT INTERFACE
-
            ! single precision
 
            ! scalar
-           FUNCTION rhsfunc_ss(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
+           FUNCTION rhsfunc_ss(topoid,xp,up,dup,lda,npart,ipack,lpack,rpack,info)
              INTEGER                          , INTENT(IN)  :: topoid
              INTEGER                          , INTENT(IN)  :: lda,npart
              INTEGER                          , INTENT(OUT) :: info
@@ -100,12 +98,11 @@
              INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
+             INTEGER                                        :: rhsfunc_ss
            END FUNCTION rhsfunc_ss
 
            ! vector
-           FUNCTION rhsfunc_sv(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
+           FUNCTION rhsfunc_sv(topoid,xp,up,dup,lda,npart,ipack,lpack,rpack,info)
              INTEGER                          , INTENT(IN)  :: topoid
              INTEGER                          , INTENT(IN)  :: lda,npart
              INTEGER                          , INTENT(OUT) :: info
@@ -114,14 +111,13 @@
              INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0E0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
+             INTEGER                                        :: rhsfunc_sv
            END FUNCTION rhsfunc_sv
 
            ! double precision
 
            ! scalar
-           FUNCTION rhsfunc_ds(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
+           FUNCTION rhsfunc_ds(topoid,xp,up,dup,lda,npart,ipack,lpack,rpack,info)
              INTEGER                          , INTENT(IN)  :: topoid
              INTEGER                          , INTENT(IN)  :: lda,npart
              INTEGER                          , INTENT(OUT) :: info
@@ -131,12 +127,11 @@
              INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
+             INTEGER                                        :: rhsfunc_ds
            END FUNCTION rhsfunc_ds
 
            ! vector
-           FUNCTION rhsfunc_dv(topoid,xp,up,dup,lda,npart,ipack,&
-                &lpack,rpack,info)
+           FUNCTION rhsfunc_dv(topoid,xp,up,dup,lda,npart,ipack,lpack,rpack,info)
              INTEGER                          , INTENT(IN)  :: topoid
              INTEGER                          , INTENT(IN)  :: lda,npart
              INTEGER                          , INTENT(OUT) :: info
@@ -145,9 +140,8 @@
              INTEGER,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: ipack
              LOGICAL,  DIMENSION(:,:), INTENT(IN), OPTIONAL :: lpack
              REAL(kind(1.0D0)), DIMENSION(:,:), INTENT(IN), OPTIONAL :: rpack
-             INTEGER                                     :: rhsfunc
+             INTEGER                                        :: rhsfunc_dv
            END FUNCTION rhsfunc_dv
-
         END INTERFACE
 
 #endif
@@ -173,4 +167,4 @@
       END MODULE ppm_module_ode_step
 
 
-        
+

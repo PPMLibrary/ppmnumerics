@@ -4,9 +4,9 @@
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -100,20 +100,20 @@
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       INTEGER                 , DIMENSION(:  ), INTENT(IN   ) :: lda
       INTEGER                                 , INTENT(IN   ) :: iopt
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-#if __KIND ==__SINGLE_PRECISION 
+#if __KIND ==__SINGLE_PRECISION
       TYPE(mg_field_2d_sca_s), DIMENSION(:,:), POINTER :: field
 #elif __KIND == __DOUBLE_PRECISION
       TYPE(mg_field_2d_sca_d), DIMENSION(:,:), POINTER :: field
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND ==__SINGLE_PRECISION
-      TYPE(mg_field_3d_sca_s), DIMENSION(:,:), POINTER :: field 
+      TYPE(mg_field_3d_sca_s), DIMENSION(:,:), POINTER :: field
 #elif __KIND == __DOUBLE_PRECISION
       TYPE(mg_field_3d_sca_d),DIMENSION(:,:), POINTER  :: field
 #endif
@@ -137,7 +137,7 @@
 
       INTEGER                           , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       INTEGER               :: i,j
       INTEGER, DIMENSION(2) :: ldc
@@ -175,11 +175,11 @@
 
       LOGICAL            :: lcopy,lalloc,lrealloc,ldealloc
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
-      
+
       !-------------------------------------------------------------------------
-      !  Initialise 
+      !  Initialise
       !-------------------------------------------------------------------------
       CALL substart('ppm_mg_alloc_field',t0,info)
 
@@ -285,29 +285,29 @@
               ldealloc = .TRUE.
           ENDIF
       ENDIF
-              
+
       !-------------------------------------------------------------------------
       !  Perform the actual alloc action
       !-------------------------------------------------------------------------
       IF (lalloc) THEN
-          !---------------------------------------------------------------------
-          !  Allocate new array with new size and nullify all members
-          !---------------------------------------------------------------------
-          ALLOCATE(work_field(lda(1),lda(2)),STAT=info)
-          IF (info .NE. 0) THEN
-              info = ppm_error_fatal
-              CALL ppm_error(ppm_err_alloc,'ppm_mg_alloc_field',  &
-     &            'new mgfield WORK_MESH',__LINE__,info)
-              GOTO 9999
-          ENDIF
-          DO j=1,lda(2)
-              DO i=1,lda(1)
-                  NULLIFY(work_field(i,j)%uc)
-                  NULLIFY(work_field(i,j)%fc)
-                  NULLIFY(work_field(i,j)%err)
-                  NULLIFY(work_field(i,j)%bcvalue)
-              ENDDO
-          ENDDO
+         !---------------------------------------------------------------------
+         !  Allocate new array with new size and nullify all members
+         !---------------------------------------------------------------------
+         ALLOCATE(work_field(lda(1),lda(2)),STAT=info)
+         IF (info .NE. 0) THEN
+            info = ppm_error_fatal
+            CALL ppm_error(ppm_err_alloc,'ppm_mg_alloc_field',  &
+     &          'new mgfield WORK_MESH',__LINE__,info)
+            GOTO 9999
+         ENDIF
+         DO j=1,lda(2)
+            DO i=1,lda(1)
+               NULLIFY(work_field(i,j)%uc)
+               NULLIFY(work_field(i,j)%fc)
+               NULLIFY(work_field(i,j)%err)
+               NULLIFY(work_field(i,j)%bcvalue)
+            ENDDO
+         ENDDO
       ENDIF
 
       IF (lcopy) THEN
@@ -390,7 +390,7 @@
       ENDIF
 
       !-------------------------------------------------------------------------
-      !  Return 
+      !  Return
       !-------------------------------------------------------------------------
  9999 CONTINUE
       CALL substop('ppm_mg_alloc_field',t0,info)

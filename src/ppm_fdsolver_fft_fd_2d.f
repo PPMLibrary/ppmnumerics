@@ -7,14 +7,14 @@
       !
       !  Input        : data_in(:,:)   (F) 2d data array to be transformed
       !
-      !  Input/output : lda(:)         (I) size of data              
-      !                                
+      !  Input/output : lda(:)         (I) size of data
+      !
       !
       !  Output       : data_out(:,:)  (F) transformed data
       !                 info           (I) return status. =0 if no error.
       !
-      !  Remarks      : 
-      !                                                  
+      !  Remarks      :
+      !
       !  References   :
       !
       !  Revisions    :
@@ -35,16 +35,16 @@
       !  initial implementation
       !
       !-------------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -84,9 +84,9 @@
       USE ppm_module_error
       USE ppm_module_alloc
       IMPLICIT NONE
-#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX 
+#if   __KIND == __SINGLE_PRECISION | __KIND ==__SINGLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_single
-#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX 
+#elif __KIND == __DOUBLE_PRECISION | __KIND ==__DOUBLE_PRECISION_COMPLEX
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-------------------------------------------------------------------------
@@ -96,7 +96,7 @@
       INCLUDE "fftw3.f"
 #endif
       !-------------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-------------------------------------------------------------------------
       ! input data
 #if   __KIND == __SINGLE_PRECISION | __KIND == __DOUBLE_PRECISION
@@ -110,15 +110,15 @@
       COMPLEX(MK), DIMENSION(:,:)   , POINTER       :: data_out
       INTEGER                       , INTENT(  OUT) :: info
       !-------------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-------------------------------------------------------------------------
       ! timer
       REAL(MK)                                :: t0
       ! counters
       INTEGER                                 :: i,j,iopt
-      ! size of the data_in 
+      ! size of the data_in
       INTEGER                                 :: Nx_in, Ny_in
-      ! size of the data_out 
+      ! size of the data_out
       INTEGER                                 :: Nx_out, Ny_out
 #ifdef __FFTW
       ! FFTW Plan
@@ -133,12 +133,12 @@
       ! scale of the transformation
       REAL(MK)                                :: scale_fft
       ! working storage
-      REAL(MK), DIMENSION(:),POINTER          :: table, work
+      REAL(MK), DIMENSION(:),POINTER          :: work
       ! the size of the working storage
       INTEGER, DIMENSION(1)                   :: lda_table, lda_work
 #endif
       !-------------------------------------------------------------------------
-      !  Externals 
+      !  Externals
       !-------------------------------------------------------------------------
 
       !-------------------------------------------------------------------------
@@ -158,7 +158,7 @@
       CALL ppm_error(ppm_err_noMathKeisan,'ppm_fdsolver_fft_fd_2d',  &
      &    'PPM was compiled without MATHKEISAN support',__LINE__,info)
 #endif
-      GOTO 9999   
+      GOTO 9999
 #else
       !-------------------------------------------------------------------------
       !  Check arguments
@@ -224,6 +224,7 @@
       !-------------------------------------------------------------------------
       !  Allocate working storage
       !-------------------------------------------------------------------------
+      NULLIFY(work)
       lda_work(1) = 4*Nx_in
       CALL ppm_alloc(work,lda_work,ppm_param_alloc_fit,info)
       IF (info .NE. 0) THEN
@@ -233,7 +234,7 @@
           GOTO 9999
       ENDIF
       !-------------------------------------------------------------------------
-      !  Forward FFT 
+      !  Forward FFT
       !-------------------------------------------------------------------------
       scale_fft = 1
       isign_fft = 0
@@ -282,14 +283,14 @@
       CALL dfftw_execute_dft(Plan_fd_cc_y,data_in(1,1),data_out(1,1) )
 #endif
 #endif
-#endif 
+#endif
 #if __KIND == __SINGLE_PRECISION_COMPLEX | __KIND == __DOUBLE_PRECISION_COMPLEX
       !-------------------------------------------------------------------------
       !  Copy margin to conform with PPM convention
       !-------------------------------------------------------------------------
       DO j=1,Ny_out
             data_out(lda(1),j) = data_out(1,j)
-      ENDDO     
+      ENDDO
 #endif
       !-------------------------------------------------------------------------
       !  Return

@@ -1,16 +1,16 @@
       !----------------------------------------------------------------------
-      !  Subroutine   :            ppm_mg_restrict  
+      !  Subroutine   :            ppm_mg_restrict
       !-----------------------------------------------------------------------
-      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich), 
+      ! Copyright (c) 2012 CSE Lab (ETH Zurich), MOSAIC Group (ETH Zurich),
       !                    Center for Fluid Dynamics (DTU)
       !
       !
       ! This file is part of the Parallel Particle Mesh Library (PPM).
       !
       ! PPM is free software: you can redistribute it and/or modify
-      ! it under the terms of the GNU Lesser General Public License 
-      ! as published by the Free Software Foundation, either 
-      ! version 3 of the License, or (at your option) any later 
+      ! it under the terms of the GNU Lesser General Public License
+      ! as published by the Free Software Foundation, either
+      ! version 3 of the License, or (at your option) any later
       ! version.
       !
       ! PPM is distributed in the hope that it will be useful,
@@ -25,7 +25,7 @@
       ! Parallel Particle Mesh Library (PPM)
       ! ETH Zurich
       ! CH-8092 Zurich, Switzerland
-      !------------------------------------------------------------------------ 
+      !------------------------------------------------------------------------
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
@@ -61,7 +61,7 @@
       !-----------------------------------------------------------------------
 #include "ppm_define.h"
       !-----------------------------------------------------------------------
-      !  Modules 
+      !  Modules
       !-----------------------------------------------------------------------
       USE ppm_module_data
       USE ppm_module_data_mg
@@ -80,12 +80,12 @@
       INTEGER, PARAMETER :: MK = ppm_kind_double
 #endif
       !-----------------------------------------------------------------------
-      !  Arguments     
+      !  Arguments
       !-----------------------------------------------------------------------
       INTEGER,                   INTENT(IN)      ::  mlev, topo_id
       INTEGER,                   INTENT(INOUT)   ::  info
       !-----------------------------------------------------------------------
-      !  Local variables 
+      !  Local variables
       !-----------------------------------------------------------------------
       CHARACTER(LEN=256)                         :: cbuf
       INTEGER                                    :: isub,j,j2,i,i2
@@ -94,68 +94,68 @@
       INTEGER,DIMENSION(4)                       :: ldl4,ldu4
       INTEGER,DIMENSION(3)                       :: ldl3,ldu3
       INTEGER                                    :: iopt,topoid
-      INTEGER                                    :: a,b,c,d,e,f,g  
+      INTEGER                                    :: a,b,c,d,e,f,g
 #if __MESH_DIM == __3D
       INTEGER                                    :: k,k2
-#endif        
-      REAL(MK)                                   :: t0 
+#endif
+      REAL(MK)                                   :: t0
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-      TYPE(mg_field_2d_sca_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_2d_sca_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-      TYPE(mg_field_2d_sca_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_2d_sca_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-      TYPE(mg_field_3d_sca_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_3d_sca_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-      TYPE(mg_field_3d_sca_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_3d_sca_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
 #if __KIND == __SINGLE_PRECISION
-      TYPE(mg_field_2d_vec_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_2d_vec_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-      TYPE(mg_field_2d_vec_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_2d_vec_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #elif __MESH_DIM == __3D
 #if __KIND == __SINGLE_PRECISION
-      TYPE(mg_field_3d_vec_s),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_3d_vec_s),DIMENSION(:,:),POINTER :: mgfield
 #elif __KIND == __DOUBLE_PRECISION
-      TYPE(mg_field_3d_vec_d),DIMENSION(:,:),POINTER :: mgfield => NULL()
+      TYPE(mg_field_3d_vec_d),DIMENSION(:,:),POINTER :: mgfield
 #endif
 #endif
 #endif
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-      REAL(MK),DIMENSION(:,:,:),POINTER :: uc_dummy => NULL()
+      REAL(MK),DIMENSION(:,:,:),POINTER :: uc_dummy
 #elif __MESH_DIM == __3D
-      REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy => NULL()
+      REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
-      REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy => NULL()
+      REAL(MK),DIMENSION(:,:,:,:),POINTER :: uc_dummy
 #elif __MESH_DIM == __3D
-      REAL(MK),DIMENSION(:,:,:,:,:),POINTER :: uc_dummy => NULL()
+      REAL(MK),DIMENSION(:,:,:,:,:),POINTER :: uc_dummy
 #endif
 #endif
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
-      REAL(MK),DIMENSION(:,:),POINTER :: terr => NULL()
-      REAL(MK),DIMENSION(:,:),POINTER :: pfc => NULL()
+      REAL(MK),DIMENSION(:,:),POINTER :: terr
+      REAL(MK),DIMENSION(:,:),POINTER :: pfc
 #elif __MESH_DIM == __3D
-      REAL(MK),DIMENSION(:,:,:),POINTER :: terr => NULL()
-      REAL(MK),DIMENSION(:,:,:),POINTER :: pfc => NULL()
+      REAL(MK),DIMENSION(:,:,:),POINTER :: terr
+      REAL(MK),DIMENSION(:,:,:),POINTER :: pfc
 #endif
 #elif __DIM == __VFIELD
 #if __MESH_DIM == __2D
-      REAL(MK),DIMENSION(:,:,:),POINTER :: terr => NULL()
-      REAL(MK),DIMENSION(:,:,:),POINTER :: pfc => NULL()
+      REAL(MK),DIMENSION(:,:,:),POINTER :: terr
+      REAL(MK),DIMENSION(:,:,:),POINTER :: pfc
 #elif __MESH_DIM == __3D
-      REAL(MK),DIMENSION(:,:,:,:),POINTER :: terr => NULL()
-      REAL(MK),DIMENSION(:,:,:,:),POINTER :: pfc => NULL()
+      REAL(MK),DIMENSION(:,:,:,:),POINTER :: terr
+      REAL(MK),DIMENSION(:,:,:,:),POINTER :: pfc
 #endif
 #endif
       !----------------------------------------------------------------------
@@ -216,7 +216,10 @@
       IF (ppm_debug.GT.0) THEN
           WRITE(cbuf,*) 'WELCOME TO THE RESTRICTION LEVEL:',mlev
           CALL PPM_WRITE(ppm_rank,'mg_restrict',cbuf,info)
-      ENDIF 
+      ENDIF
+
+      NULLIFY(uc_dummy)
+
 #if __DIM == __SFIELD
 #if __MESH_DIM == __2D
       !----------------------------------------------------------------------
@@ -239,13 +242,13 @@
           GOTO 9999
       ENDIF
       DO isub=1,nsubs
-          terr=>mgfield(isub,mlevm1)%err 
+          terr=>mgfield(isub,mlevm1)%err
           DO i=1-ghostsize(1),max_node(1,mlevm1)+ghostsize(1)
               DO j=1-ghostsize(2),max_node(2,mlevm1)+ghostsize(2)
                   uc_dummy(i,j,isub) = terr(i,j)
               ENDDO
-          ENDDO   
-      ENDDO 
+          ENDDO
+      ENDDO
       CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlevm1),&
       &                         ghostsize,info)
       CALL ppm_map_field_push(topoid,mg_meshid(mlevm1),uc_dummy,&
@@ -254,15 +257,15 @@
       CALL ppm_map_field_pop(topoid,mg_meshid(mlevm1),uc_dummy,&
       &                          ghostsize,info)
       DO isub=1,nsubs
-          terr=>mgfield(isub,mlevm1)%err 
-          pfc=>mgfield(isub,mlev)%fc 
+          terr=>mgfield(isub,mlevm1)%err
+          pfc=>mgfield(isub,mlev)%fc
           DO i=1-ghostsize(1),max_node(1,mlevm1)+ghostsize(1)
               DO j=1-ghostsize(2),max_node(2,mlevm1)+ghostsize(2)
                   terr(i,j) = uc_dummy(i,j,isub)
               ENDDO
-          ENDDO   
+          ENDDO
           DO j=start(2,isub,mlev),istop(2,isub,mlev)
-              j2=2*j 
+              j2=2*j
               DO i=start(1,isub,mlev),istop(1,isub,mlev)
                   i2=2*i
                        pfc(i,j)= &
@@ -274,22 +277,15 @@
                        &        0.0625_MK * (terr(i2,j2-2) + &
                        &                    terr(i2-2,j2) +  &
                        &                     terr(i2-2,j2-2) &
-                       &                      + terr(i2,j2)) 
+                       &                      + terr(i2,j2))
                    ENDDO
                ENDDO
            ENDDO
            iopt = ppm_param_dealloc
-           ldl3(1) = 1-ghostsize(1)
-           ldl3(2) = 1-ghostsize(2)
-           ldl3(3) = 1
-           ldu3(1) = max_node(1,mlevm1)+ghostsize(1)
-           ldu3(2) = max_node(2,mlevm1)+ghostsize(2)
-           ldu3(3) = nsubs
            CALL ppm_alloc(uc_dummy,ldl3,ldu3,iopt,info)
            IF (info .NE. 0) THEN
               info = ppm_error_fatal
-              CALL ppm_error(ppm_err_alloc,'restrict',    &
-              &             'uc_dummy',__LINE__,info)
+              CALL ppm_error(ppm_err_alloc,'restrict','uc_dummy',__LINE__,info)
               GOTO 9999
            ENDIF
 #elif __MESH_DIM == __3D
@@ -306,20 +302,19 @@
            CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
            IF (info .NE. 0) THEN
                info = ppm_error_fatal
-               CALL ppm_error(ppm_err_alloc,'restrict',    &
-               &                       'uc_dummy',__LINE__,info)
+               CALL ppm_error(ppm_err_alloc,'restrict','uc_dummy',__LINE__,info)
                GOTO 9999
            ENDIF
            DO isub=1,nsubs
-               terr=>mgfield(isub,mlevm1)%err 
+               terr=>mgfield(isub,mlevm1)%err
                DO i=1-ghostsize(1),max_node(1,mlevm1)+ghostsize(1)
                    DO j=1-ghostsize(2),max_node(2,mlevm1)+ghostsize(2)
                        DO k=1-ghostsize(3),max_node(3,mlevm1)+ghostsize(3)
                            uc_dummy(i,j,k,isub) = terr(i,j,k)
                        ENDDO
-                   ENDDO   
+                   ENDDO
                ENDDO
-           ENDDO 
+           ENDDO
            CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlevm1),&
            &                            ghostsize,info)
            CALL ppm_map_field_push(topoid,mg_meshid(mlevm1),uc_dummy,&
@@ -329,8 +324,8 @@
            &                      ghostsize,info)
 
            DO isub=1,nsubs
-               terr=>mgfield(isub,mlevm1)%err 
-               pfc=>mgfield(isub,mlev)%fc 
+               terr=>mgfield(isub,mlevm1)%err
+               pfc=>mgfield(isub,mlev)%fc
                DO i=1-ghostsize(1),max_node(1,mlevm1)+ghostsize(1)
                    DO j=1-ghostsize(2),max_node(2,mlevm1)+ghostsize(2)
                        DO k=1-ghostsize(3),max_node(3,mlevm1)+ghostsize(3)
@@ -341,7 +336,7 @@
                DO k=start(3,isub,mlev),istop(3,isub,mlev)
                    k2=2*k
                    DO j=start(2,isub,mlev),istop(2,isub,mlev)
-                       j2=2*j 
+                       j2=2*j
                        DO i=start(1,isub,mlev),istop(1,isub,mlev)
                            i2=2*i
                            pfc(i,j,k) = &
@@ -354,7 +349,7 @@
                            &               terr(i2,j2-2,k2-1)+ &
                            &             terr(i2-2,j2,k2-1) +  &
                            &             terr(i2-2,j2-2,k2-1) +&
-                           &                terr(i2,j2,k2-1)) 
+                           &                terr(i2,j2,k2-1))
 
                           pfc(i,j,k)=              pfc(i,j,k) +&
                           & 0.0625_MK * terr(i2-1,j2-1,k2-2) + &
@@ -366,25 +361,16 @@
                           &                 terr(i2,j2-2,k2-2)+&
                           &              terr(i2-2,j2,k2-2) +  &
                           &               terr(i2-2,j2-2,k2-2)+&
-                          &                  terr(i2,j2,k2-2)) 
+                          &                  terr(i2,j2,k2-2))
                       ENDDO
                   ENDDO
               ENDDO
           ENDDO
           iopt = ppm_param_dealloc
-          ldl4(1) = 1-ghostsize(1)
-          ldl4(2) = 1-ghostsize(2)
-          ldl4(3) = 1-ghostsize(3)
-          ldl4(4) = 1
-          ldu4(1) = max_node(1,mlevm1)+ghostsize(1)
-          ldu4(2) = max_node(2,mlevm1)+ghostsize(2)
-          ldu4(3) = max_node(3,mlevm1)+ghostsize(3)
-          ldu4(4) = nsubs
           CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
           IF (info .NE. 0) THEN
               info = ppm_error_fatal
-              CALL ppm_error(ppm_err_alloc,'restrict',    &
-              &             'uc_dummy',__LINE__,info)
+              CALL ppm_error(ppm_err_alloc,'restrict','uc_dummy',__LINE__,info)
               GOTO 9999
           ENDIF
 #endif
@@ -407,8 +393,7 @@
           CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
           IF (info .NE. 0) THEN
               info = ppm_error_fatal
-              CALL ppm_error(ppm_err_alloc,'restrict',    &
-              &             'uc_dummy',__LINE__,info)
+              CALL ppm_error(ppm_err_alloc,'restrict','uc_dummy',__LINE__,info)
               GOTO 9999
           ENDIF
           DO isub=1,nsubs
@@ -418,17 +403,14 @@
                       DO ilda=1,vecdim
                           uc_dummy(ilda,i,j,isub) = terr(ilda,i,j)
                       ENDDO
-                  ENDDO   
+                  ENDDO
               ENDDO
-          ENDDO 
+          ENDDO
 
-          CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlevm1),&
-          &                         ghostsize,info)
-          CALL ppm_map_field_push(topoid,mg_meshid(mlevm1),uc_dummy,&
-          &                         vecdim,info)
+          CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlevm1),ghostsize,info)
+          CALL ppm_map_field_push(topoid,mg_meshid(mlevm1),uc_dummy,vecdim,info)
           CALL ppm_map_field_send(info)
-          CALL ppm_map_field_pop(topoid,mg_meshid(mlevm1),uc_dummy,&
-          &                          vecdim,ghostsize,info)
+          CALL ppm_map_field_pop(topoid,mg_meshid(mlevm1),uc_dummy,vecdim,ghostsize,info)
           DO isub=1,nsubs
               terr=>mgfield(isub,mlevm1)%err
               pfc=>mgfield(isub,mlev)%fc
@@ -437,10 +419,10 @@
                       DO ilda=1,vecdim
                           terr(ilda,i,j) = uc_dummy(ilda,i,j,isub)
                       ENDDO
-                  ENDDO   
+                  ENDDO
               ENDDO
               DO j=start(2,isub,mlev),istop(2,isub,mlev)
-                  j2=2*j 
+                  j2=2*j
                   DO i=start(1,isub,mlev),istop(1,isub,mlev)
                       i2=2*i
                       DO ilda=1,vecdim
@@ -453,25 +435,16 @@
                           &  0.0625_MK * (terr(ilda,i2,j2-2)+&
                           &            terr(ilda,i2-2,j2) +  &
                           &              terr(ilda,i2-2,j2-2)&
-                          &               + terr(ilda,i2,j2)) 
+                          &               + terr(ilda,i2,j2))
                       ENDDO
                   ENDDO
               ENDDO
           ENDDO
           iopt = ppm_param_dealloc
-          ldl4(1) = 1
-          ldl4(2) = 1-ghostsize(1)
-          ldl4(3) = 1-ghostsize(2)
-          ldl4(4) = 1
-          ldu4(1) = vecdim
-          ldu4(2) = max_node(1,mlevm1)+ghostsize(1)
-          ldu4(3) = max_node(2,mlevm1)+ghostsize(2)
-          ldu4(4) = nsubs
           CALL ppm_alloc(uc_dummy,ldl4,ldu4,iopt,info)
           IF (info .NE. 0) THEN
               info = ppm_error_fatal
-              CALL ppm_error(ppm_err_alloc,'restrict',    &
-              &                       'uc_dummy',__LINE__,info)
+              CALL ppm_error(ppm_err_alloc,'restrict','uc_dummy',__LINE__,info)
               GOTO 9999
           ENDIF
 #elif __MESH_DIM == __3D
@@ -490,8 +463,7 @@
           CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
           IF (info .NE. 0) THEN
               info = ppm_error_fatal
-              CALL ppm_error(ppm_err_alloc,'restrict',    &
-              &                       'uc_dummy',__LINE__,info)
+              CALL ppm_error(ppm_err_alloc,'restrict','uc_dummy',__LINE__,info)
               GOTO 9999
           ENDIF
           DO isub=1,nsubs
@@ -505,20 +477,17 @@
                           uc_dummy(3,i,j,k,isub) = terr(3,i,j,k)
 #else
                           DO ilda=1,vecdim
-                              uc_dummy(ilda,i,j,k,isub) = terr(ilda,i,j,k)
+                             uc_dummy(ilda,i,j,k,isub) = terr(ilda,i,j,k)
 #endif
                       ENDDO
                   ENDDO
               ENDDO
-          ENDDO  
-      ENDDO 
-      CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlevm1),&
-      &                         ghostsize,info)
-      CALL ppm_map_field_push(topoid,mg_meshid(mlevm1),uc_dummy,&
-      &                         vecdim,info)
+          ENDDO
+      ENDDO
+      CALL ppm_map_field_ghost_get(topoid,mg_meshid(mlevm1),ghostsize,info)
+      CALL ppm_map_field_push(topoid,mg_meshid(mlevm1),uc_dummy,vecdim,info)
       CALL ppm_map_field_send(info)
-      CALL ppm_map_field_pop(topoid,mg_meshid(mlevm1),uc_dummy,&
-      &                          vecdim,ghostsize,info)
+      CALL ppm_map_field_pop(topoid,mg_meshid(mlevm1),uc_dummy,vecdim,ghostsize,info)
       DO isub=1,nsubs
           terr=>mgfield(isub,mlevm1)%err
           pfc=>mgfield(isub,mlev)%fc
@@ -533,7 +502,7 @@
 #else
                       DO ilda=1,vecdim
                           terr(ilda,i,j,k) = uc_dummy(ilda,i,j,k,isub)
-#endif       
+#endif
                      ENDDO
                  ENDDO
              ENDDO
@@ -541,7 +510,7 @@
          DO k=start(3,isub,mlev),istop(3,isub,mlev)
              k2=2*k
              DO j=start(2,isub,mlev),istop(2,isub,mlev)
-                 j2=2*j 
+                 j2=2*j
                  DO i=start(1,isub,mlev),istop(1,isub,mlev)
                      i2=2*i
 #ifdef __VECTOR
@@ -557,7 +526,7 @@
                      &       terr(1,i2,j2-2,k2-1)+ &
                      &     terr(1,i2-2,j2,k2-1) +  &
                      &     terr(1,i2-2,j2-2,k2-1) +&
-                     &        terr(1,i2,j2,k2-1)) 
+                     &        terr(1,i2,j2,k2-1))
                      pfc(1,i,j,k)= &
                      &                pfc(1,i,j,k)+&
                      &                 0.0625_MK * &
@@ -571,7 +540,7 @@
                      &         terr(1,i2,j2-2,k2)+ &
                      &       terr(1,i2-2,j2,k2) +  &
                      &      terr(1,i2-2,j2-2,k2) + &
-                     &         terr(1,i2,j2,k2)) 
+                     &         terr(1,i2,j2,k2))
                      pfc(1,i,j,k)= &
                      &               pfc(1,i,j,k) +&
                      &                 0.0625_MK * &
@@ -585,7 +554,7 @@
                      &        terr(1,i2,j2-2,k2-2)+&
                      &     terr(1,i2-2,j2,k2-2) +  &
                      &      terr(1,i2-2,j2-2,k2-2)+&
-                     &         terr(1,i2,j2,k2-2)) 
+                     &         terr(1,i2,j2,k2-2))
                      pfc(2,i,j,k)= &
                      &                  0.125_MK * &
                      &    terr(2,i2-1,j2-1,k2-1) + &
@@ -598,7 +567,7 @@
                      &       terr(2,i2,j2-2,k2-1)+ &
                      &     terr(2,i2-2,j2,k2-1) +  &
                      &     terr(2,i2-2,j2-2,k2-1) +&
-                     &        terr(2,i2,j2,k2-1)) 
+                     &        terr(2,i2,j2,k2-1))
                      pfc(2,i,j,k)= &
                      &                pfc(2,i,j,k)+&
                      &                 0.0625_MK * &
@@ -612,7 +581,7 @@
                      &         terr(2,i2,j2-2,k2)+ &
                      &       terr(2,i2-2,j2,k2) +  &
                      &      terr(2,i2-2,j2-2,k2) + &
-                     &         terr(2,i2,j2,k2)) 
+                     &         terr(2,i2,j2,k2))
                      pfc(2,i,j,k)= &
                      &               pfc(2,i,j,k) +&
                      &                 0.0625_MK * &
@@ -626,7 +595,7 @@
                      &        terr(2,i2,j2-2,k2-2)+&
                      &     terr(2,i2-2,j2,k2-2) +  &
                      &      terr(2,i2-2,j2-2,k2-2)+&
-                     &         terr(2,i2,j2,k2-2)) 
+                     &         terr(2,i2,j2,k2-2))
                      pfc(3,i,j,k)= &
                      &                  0.125_MK * &
                      &    terr(3,i2-1,j2-1,k2-1) + &
@@ -639,7 +608,7 @@
                      &       terr(3,i2,j2-2,k2-1)+ &
                      &     terr(3,i2-2,j2,k2-1) +  &
                      &     terr(3,i2-2,j2-2,k2-1) +&
-                     &        terr(3,i2,j2,k2-1)) 
+                     &        terr(3,i2,j2,k2-1))
                      pfc(3,i,j,k)= &
                      &                pfc(3,i,j,k)+&
                      &                 0.0625_MK * &
@@ -653,7 +622,7 @@
                      &         terr(3,i2,j2-2,k2)+ &
                      &       terr(3,i2-2,j2,k2) +  &
                      &      terr(3,i2-2,j2-2,k2) + &
-                     &         terr(3,i2,j2,k2)) 
+                     &         terr(3,i2,j2,k2))
                      pfc(3,i,j,k)= &
                      &               pfc(3,i,j,k) +&
                      &                 0.0625_MK * &
@@ -667,7 +636,7 @@
                      &        terr(3,i2,j2-2,k2-2)+&
                      &     terr(3,i2-2,j2,k2-2) +  &
                      &      terr(3,i2-2,j2-2,k2-2)+&
-                     &         terr(3,i2,j2,k2-2)) 
+                     &         terr(3,i2,j2,k2-2))
 #else
                      DO ilda=1,vecdim
                          pfc(ilda,i,j,k)= &
@@ -682,7 +651,7 @@
                          &     terr(ilda,i2,j2-2,k2-1)+ &
                          &   terr(ilda,i2-2,j2,k2-1) +  &
                          &   terr(ilda,i2-2,j2-2,k2-1) +&
-                         &      terr(ilda,i2,j2,k2-1)) 
+                         &      terr(ilda,i2,j2,k2-1))
                          pfc(ilda,i,j,k)= &
                          &              pfc(ilda,i,j,k)+&
                          &                  0.0625_MK * &
@@ -696,7 +665,7 @@
                          &       terr(ilda,i2,j2-2,k2)+ &
                          &     terr(ilda,i2-2,j2,k2) +  &
                          &    terr(ilda,i2-2,j2-2,k2) + &
-                         &       terr(ilda,i2,j2,k2)) 
+                         &       terr(ilda,i2,j2,k2))
                          pfc(ilda,i,j,k)= &
                          &             pfc(ilda,i,j,k) +&
                          &                  0.0625_MK * &
@@ -710,7 +679,7 @@
                          &      terr(ilda,i2,j2-2,k2-2)+&
                          &   terr(ilda,i2-2,j2,k2-2) +  &
                          &    terr(ilda,i2-2,j2-2,k2-2)+&
-                         &       terr(ilda,i2,j2,k2-2)) 
+                         &       terr(ilda,i2,j2,k2-2))
                      ENDDO
 #endif
                  ENDDO
@@ -718,21 +687,10 @@
          ENDDO
      ENDDO
      iopt = ppm_param_dealloc
-     ldl5(1) = 1
-     ldl5(2) = 1-ghostsize(1)
-     ldl5(3) = 1-ghostsize(2)
-     ldl5(4) = 1-ghostsize(3)
-     ldl5(5) = 1
-     ldu5(1) = vecdim
-     ldu5(2) = max_node(1,mlevm1)+ghostsize(1)
-     ldu5(3) = max_node(2,mlevm1)+ghostsize(2)
-     ldu5(4) = max_node(3,mlevm1)+ghostsize(3)
-     ldu5(5) = nsubs
      CALL ppm_alloc(uc_dummy,ldl5,ldu5,iopt,info)
      IF (info .NE. 0) THEN
          info = ppm_error_fatal
-         CALL ppm_error(ppm_err_alloc,'restrict',    &
-         &                       'uc_dummy',__LINE__,info)
+         CALL ppm_error(ppm_err_alloc,'restrict','uc_dummy',__LINE__,info)
          GOTO 9999
      ENDIF
 #endif

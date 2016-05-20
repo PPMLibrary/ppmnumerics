@@ -53,12 +53,12 @@
       !-------------------------------------------------------------------------
       ! Local variables
       !-------------------------------------------------------------------------
-      REAL(__PREC)                  :: t0
-      INTEGER                       :: isub,isubl
-      INTEGER                       :: nsubs
-      INTEGER,DIMENSION(:),POINTER  :: isublist
-      TYPE(ppm_t_topo),POINTER      :: topology
-      TYPE(ppm_t_equi_mesh)         :: mesh
+      REAL(__PREC)                   :: t0
+      INTEGER                        :: isub,isubl
+      INTEGER                        :: nsubs
+      INTEGER,DIMENSION(:),  POINTER :: isublist
+      TYPE(ppm_t_topo),      POINTER :: topology
+      TYPE(ppm_t_equi_mesh), POINTER :: mesh
 
       !-------------------------------------------------------------------------
       ! Initialise routine
@@ -68,6 +68,7 @@
       !-------------------------------------------------------------------------
       ! Get topology and mesh values
       !-------------------------------------------------------------------------
+      NULLIFY(topology)
       CALL ppm_topo_get(topoid,topology,info)
       IF (info .NE. 0) THEN
          CALL ppm_write(ppm_rank,'ppm_fft_plan','Failed to get topology.',isub)
@@ -78,7 +79,7 @@
       DO isub=1,nsubs
         isublist(isub) = topology%isublist(isub)
       ENDDO
-      mesh  = topology%mesh(meshid)
+      mesh => topology%mesh(meshid)
 
       !-------------------------------------------------------------------------
       ! Setup parameters for this particular routine
@@ -103,8 +104,8 @@
       !e.g. z values recur every x-dim*y-dim*component values
       ppmplan%istride = UBOUND(infield,2) *UBOUND(infield,3)*3
       ppmplan%ostride = UBOUND(outfield,2)*UBOUND(outfield,3)*3
-      !idist tells how multiple arrays are spaced in memory. I.e. a memory 
-      !offset. e.g. vector components (idist=1) or scalar 2D arrays in 
+      !idist tells how multiple arrays are spaced in memory. I.e. a memory
+      !offset. e.g. vector components (idist=1) or scalar 2D arrays in
       !3D array(idist=NxNy)
       ppmplan%idist = 1
       ppmplan%odist = 1
@@ -146,6 +147,6 @@
       CALL substop('ppm_fft_plan',t0,info)
       RETURN
 
-      END SUBROUTINE __ROUTINE 
+      END SUBROUTINE __ROUTINE
 #undef __ROUTINE
 #undef __PREC
