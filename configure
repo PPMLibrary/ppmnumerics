@@ -601,6 +601,7 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 DEBUG
+FUNIT_FLAGS
 PPMDIR
 F90_LIBS_ppm
 F90_LDFLAGS_ppm
@@ -5902,6 +5903,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
   echo "#define __MPI" >> ./src/ppm_define.h
+  CPPFLAGS="$CPPFLAGS -D__MPI"
 else
   as_fn_error $? "Cannot build PPM with MPI support like this" "$LINENO" 5
 fi
@@ -5918,6 +5920,10 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
+if test "x${use_mpi}" = xyes; then
+	    FUNIT_FLAGS="--with-mpi"
+
+fi
 fi
 
 # Checks for libraries and set preprocessing flags
