@@ -135,10 +135,9 @@ install: all
 	@cp $(MODULES_DIR)/* $(includedir)/ppm
 
 uninstall:
-	@echo '[ removing '$(libdir)/$(LIB_PPM)', '$(includedir)/ppm' & '$(prefix)/utils']'
+	@echo '[ removing '$(libdir)/$(LIB_PPM)' & '$(includedir)/ppm']'
 	@rm $(libdir)/$(LIB_PPM)
 	@rm -fR $(includedir)/ppm
-	@rm -fR $(prefix)/utils
 
 
 # This compiles, and copies the PPM library
