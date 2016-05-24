@@ -82,7 +82,7 @@ $(shell test -e $(LOG) && rm $(LOG))
 $(warning Clean up the files created by make)
 endif
 
-.PHONY: all clean install new test
+.PHONY: all clean install uninstall new test
 
 .DEFAULT: ;
 
@@ -133,6 +133,13 @@ install: all
 	@echo '[ deploying modules to '$(includedir)/ppm']'
 	@mkdir -p $(includedir)/ppm
 	@cp $(MODULES_DIR)/* $(includedir)/ppm
+
+uninstall:
+	@echo '[ removing '$(libdir)/$(LIB_PPM)', '$(includedir)/ppm' & '$(prefix)/utils']'
+	@rm $(libdir)/$(LIB_PPM)
+	@rm -fR $(includedir)/ppm
+	@rm -fR $(prefix)/utils
+
 
 # This compiles, and copies the PPM library
 new: all install
