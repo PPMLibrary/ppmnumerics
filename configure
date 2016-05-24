@@ -5902,7 +5902,7 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
                      end program conftest_prog
 _ACEOF
 if ac_fn_fc_try_link "$LINENO"; then :
-  echo "#define __MPI" >> ./src/ppm_define.h
+  #echo "#define __MPI" >> ./src/ppm_define.h
   CPPFLAGS="$CPPFLAGS -D__MPI"
 else
   as_fn_error $? "Cannot build PPM with MPI support like this" "$LINENO" 5
