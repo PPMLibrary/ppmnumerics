@@ -16,8 +16,9 @@
       !  Modules
       !----------------------------------------------------------------------
       USE ppm_module_core
+      USE ppm_module_options, ONLY : ppm_t_options
       USE ppm_module_interfaces, ONLY : ppm_v_main_abstr,ppm_v_var_discr_pair,  &
-      &   ppm_v_discr_kind,ppm_t_options,ppm_t_part_prop_s_,ppm_t_part_prop_d_, &
+      &   ppm_v_discr_kind,ppm_t_part_prop_s_,ppm_t_part_prop_d_, &
       &   ppm_t_field_discr_pair,ppm_t_var_discr_pair
       USE ppm_module_field_typedef, ONLY : ppm_v_field
 
